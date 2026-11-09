@@ -256,7 +256,11 @@ img.av{background:var(--panel-2)}
         <li>سوّ حساب بالموقع، وأكمل ملفك برقم حسابك ويوزر تيليجرام</li>
         <li>نراجع حسابك ونفعّل دخولك للمنصة</li>
       </ol>
-      <a class="btn primary" id="brokerLink" href="#" target="_blank" rel="noopener" style="display:inline-block;padding:10px 18px;text-decoration:none">افتح حسابك مع INFINOX</a>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <a class="btn primary" id="brokerLink" href="#" target="_blank" rel="noopener" style="display:inline-block;padding:10px 18px;text-decoration:none">افتح حسابك مع INFINOX</a>
+        <a class="btn" href="https://t.me/sbworldmodel" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;text-decoration:none;color:var(--fg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/></svg>قناتنا الرسمية</a>
+        <a class="btn" href="https://t.me/omo_rabah" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;text-decoration:none;color:var(--fg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg>الدعم</a>
+      </div>
     </div>
   </div>
   <div class="gate-card">
@@ -370,6 +374,7 @@ img.av{background:var(--panel-2)}
     <div class="row">
       <button class="btn primary" type="button" id="tgSave">حفظ</button>
       <button class="btn" type="button" id="tgTest">إرسال رسالة تجربة</button>
+      <button class="btn" type="button" id="tgFind">اكتشف رقم القناة تلقائياً</button>
     </div>
     <p id="tgMsg"></p>
     <h3>قائمة المراقبة</h3>
@@ -557,7 +562,7 @@ img.av{background:var(--panel-2)}
     </section>
   </section>
 
-  <footer class="foot">GOLDEN AI TRADER · Research signals only · Not financial advice · الدعم: <a class="gold" href="https://t.me/omo_rabah" target="_blank" rel="noopener">@omo_rabah</a></footer>
+  <footer class="foot">GOLDEN AI TRADER · Research signals only · Not financial advice<br>قناتنا الرسمية: <a class="gold" href="https://t.me/sbworldmodel" target="_blank" rel="noopener">@sbworldmodel</a> · الدعم: <a class="gold" href="https://t.me/omo_rabah" target="_blank" rel="noopener">@omo_rabah</a></footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0/dist/umd/supabase.js"></script>
@@ -1317,6 +1322,18 @@ $("autoSend").addEventListener("change",e=>{SC.auto=e.target.checked;saveSC();$(
 $("sumHour").addEventListener("change",e=>{SC.sumHour=+e.target.value;saveSC()});
 const readTg=()=>{SC.tg={token:$("tgToken").value.trim(),chat:$("tgChat").value.trim()};saveSC();DB.setConfig("tg_token",SC.tg.token,false).catch(()=>{});DB.setConfig("tg_chat",SC.tg.chat,false).catch(()=>{});
   const inv=$("tgInvite").value.trim();if(inv!==(ME.invite||"")){ME.invite=inv;DB.setConfig("tg_invite",inv,true).catch(()=>{})}};
+$("tgFind").addEventListener("click",async()=>{
+  const tok=$("tgToken").value.trim();if(!tok){$("tgMsg").textContent="الصق توكن البوت أولاً";return}
+  $("tgMsg").textContent="جاري البحث…";
+  try{const j=await(await fetch(`https://api.telegram.org/bot${tok}/getUpdates?allowed_updates=${encodeURIComponent('["channel_post","my_chat_member","message"]')}`)).json();
+    if(!j.ok)throw new Error(j.description||"التوكن غلط");
+    const chats={};(j.result||[]).forEach(u=>{const m=u.channel_post||u.my_chat_member||u.edited_channel_post||u.message;const c=m&&m.chat;if(c&&(c.type==="channel"||c.type==="supergroup"))chats[c.id]=c.title||c.username||c.id});
+    const ids=Object.keys(chats);
+    if(!ids.length){$("tgMsg").textContent="ما لقيت القناة. انشر أي رسالة بالقناة (والبوت مشرف بيها)، وبعدها اضغط الزر مرة ثانية.";return}
+    const id=ids[ids.length-1];$("tgChat").value=id;readTg();
+    $("tgMsg").textContent=`لقيت القناة "${chats[id]}" ورقمها ${id}. انحفظ ✓ هسه اضغط "إرسال رسالة تجربة".`;
+  }catch(e){$("tgMsg").textContent=e instanceof TypeError?"المتصفح منع الاتصال بتيليجرام. جرّب من Chrome على الكمبيوتر.":e.message}
+});
 $("tgSave").addEventListener("click",()=>{readTg();$("tgMsg").textContent=tgReady()?"تم الحفظ.":"أكمل الخانتين."});
 $("tgTest").addEventListener("click",async()=>{readTg();$("tgMsg").textContent="جاري الإرسال…";
   try{await tgSend("◆ <b>GOLDEN AI TRADER</b>\n✅ البوت متصل وجاهز لإرسال الصفقات");$("tgMsg").textContent="أُرسلت. إذا ما وصلتك، تأكد من التوكن ورقم المحادثة، وإن البوت مضاف للقناة كمشرف."}catch(e){$("tgMsg").textContent=e.message}});
@@ -1338,7 +1355,8 @@ const CONFIG={
   SUPABASE_ANON_KEY:"sb_publishable_S4Huon2QXOIltvxoFIDdXQ_h79LR245",
   BROKER_NAME:"INFINOX",
   BROKER_LINK:"https://myaccount.infinox.com/ar/links/go/9935360",
-  SUPPORT_TG:"omo_rabah"   // يوزر تيليجرام للدعم (بدون @)
+  SUPPORT_TG:"omo_rabah",   // يوزر تيليجرام للدعم (بدون @)
+  OFFICIAL_TG:"sbworldmodel" // القناة الرسمية العامة (بدون @)
 };
 
 /* ================= members: data layer ================= */

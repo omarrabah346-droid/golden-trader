@@ -341,7 +341,7 @@ img.av{background:var(--panel-2)}
   </header>
 
   <div id="terminalView" style="display:grid;gap:12px;grid-template-columns:minmax(0,1fr)">
-  <section class="panel settings" id="settings" hidden>
+  <section class="panel settings admin-only" id="settings" hidden>
     <h3>مصدر الأسعار: Twelve Data</h3>
     <p>سجّل مجاناً في <a href="https://twelvedata.com/pricing" target="_blank" rel="noopener">Twelve Data</a> وانسخ مفتاح API هنا. المفتاح يُحفظ في متصفحك فقط. الخطة المجانية 8 طلبات بالدقيقة و800 باليوم، والموقع يوزّع طلباته حتى ما يتجاوزها.</p>
     <div class="row">
@@ -355,6 +355,10 @@ img.av{background:var(--panel-2)}
     <div class="row">
       <input id="tgToken" type="password" placeholder="توكن البوت Bot Token" autocomplete="off" spellcheck="false">
       <input id="tgChat" type="text" placeholder="رقم المحادثة أو @القناة" autocomplete="off" spellcheck="false">
+    </div>
+    <p>رابط دعوة القناة الخاصة: يظهر بس للأعضاء المقبولين حتى يطلبون الانضمام. سوّه من القناة ← Invite Links ← فعّل Request Admin Approval.</p>
+    <div class="row">
+      <input id="tgInvite" type="text" placeholder="https://t.me/+xxxxxxxx" autocomplete="off" spellcheck="false">
     </div>
     <div class="row">
       <label class="tgl" for="autoSend"><input type="checkbox" id="autoSend"> إرسال تلقائي: الصفقات الجديدة، ووصول الأهداف والوقف، وملخص اليوم</label>
@@ -371,6 +375,11 @@ img.av{background:var(--panel-2)}
   </section>
 
   <div id="simBanner" class="banner" hidden><strong>أسعار محاكاة، ليست السعر الحقيقي.</strong> <span id="simWhy"></span></div>
+
+  <section class="panel" id="chanCard" hidden style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;border-color:var(--accent)">
+    <div style="display:grid;gap:2px;min-width:0"><b class="gold">انضم لقناة الصفقات على تيليجرام</b><span class="label">اضغط الزر واطلب الانضمام بنفس يوزرك <span class="num" id="chanUser"></span>، ونقبلك خلال وقت قصير.</span></div>
+    <a class="btn primary" id="chanLink" href="#" target="_blank" rel="noopener" style="text-decoration:none;padding:9px 18px">انضم للقناة</a>
+  </section>
 
   <div class="ticker" id="ticker" aria-label="الأسواق"></div>
 
@@ -510,6 +519,7 @@ img.av{background:var(--panel-2)}
       <div class="panel pcard">
         <span id="pAv"></span><h2 id="pName"></h2><div class="label num" id="pEmail"></div><span id="pBadge"></span>
         <div class="kvs" id="pInfo" style="grid-template-columns:1fr 1fr"></div>
+        <a class="btn primary" id="pChan" href="#" target="_blank" rel="noopener" hidden style="text-decoration:none">انضم لقناة الصفقات</a>
         <button class="btn" type="button" data-out>تسجيل خروج</button>
       </div>
       <div class="panel">
@@ -536,7 +546,7 @@ img.av{background:var(--panel-2)}
     <div class="atiles" id="admStats"></div>
     <section class="panel">
       <div class="tabs" id="admTabs" role="tablist"></div>
-      <p class="note" style="margin-bottom:10px">قبل القبول، افتح لوحة الشركاء في <span class="brokerN">INFINOX</span> وتأكد إن رقم حساب العضو مسجّل تحت رابطك. كل طلب انضمام جديد يوصلك تنبيه على تيليجرام.</p>
+      <p class="note" style="margin-bottom:10px">قبل القبول، افتح لوحة الشركاء في <span class="brokerN">INFINOX</span> وتأكد إن رقم حساب العضو مسجّل تحت رابطك. كل طلب انضمام جديد يوصلك تنبيه على تيليجرام. وبعد القبول، العضو يطلب الانضمام للقناة الخاصة، فاقبل بالقناة بس اليوزرات اللي حالتها "مفعّل" هنا.</p>
       <div class="tbl"><table>
         <thead><tr><th>العضو</th><th>تيليجرام</th><th>رقم الحساب</th><th>الهاتف</th><th>الدولة</th><th>التسجيل</th><th>الحالة</th><th>إجراء</th></tr></thead>
         <tbody id="admRows"></tbody>
@@ -1302,7 +1312,8 @@ $("scanSyms").addEventListener("change",e=>{const v=e.target.dataset.sc;if(!v)re
   SC.syms=SYMS.map(x=>x.s).filter(x=>set.has(x));Object.keys(SC.day).forEach(k=>{if(!set.has(k))delete SC.day[k]});saveSC();renderWatch();renderTicker();renderToday()});
 $("autoSend").addEventListener("change",e=>{SC.auto=e.target.checked;saveSC();$("tgMsg").textContent=SC.auto&&!tgReady()?"أضف التوكن ورقم المحادثة واضغط حفظ.":""});
 $("sumHour").addEventListener("change",e=>{SC.sumHour=+e.target.value;saveSC()});
-const readTg=()=>{SC.tg={token:$("tgToken").value.trim(),chat:$("tgChat").value.trim()};saveSC();DB.setConfig("tg_token",SC.tg.token,false).catch(()=>{});DB.setConfig("tg_chat",SC.tg.chat,false).catch(()=>{})};
+const readTg=()=>{SC.tg={token:$("tgToken").value.trim(),chat:$("tgChat").value.trim()};saveSC();DB.setConfig("tg_token",SC.tg.token,false).catch(()=>{});DB.setConfig("tg_chat",SC.tg.chat,false).catch(()=>{});
+  const inv=$("tgInvite").value.trim();if(inv!==(ME.invite||"")){ME.invite=inv;DB.setConfig("tg_invite",inv,true).catch(()=>{})}};
 $("tgSave").addEventListener("click",()=>{readTg();$("tgMsg").textContent=tgReady()?"تم الحفظ.":"أكمل الخانتين."});
 $("tgTest").addEventListener("click",async()=>{readTg();$("tgMsg").textContent="جاري الإرسال…";
   try{await tgSend("◆ <b>GOLDEN AI TRADER</b>\n✅ البوت متصل وجاهز لإرسال الصفقات");$("tgMsg").textContent="أُرسلت. إذا ما وصلتك، تأكد من التوكن ورقم المحادثة، وإن البوت مضاف للقناة كمشرف."}catch(e){$("tgMsg").textContent=e.message}});
@@ -1475,7 +1486,7 @@ $("forgotBtn").addEventListener("click",async()=>{const email=$("aEmail").value.
   try{await DB.reset(email);say("aMsg","أرسلنا رابط تغيير كلمة السر على إيميلك.",true)}catch(err){say("aMsg",err.message)}});
 $("resetForm").addEventListener("submit",async e=>{e.preventDefault();const pw=$("rPass").value;if(pw.length<6)return say("rMsg","كلمة السر لازم 6 أحرف أو أكثر");
   try{await DB.setPassword(pw);say("rMsg","تم تغيير كلمة السر.",true);setTimeout(()=>route(),900)}catch(err){say("rMsg",err.message)}});
-document.addEventListener("click",async e=>{if(e.target.closest("[data-out]")){$("userMenu").hidden=true;await DB.signOut()}});
+document.addEventListener("click",async e=>{if(e.target.closest("[data-out]")){$("userMenu").hidden=true;await DB.signOut();location.hash="";location.reload()}});
 
 /* onboarding */
 const obPick=avatarPicker("obFile","obAv",()=>ME.profile);
@@ -1533,7 +1544,10 @@ async function enterApp(){
     if(c.twelve_key)S.key=c.twelve_key;
     if(isAdminUser()&&(c.tg_token||c.tg_chat)){SC.tg={token:c.tg_token||SC.tg.token,chat:c.tg_chat||SC.tg.chat}}
     if(!isAdminUser())SC.auto=false;
+    ME.invite=c.tg_invite||"";if($("tgInvite"))$("tgInvite").value=ME.invite;
   }catch(e){}
+  $("chanCard").hidden=!ME.invite||isAdminUser();if(ME.invite){$("chanLink").href=ME.invite;$("pChan").href=ME.invite}$("pChan").hidden=!ME.invite;
+  $("chanUser").textContent=ME.profile.telegram||"";
   if(!ME.started){ME.started=true;startTerminal()}
   showView();if(isAdminUser())refreshPendCount();
 }

@@ -212,6 +212,16 @@ textarea{min-height:90px;resize:vertical}
 .mcell span{display:block;color:var(--muted);font-size:12px}
 .acts2{display:grid;gap:6px;min-width:220px}
 
+.phead{display:flex;justify-content:space-between;align-items:end;gap:14px;flex-wrap:wrap;padding:34px 0 18px;border-bottom:1px solid var(--line-2);margin-bottom:18px}
+.phead h1{font-size:clamp(26px,3.6vw,38px)}
+.phead p{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.tile{display:flex;flex-direction:column;gap:6px;padding:20px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(160deg,#18150b,#111113 60%);text-decoration:none;color:var(--fg);min-width:0}
+.tile:hover{border-color:var(--accent)}
+.tile .ti{font-size:30px}
+.tile b{font-family:var(--f-display);font-size:18px}
+.tile span{color:var(--muted);font-size:14px;flex:1}
+.tile i{font-style:normal;color:var(--accent);font-weight:600;font-size:14px}
 footer{border-top:1px solid var(--line-2);margin-top:30px;padding:26px 0 40px;color:var(--muted);font-size:13px;text-align:center}
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--accent);color:var(--fg);padding:10px 16px;border-radius:12px;z-index:50;font-size:14px;max-width:calc(100vw - 32px)}
 
@@ -238,10 +248,12 @@ footer{border-top:1px solid var(--line-2);margin-top:30px;padding:26px 0 40px;co
       <a href="#" data-nav="home">الرئيسية</a>
       <a href="#courses" data-nav="courses">الدورات</a>
       <a href="#live" data-nav="live">دروس الزوم</a>
+      <a href="#plans" data-nav="plans">الاشتراكات</a>
+      <a href="#coach" data-nav="coach">الكوتش</a>
       <a href="#orders" data-nav="orders" id="navOrders" hidden>طلباتي</a>
       <a href="#admin" data-nav="admin" id="navAdmin" hidden>الإدارة</a>
     </nav>
-    <div class="who" id="who"></div>
+    <div class="who"><a class="btn sm" href="./" style="border-color:#5a4a16;color:var(--accent)">📊 منصة التوصيات</a><span id="who" style="display:flex;align-items:center;gap:8px"></span></div>
   </div>
 </header>
 
@@ -386,9 +398,10 @@ function offersHTML(){
     </div>
   </div>`;
 }
+function pageHead(t,sub,extra){return`<div class="wrap"><div class="phead"><div><h1>${t}</h1>${sub?`<p>${sub}</p>`:""}</div>${extra||""}</div></div>`}
 function home(){
   setNav("home");
-  const nL=S.lessons.length;
+  const nL=S.lessons.length,next=S.sessions.find(s=>new Date(s.starts_at).getTime()>Date.now());
   $("view").innerHTML=`
   <section class="hero"><div class="wrap">
     <div>
@@ -396,7 +409,7 @@ function home(){
       <h1>تعلّم تقرأ السوق <em>بنفسك</em><br>ويا ${esc(coachName())}</h1>
       <p class="lead">${esc(S.info.coach_bio||"")}</p>
       <div class="dips"><span class="chip gold">📈 دبلوم التحليل الفني</span><span class="chip gold">📐 الكلاسيكي</span><span class="chip gold">🌊 الموجي</span><span class="chip gold">⏳ الزمني</span><span class="chip gold">🔢 الرقمي</span></div>
-      <div class="cta"><a class="btn gold" href="#courses">ابدأ الدرس المجاني</a><button class="btn" type="button" data-buy="zoom">احجز جلسة خاصة</button></div>
+      <div class="cta"><a class="btn gold" href="#courses">ابدأ الدرس المجاني</a><a class="btn" href="#plans">الاشتراكات</a></div>
       <div class="links">${coachLinks(true)}</div>
     </div>
     <figure class="coach" style="margin:0">
@@ -411,23 +424,51 @@ function home(){
     <div><b>Zoom</b><span>دروس مباشرة أسبوعية</span></div>
     <div><b>مجاني</b><span>الدرس الأول بكل دورة</span></div>
   </div></div></section>
-
-  <section class="blk" id="courses"><div class="wrap">
-    <div class="sh"><div><h2>الدورات</h2><p>كل دورة تفتح أول درس مجاناً. افتح الدورة اللي تهمك، أو اشترك بكلهن.</p></div></div>
-    <div class="grid">${S.courses.map(courseCard).join("")}</div>
-  </div></section>
-
   <section class="blk"><div class="wrap">
-    <div class="sh"><div><h2>تعلّم ويا الكوتش مباشرة</h2><p>اشتراك شهري لكل شي، أو ساعة خاصة على زوم.</p></div></div>
-    ${offersHTML()}
-  </div></section>
-
-  <section class="blk" id="live"><div class="wrap">
-    <div class="sh"><div><h2>دروس الزوم القادمة</h2><p>اضغط «ذكّرني» ويوصلك تذكير بالإيميل قبل يوم وقبل ساعة.</p></div></div>
-    ${sessionsHTML()}
+    <div class="sh"><div><h2>من وين تبدأ؟</h2><p>كل قسم إله صفحته.</p></div></div>
+    <div class="tiles">
+      <a class="tile" href="#courses"><span class="ti">📚</span><b>الدورات</b><span>${S.courses.length} دورات · ${nL} درس · الدرس الأول مجاني</span><i>افتح الدورات ←</i></a>
+      <a class="tile" href="#live"><span class="ti">🎥</span><b>دروس الزوم المباشرة</b><span>${next?`القادم: ${esc(next.title)} · ${fmtDate(next.starts_at)}`:"شوف المواعيد واضغط «ذكّرني»"}</span><i>المواعيد ←</i></a>
+      <a class="tile" href="#plans"><span class="ti">⭐</span><b>الاشتراك الشهري والجلسات الخاصة</b><span>كل الدورات + الزوم بـ ${money(S.info.price_monthly)} شهرياً، أو ساعة خاصة بـ ${money(S.info.price_zoom)}</span><i>الاشتراكات ←</i></a>
+      <a class="tile" href="./"><span class="ti">📊</span><b>منصة التوصيات</b><span>صفقات الذهب والفوركس والكريبتو بالذكاء الاصطناعي</span><i>افتح المنصة ←</i></a>
+    </div>
   </div></section>`;
-  if(location.hash==="#courses"||location.hash==="#live"){const t=document.getElementById(location.hash.slice(1));if(t)t.scrollIntoView()}
+}
+function coursesPage(){
+  setNav("courses");
+  $("view").innerHTML=pageHead("الدورات","كل دورة تفتح أول درس مجاناً. افتح الدورة اللي تهمك، أو اشترك بكلهن.",`<a class="btn" href="#plans">⭐ كل الدورات بالاشتراك الشهري</a>`)
+    +`<section class="blk" style="padding-top:6px"><div class="wrap"><div class="grid">${S.courses.map(courseCard).join("")}</div></div></section>`;
+}
+function plansPage(){
+  setNav("plans");
+  $("view").innerHTML=pageHead("الاشتراكات والجلسات الخاصة","تعلّم ويا الكوتش مباشرة: اشتراك شهري لكل شي، أو ساعة خاصة على زوم، أو دورة وحدة بدفعة وحدة.")
+    +`<section class="blk" style="padding-top:6px"><div class="wrap">${offersHTML()}
+      <div class="sh" style="margin-top:30px"><div><h2>أو اشتري دورة وحدة</h2><p>دفعة وحدة ووصول دائم.</p></div></div>
+      <div class="tbl"><table><thead><tr><th>الدورة</th><th>الدروس</th><th>السعر</th><th></th></tr></thead><tbody>${S.courses.map(c=>`<tr><td><b>${esc(c.icon)} ${esc(c.title)}</b><div class="muted" style="font-size:12.5px">${esc(c.level)}</div></td><td>${lessonsOf(c.id).length}</td><td class="price" style="font-size:17px">${money(c.price)}</td><td>${ownsCourse(c.id)?'<span class="chip up">✓ مفتوحة</span>':`<a class="btn sm" href="#course/${esc(c.id)}">التفاصيل</a>`}</td></tr>`).join("")}</tbody></table></div>
+      <div class="panel" style="margin-top:18px"><b style="color:var(--accent)">💵 طريقة الدفع</b><div class="payinfo" style="margin-top:8px">${esc(S.info.pay_info||"")}</div></div>
+    </div></section>`;
+}
+function livePage(){
+  setNav("live");
+  $("view").innerHTML=pageHead("دروس الزوم المباشرة","اضغط «ذكّرني» ويوصلك تذكير قبل يوم وقبل ساعة. رابط الدخول يطلع هنا قبل الدرس.",`<button class="btn" type="button" data-buy="zoom">🎯 احجز جلسة خاصة</button>`)
+    +`<section class="blk" style="padding-top:6px"><div class="wrap">${sessionsHTML()}</div></section>`;
   tickCountdowns();
+}
+function coachPage(){
+  setNav("coach");
+  $("view").innerHTML=`<section class="hero"><div class="wrap">
+    <div>
+      <span class="kicker">👑 تعرّف على الكوتش</span>
+      <h1>${esc(coachName())}</h1>
+      <p class="lead" style="color:var(--accent);margin-bottom:8px">${esc(S.info.coach_title||"")}</p>
+      <p class="lead">${esc(S.info.coach_bio||"")}</p>
+      <div class="dips"><span class="chip gold">📈 دبلوم التحليل الفني</span><span class="chip gold">📐 دبلوم الكلاسيكي</span><span class="chip gold">🌊 دبلوم الموجي</span><span class="chip gold">⏳ دبلوم الزمني</span><span class="chip gold">🔢 دبلوم الرقمي</span></div>
+      <div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 20px"><div><b>${esc(S.info.coach_since||"2018")}</b><span>بالأسواق منذ</span></div><div><b>5</b><span>دبلومات تحليل</span></div><div><b>${S.lessons.length}</b><span>درس بالأكاديمية</span></div></div>
+      <div class="cta"><button class="btn gold" type="button" data-buy="zoom">احجز جلسة خاصة · ${money(S.info.price_zoom)}</button><a class="btn" href="#courses">الدورات</a></div>
+      <div class="links">${coachLinks(true)}</div>
+    </div>
+    <figure class="coach" style="margin:0"><img src="${esc(cover())}" alt="${esc(coachName())}" onerror="this.src='${esc(photo())}'"><div class="since"><b>${esc(S.info.coach_since||"2018")}</b><small>بالأسواق منذ</small></div></figure>
+  </div></section>`;
 }
 
 /* ================= sessions ================= */
@@ -683,10 +724,14 @@ function render(){
   if(h.startsWith("course/"))return coursePage(decodeURIComponent(h.slice(7)));
   if(h.startsWith("lesson/"))return lessonPage(decodeURIComponent(h.slice(7)));
   if(h==="orders")return ordersPage();
+  if(h==="courses")return coursesPage();
+  if(h==="live")return livePage();
+  if(h==="plans")return plansPage();
+  if(h==="coach")return coachPage();
   if(h==="admin")return adminPage();
   home();
 }
-window.addEventListener("hashchange",()=>{render();if(!/^#(courses|live)$/.test(location.hash))window.scrollTo(0,0)});
+window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0)});
 API.onAuth(async()=>{await loadAll();render()});
 (async()=>{try{await loadAll()}catch(e){$("view").innerHTML=`<div class="wrap"><div class="empty" style="margin-top:30px">ما گدرنا نحمّل الأكاديمية: ${esc(e.message)}<br>تأكد إن ملفات academy.sql و academy_lessons.sql انشغلت بـ Supabase.</div></div>`;return}render()})();
 })();

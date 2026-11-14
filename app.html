@@ -950,7 +950,9 @@ const SUBS={smc:"كسر الهيكل BOS، تغيّر الاتجاه CHOCH، ا�
 const $=id=>document.getElementById(id);
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 const clamp=(x,a=-100,b=100)=>Math.max(a,Math.min(b,x));
-let SERVER_SCAN=false;
+let SERVER_SCAN=false,TD_BLOCK=0;
+const nextUtcMidnight=()=>{const d=new Date();return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate()+1,0,3)};
+const creditMsg=()=>`خلص رصيد الأسعار الحقيقية لليوم (800 طلب). ترجع الأسعار الحقيقية لحالها الساعة ${new Date(TD_BLOCK).toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})}.`;
 let S={sym:SYMS[0],tf:"H1",key:"",candles:[],src:"",A:null,plan:null,alt:null,mtf:{},bt:[],timer:null,tok:0};
 try{const s=JSON.parse(localStorage.getItem("mizanfx")||"{}");S.sym=SYMS.find(x=>x.s===s.sym)||S.sym;S.tf=TFS[s.tf]?s.tf:S.tf;S.key=s.key||""}catch(e){}
 const save=()=>{try{localStorage.setItem("mizanfx",JSON.stringify({sym:S.sym.s,tf:S.tf,key:S.key}))}catch(e){}};
@@ -992,7 +994,8 @@ async function getData(sym,tf,force){
     if(r&&r.data&&r.data.length>220){const cs=r.data.map(x=>({time:x[0],open:x[1],high:x[2],low:x[3],close:x[4]})),age=Date.now()-new Date(r.updated_at);
       if(age<Math.max(2*TFS[tf].s*1000,20*60e3)){data=cs;src="Twelve Data"}else stale=cs}}catch(e){}
   // 2) المفتاح مباشرة: للمدير دائماً، وللأعضاء بس إذا سيرفر التوصيات مطفي
-  if(!data&&S.key&&(isAdminUser()||!SERVER_SCAN)){try{data=await fetchTD(sym,tf);src="Twelve Data"}catch(e){err=e.message}}
+  if(!data&&S.key&&(isAdminUser()||!SERVER_SCAN)&&Date.now()>=TD_BLOCK){try{data=await fetchTD(sym,tf);src="Twelve Data"}catch(e){err=e.message;if(/API credits|run out of/i.test(err)){TD_BLOCK=nextUtcMidnight();err=creditMsg()}}}
+  else if(!data&&Date.now()<TD_BLOCK)err=creditMsg();
   if(!data&&stale){data=stale;src="Twelve Data"}
   if(!data){data=(c&&c.src==="sim")?c.data:simulate(sym,tf);src="sim"}
   return cache[k]={t:Date.now(),data,src,err};
@@ -1490,7 +1493,7 @@ async function load(){
   const sim=c.src==="sim";
   $("modePill").className="pill "+(sim?"sim":"live");$("modeText").textContent=sim?"أسعار محاكاة":"أسعار حية · "+c.src;
   $("simBanner").hidden=!sim;
-  $("simWhy").textContent=c.err?`تعذّر جلب الأسعار: ${c.err}`:S.key?"تعذّر الاتصال بمزوّد البيانات من هنا. افتح الموقع من رابطه على GitHub.":"أضف مفتاح Twelve Data من زر \"الإعدادات\" فوق للحصول على أسعار حقيقية. التحليل هنا على شموع مولّدة لعرض طريقة العمل فقط.";
+  $("simWhy").textContent=c.err?(/^خلص رصيد/.test(c.err)?c.err:`تعذّر جلب الأسعار: ${c.err}`):S.key?"تعذّر الاتصال بمزوّد البيانات من هنا. افتح الموقع من رابطه على GitHub.":"أضف مفتاح Twelve Data من زر \"الإعدادات\" فوق للحصول على أسعار حقيقية. التحليل هنا على شموع مولّدة لعرض طريقة العمل فقط.";
   renderAll(true);$("mainArea").classList.remove("loading");$("goBtn").disabled=false;$("goBtn").textContent="تحديث";
   renderWatch();
   loadMTF(tok);
@@ -2092,7 +2095,7 @@ async function enterApp(){
   $("gate").hidden=true;$("app").hidden=false;fillUser();fillLock();
   try{const c=await DB.getConfig();
     if(c.twelve_key)S.key=c.twelve_key;
-    SERVER_SCAN=c.server_scan==="1";
+    SERVER_SCAN=c.server_scan==="1";if(c.td_block_until&&Date.parse(c.td_block_until)>Date.now())TD_BLOCK=Date.parse(c.td_block_until);
     if(isAdminUser()&&(c.tg_token||c.tg_chat)){SC.tg={token:c.tg_token||SC.tg.token,chat:c.tg_chat||SC.tg.chat,admin:c.tg_admin||SC.tg.admin||"",news:c.tg_news||SC.tg.news||""}}
     if(!isAdminUser())SC.auto=false;
     ME.invite=c.tg_invite||"";if($("tgInvite"))$("tgInvite").value=ME.invite;ME.invite2=c.tg_invite2||"";if($("tgInvite2"))$("tgInvite2").value=ME.invite2;

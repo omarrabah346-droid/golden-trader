@@ -293,6 +293,14 @@ img.av{background:var(--panel-2)}
 .avpick{display:flex;align-items:center;gap:14px}
 .avpick input[type=file]{display:none}
 .umenu-w{position:relative}
+/* chart page: chart on top full width, assistant below */
+#chartView .cv-grid{grid-template-columns:minmax(0,1fr)}
+#chartView #tvBox{height:calc(100vh - 200px);min-height:560px}
+#chartView .cv-ai{position:static;height:auto;min-height:0}
+#chartView .cv-msgs{min-height:220px;max-height:460px}
+#chartView .cv-m{max-width:min(820px,95%)}
+@media (max-width:560px){#chartView #tvBox{height:70vh;min-height:420px}}
+
 /* layout: chart on top, then signal + watchlist, then cards */
 #mainArea.grid{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"chart chart" "signal watch" "cards cards"}
 #mainArea .col-watch{grid-template-columns:minmax(0,1fr)}

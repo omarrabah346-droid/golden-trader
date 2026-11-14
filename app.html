@@ -293,6 +293,16 @@ img.av{background:var(--panel-2)}
 .avpick{display:flex;align-items:center;gap:14px}
 .avpick input[type=file]{display:none}
 .umenu-w{position:relative}
+/* layout: chart on top, then signal + watchlist, then cards */
+#mainArea.grid{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);grid-template-areas:"chart chart" "signal watch" "cards cards"}
+#mainArea .col-watch{grid-template-columns:minmax(0,1fr)}
+#cardsRow{grid-area:cards;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+#cardsRow .kvs{grid-template-columns:repeat(auto-fit,minmax(110px,1fr))}
+#cardsRow .fields{grid-template-columns:repeat(auto-fit,minmax(90px,1fr))}
+#mainArea #chart{height:480px}
+@media (max-width:1180px){#mainArea.grid{grid-template-columns:minmax(0,1fr);grid-template-areas:"chart" "signal" "cards" "watch"}#mainArea .col-watch{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}}
+@media (max-width:560px){#mainArea #chart{height:340px}}
+
 .on-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px;max-height:360px;overflow:auto}
 .on-i{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07)}
 .on-i.live{border-color:rgba(52,201,142,.45);background:rgba(52,201,142,.07)}
@@ -644,33 +654,6 @@ input,textarea,select{background:rgba(255,255,255,.05)!important;border-color:rg
         </div>
       </section>
 
-      <div class="cards">
-        <section class="panel card">
-          <div class="ph"><h3>نتائج اليوم</h3><span class="label" id="todayTf"></span></div>
-          <div class="wlbig">
-            <div><span class="label">رابحة</span><b class="up" id="tWin">0</b></div>
-            <div><span class="label">خاسرة</span><b class="down" id="tLoss">0</b></div>
-          </div>
-          <div class="kvs" id="tKv"></div>
-        </section>
-        <section class="panel card">
-          <div class="ph"><h3>سجل الأداء</h3><span class="label" id="perfSym"></span></div>
-          <div class="label">نسبة النجاح (اختبار رجعي)</div>
-          <div class="big" id="pWin">—</div>
-          <div class="kvs" id="pKv" style="margin-top:8px"></div>
-        </section>
-        <section class="panel card">
-          <div class="ph"><h3>إدارة المخاطر</h3></div>
-          <div class="fields">
-            <label for="bal">رأس المال $<input id="bal" type="number" inputmode="decimal" value="1000" min="0"></label>
-            <label for="rp">المخاطرة %<input id="rp" type="number" inputmode="decimal" value="1" min="0" step="0.1"></label>
-            <label for="slp">الوقف نقطة<input id="slp" type="number" inputmode="decimal" min="0"></label>
-          </div>
-          <div class="label">حجم اللوت</div>
-          <div class="big" id="lotBig">—</div>
-          <div class="kvs" id="riskOut" style="margin-top:8px"></div>
-        </section>
-      </div>
     </div>
 
     <div class="col-signal">
@@ -704,6 +687,34 @@ input,textarea,select{background:rgba(255,255,255,.05)!important;border-color:rg
         </table></div>
       </section>
     </div>
+      <div class="cards" id="cardsRow">
+        <section class="panel card">
+          <div class="ph"><h3>نتائج اليوم</h3><span class="label" id="todayTf"></span></div>
+          <div class="wlbig">
+            <div><span class="label">رابحة</span><b class="up" id="tWin">0</b></div>
+            <div><span class="label">خاسرة</span><b class="down" id="tLoss">0</b></div>
+          </div>
+          <div class="kvs" id="tKv"></div>
+        </section>
+        <section class="panel card">
+          <div class="ph"><h3>سجل الأداء</h3><span class="label" id="perfSym"></span></div>
+          <div class="label">نسبة النجاح (اختبار رجعي)</div>
+          <div class="big" id="pWin">—</div>
+          <div class="kvs" id="pKv" style="margin-top:8px"></div>
+        </section>
+        <section class="panel card">
+          <div class="ph"><h3>إدارة المخاطر</h3></div>
+          <div class="fields">
+            <label for="bal">رأس المال $<input id="bal" type="number" inputmode="decimal" value="1000" min="0"></label>
+            <label for="rp">المخاطرة %<input id="rp" type="number" inputmode="decimal" value="1" min="0" step="0.1"></label>
+            <label for="slp">الوقف نقطة<input id="slp" type="number" inputmode="decimal" min="0"></label>
+          </div>
+          <div class="label">حجم اللوت</div>
+          <div class="big" id="lotBig">—</div>
+          <div class="kvs" id="riskOut" style="margin-top:8px"></div>
+        </section>
+      </div>
+
   </div>
 
   <section class="panel" id="secTrades">

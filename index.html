@@ -1406,8 +1406,8 @@ function quizHTML(qz){
 }
 function bindQuiz(l,qz){
   const box=$("quiz");if(!box)return;let ans=0,ok=0;const picks=new Array(qz.length).fill(-1);
-  box.addEventListener("click",async e=>{const b=e.target.closest(".opt");if(!b)return;const qq=b.closest(".qq");if(qq.dataset.done)return;
-    qq.dataset.done=1;const q=qz[+qq.dataset.q],pick=+b.dataset.o;ans++;picks[+qq.dataset.q]=pick;
+  box.addEventListener("click",async e=>{const b=e.target.closest(".opt");if(!b)return;const qq=b.closest(".qq");if(qq.dataset.answered)return;
+    qq.dataset.answered=1;const q=qz[+qq.dataset.q],pick=+b.dataset.o;ans++;picks[+qq.dataset.q]=pick;
     qq.querySelectorAll(".opt").forEach(x=>{const j=+x.dataset.o;if(j===q.a)x.classList.add("ok");else if(j===pick)x.classList.add("bad")});
     if(pick===q.a)ok++;const w=qq.querySelector(".why");w.hidden=false;w.textContent=(pick===q.a?"✓ صح. ":"✗ مو هيچ. ")+q.why;
     if(ans===qz.length){const s=$("qScore");s.hidden=false;const pct=Math.round(ok/qz.length*100);
@@ -1646,11 +1646,11 @@ document.addEventListener("click",async e=>{
   const gr=e.target.closest("[data-grant]");if(gr){const id=gr.dataset.grant,w=$("gw-"+id).value,days=+$("gd-"+id).value;gr.disabled=true;
     try{if(w==="all"||w==="ai")await API.aGrant(id,w,null,days);else await API.aGrant(id,"course",w.slice(2));toast("✅ انفتحت الصلاحية للطالب");await adminAccess(true)}catch(err){toast(err.message);gr.disabled=false}return}
   const rv=e.target.closest("[data-revoke]");if(rv){if(!confirm("تسحب هذي الصلاحية من الطالب؟"))return;try{await API.aRevoke(+rv.dataset.revoke);toast("تم سحب الصلاحية");await adminAccess(true)}catch(err){toast(err.message)}return}
-  const pay=e.target.closest("[data-pay]");if(pay){const id=+pay.dataset.pay,r=ADM.rows.find(x=>x.id===id),f={status:"paid"};
+  const pay=e.target.closest("button[data-pay]");if(pay){const id=+pay.dataset.pay,r=ADM.rows.find(x=>x.id===id),f={status:"paid"};
     if(r.kind==="zoom"){const at=$("at-"+id).value,zu=$("zu-"+id).value.trim();if(!at){$("at-"+id).focus();toast("حدد موعد الجلسة");return}f.session_at=new Date(at).toISOString();f.zoom_url=zu}
     pay.disabled=true;try{await API.aSetPurchase(id,f);toast("✅ تفعّل ووصل العميل إيميل");adminPage()}catch(err){toast(err.message);pay.disabled=false}return}
-  const rej=e.target.closest("[data-rej]");if(rej){const id=+rej.dataset.rej;try{await API.aSetPurchase(id,{status:"rejected",admin_note:$("rn-"+id).value.trim()});adminPage()}catch(err){toast(err.message)}return}
-  const dn=e.target.closest("[data-done]");if(dn){try{await API.aSetPurchase(+dn.dataset.done,{status:"done"});adminPage()}catch(err){toast(err.message)}return}
+  const rej=e.target.closest("button[data-rej]");if(rej){const id=+rej.dataset.rej;try{await API.aSetPurchase(id,{status:"rejected",admin_note:$("rn-"+id).value.trim()});adminPage()}catch(err){toast(err.message)}return}
+  const dn=e.target.closest("button[data-done]");if(dn){try{await API.aSetPurchase(+dn.dataset.done,{status:"done"});adminPage()}catch(err){toast(err.message)}return}
   const ds=e.target.closest("[data-dels]");if(ds){if(!confirm("تحذف هذا الدرس؟"))return;try{await API.aDelSession(+ds.dataset.dels);ADM.sess=await API.aSessions();S.sessions=await API.sessions();adminLive()}catch(err){toast(err.message)}return}
 });
 function render(){

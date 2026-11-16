@@ -1739,7 +1739,7 @@ async function labLoad(){let rows=[];try{rows=API.candles?await API.candles(null
   addEventListener("resize",labDraw);labReset()}
 function labPip(){return/JPY/.test(LAB.sym)?.01:/XAU/.test(LAB.sym)?.1:/XAG/.test(LAB.sym)?.01:/BTC|ETH/.test(LAB.sym)?1:.0001}
 function labDec(){return/JPY/.test(LAB.sym)?3:/XAU|BTC|ETH/.test(LAB.sym)?2:/XAG/.test(LAB.sym)?3:5}
-function labReset(){const set=LAB.sets.find(r=>r.sym===LAB.sym);LAB.cs=set.data.map(c=>({t:c[0],o:c[1],h:c[2],l:c[3],c:c[4]}));
+function labReset(){const set=LAB.sets.find(r=>r.sym===LAB.sym);LAB.cs=set.data.map(c=>({t:c[0],o:c[1],h:c[2],l:c[3],c:c[4]})).filter(c=>c.h!==c.l);
   const max=Math.max(60,LAB.cs.length-40);LAB.i=Math.min(LAB.cs.length-2,60+Math.floor(Math.random()*Math.max(1,max-60)));LAB.pos=null;
   $("labInfo").textContent=`${LAB.tf} · آخر تحديث للأسعار ${new Date(set.updated_at).toLocaleString(window.LANG||"ar")}`;labDraw();labUI()}
 function labStep(){if(LAB.i>=LAB.cs.length-1){if(LAB.timer)$("labPlay").click();toast("خلصت الشموع المخزّنة. اضغط «بداية جديدة».");return}LAB.i++;

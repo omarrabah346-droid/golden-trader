@@ -48,7 +48,7 @@ function pull(){try{var cc=JSON.parse(localStorage.getItem("vx_ui_"+L)||"null");
 if(document.body)start();else document.addEventListener("DOMContentLoaded",start);
 })();
 </script>
-<style id="i18n-css">.glang{display:flex;flex-wrap:wrap;gap:4px;padding:8px 2px 0}.glang button[data-l=ckb]{font-family:'IBM Plex Sans Arabic',sans-serif}.glang button{flex:1;min-width:26px;padding:6px 0;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:rgba(242,242,243,.8);font:600 11.5px "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em;cursor:pointer;transition:background .2s}.glang button:hover{background:rgba(255,255,255,.12)}.glang button.on{background:linear-gradient(180deg,#e9c55a,#c99a22);color:#140f02;border-color:rgba(255,230,150,.6)}
+<style id="i18n-css">.glang{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:8px 2px 0}.glang button[data-l=ckb]{font-family:'IBM Plex Sans Arabic',sans-serif}.glang button{flex:1;min-width:26px;padding:6px 0;border-radius:9px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:rgba(242,242,243,.8);font:600 11.5px "IBM Plex Mono",ui-monospace,monospace;letter-spacing:.04em;cursor:pointer;transition:background .2s}.glang button:hover{background:rgba(255,255,255,.12)}.glang button.on{background:linear-gradient(180deg,#e9c55a,#c99a22);color:#140f02;border-color:rgba(255,230,150,.6)}
 @media (max-width:480px){html[dir=ltr] .who{flex-wrap:wrap;row-gap:6px;justify-content:flex-end;min-width:0;max-width:100%}html[dir=ltr] .who .btn{white-space:normal}}
 html[dir=ltr] :is(.content th,.opt,.tbl th,.steps,th,td,.umenu button,.gate-brand h1,.gate-brand .tag,.brand h1,.brand .tag,.vhead h2,.fields input){text-align:left}
 .glang-m{display:none}html[dir=ltr] .gside{direction:ltr}html[dir=ltr] body{text-align:left}
@@ -1102,6 +1102,8 @@ body.pp-mode #app{max-width:none!important;padding:0!important;margin:0!importan
 .vx-sup a{display:inline-flex;gap:8px;align-items:center;padding:10px 16px;border-radius:12px;font-weight:700;font-size:14px;text-decoration:none;color:#fff;border:1px solid rgba(255,255,255,.18)}
 .vx-sup a.tg{background:linear-gradient(180deg,#2aa3e0,#1b7fb8)}.vx-sup a.wa{background:linear-gradient(180deg,#2fd06b,#1c9d4d)}
 html[dir=rtl][lang=ckb] body,html[lang=ckb] body{font-family:"IBM Plex Sans Arabic","Readex Pro",sans-serif}
+/* بطاقة المسابقة بالرئيسية: باللغات من اليسار لليمين الصورة تروح يمين حتى ما يتغطى النص */
+@media(min-width:761px){html[dir=ltr] .hx-bg{inset:0 0 0 auto}html[dir=ltr] .hx-bg::after{background:linear-gradient(90deg,#0b0b0d 0%,rgba(11,11,13,.55) 28%,transparent 60%)}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>

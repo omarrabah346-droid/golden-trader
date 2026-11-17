@@ -4942,6 +4942,9 @@ const V5PA={tab:"requests",f:"open",
 
 window.__V5={db:()=>DB.v5,me:()=>ME,V5:V5};V5.sideInit=async function(){try{document.querySelectorAll(".need-news").forEach(x=>x.hidden=!can("news"));const r=await DB.v5.portal();const el=document.getElementById("gPartDash");if(el)el.hidden=!(r&&r.me&&r.me.status==="APPROVED")}catch(e){}};
 setTimeout(()=>{try{V5.track()}catch(e){}},0);
+// زر «الإعدادات» لوحته موجودة بالصفحة الرئيسية: من أي صفحة ثانية نرجع للرئيسية ونفتحها
+(function(){const b=document.getElementById("setBtn");if(!b)return;b.addEventListener("click",()=>{const tv=$("terminalView"),show=()=>{const pn=$("settings");if(!pn)return;pn.hidden=false;b.setAttribute("aria-expanded","true");pn.scrollIntoView({behavior:"smooth",block:"start"})};
+  if(tv&&tv.hidden){location.hash="";setTimeout(show,350)}else setTimeout(()=>{const pn=$("settings");if(pn&&!pn.hidden)pn.scrollIntoView({behavior:"smooth",block:"start"})},30)})})();
 
 /* routing by account state */
 function route(){

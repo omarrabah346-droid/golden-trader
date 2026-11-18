@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<script>(function(){var l;try{l=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1]||localStorage.getItem("albasha_lang")}catch(e){}if(l&&l!=="ar")document.write('<script src="i18n-dict.js?v=25aa46bcee"><\/script>')})();</script>
+<script>(function(){var l;try{l=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1]||localStorage.getItem("albasha_lang")}catch(e){}if(l&&l!=="ar")document.write('<script src="i18n-dict.js?v=2a75fa101e"><\/script>')})();</script>
 <script>(function(){
 var LN={ar:"العربية",en:"English",fr:"Français",de:"Deutsch",uz:"O‘zbekcha",ckb:"کوردی",kmr:"Kurdî",tr:"Türkçe"},XL={uz:1,ckb:1,kmr:1,tr:1},RTL={ar:1,ckb:1};
 var L="ar";try{var q=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1];L=q||localStorage.getItem("albasha_lang")||"";if(!L)L="ar";if(q)localStorage.setItem("albasha_lang",q)}catch(e){}
@@ -634,6 +634,12 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 .v8s-t td{vertical-align:middle}
 @media (max-width:760px){.v8s-kp{grid-template-columns:repeat(2,minmax(0,1fr))}.v8s-pb{display:none}}
 .v8-ann summary{cursor:pointer}.v8-ann .v8-acts input{min-width:120px}
+.v8s-jov{position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px}
+.v8s-jbox{width:min(980px,100%);max-height:88vh;overflow:auto;background:#121214;border:1px solid rgba(212,175,55,.4);border-radius:18px;padding:16px}
+.v8s-jh{display:flex;justify-content:space-between;align-items:center;margin:0 0 12px;font-size:16px}.v8s-jk{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:0 0 12px}
+.v8s-jk>div{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px}.v8s-jk span{display:block;font-size:12px;color:var(--muted,#9a9aa3)}.v8s-jk b{font-size:18px}
+.v8s-jt{overflow-x:auto}.v8s-jt table{width:100%;border-collapse:collapse;font-size:12.5px}.v8s-jt th,.v8s-jt td{padding:7px;border-bottom:1px solid rgba(255,255,255,.06);text-align:start;white-space:nowrap}.v8s-jn{font-size:12px;color:var(--muted,#9a9aa3);margin:10px 0 0}
+@media (max-width:700px){.v8s-jk{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body><div class="glang glang-m" aria-label="اللغة"><button type="button" data-l="ar">AR</button><button type="button" data-l="en">EN</button><button type="button" data-l="fr">FR</button><button type="button" data-l="de">DE</button><button type="button" data-l="uz">UZ</button><button type="button" data-l="ckb">سۆ</button><button type="button" data-l="kmr">KU</button><button type="button" data-l="tr">TR</button></div>
@@ -1974,7 +1980,14 @@ const V8G={
 window.__V8=V8;
 
 /* ================= V8b: صفحة «طلابي» — تقدم كل طالب بكل دورة ================= */
-const V8S={D:null,q:"",c:"",f:"all",n:100,
+const V8S={
+  async journal(uid){let d;try{d=await V8.r("coach_journal",{uid})}catch(err){toast(V8.err(err));return}
+    const T=(d&&d.trades)||[],c=(d.settings&&d.settings.acct_ccy)||"USD",cl=T.filter(t=>t.pnl!=null),w=cl.filter(t=>+t.pnl>0).length,net=cl.reduce((a,t)=>a+ +t.pnl,0),pl=cl.filter(t=>t.followed_plan!=null),ns=T.filter(t=>t.sl==null).length;
+    const ov=document.createElement("div");ov.className="v8s-jov";ov.innerHTML=`<div class="v8s-jbox" role="dialog" aria-modal="true"><div class="v8s-jh"><b>📒 دفتر تداول الطالب</b><button type="button" class="btn sm" data-x>إغلاق</button></div>
+      <div class="v8s-jk"><div><span>صفقات مسكّرة</span><b>${cl.length}</b></div><div><span>نسبة النجاح</span><b>${cl.length?Math.round(w/cl.length*100)+"%":"—"}</b></div><div><span>الصافي</span><b dir="ltr" class="${net>=0?"up":"down"}">${net.toFixed(2)} ${esc(c)}</b></div><div><span>الالتزام بالخطة</span><b>${pl.length?Math.round(pl.filter(t=>t.followed_plan).length/pl.length*100)+"%":"—"}</b></div><div><span>بدون وقف</span><b class="${ns?"down":""}">${ns}</b></div></div>
+      <div class="v8s-jt"><table><thead><tr><th>التاريخ</th><th>الأصل</th><th>الصافي</th><th>R</th><th>الاستراتيجية</th><th>الشعور</th><th>الخطة</th><th>سبب الدخول</th></tr></thead><tbody>${T.slice(0,100).map(t=>`<tr><td dir="ltr">${esc(String(t.opened_at||"").slice(0,16).replace("T"," "))}</td><td dir="ltr">${t.side==="buy"?"▲":"▼"} ${esc(t.sym)}</td><td dir="ltr" class="${+t.pnl>0?"up":+t.pnl<0?"down":""}">${t.pnl==null?"مفتوحة":(+t.pnl).toFixed(2)}</td><td dir="ltr">${t.r_mult==null?"—":(+t.r_mult).toFixed(2)}</td><td data-noi18n>${esc(t.strategy||"—")}</td><td>${esc(t.emotion||"—")}</td><td>${t.followed_plan==null?"—":t.followed_plan?"✓":"✗"}</td><td data-noi18n>${esc((t.reason_in||"").slice(0,80))}</td></tr>`).join("")||'<tr><td colspan="8">ما أكو صفقات.</td></tr>'}</tbody></table></div>
+      <p class="v8s-jn">الطالب وافق على مشاركة دفتره. الصور الخاصة ما تنعرض، وكل فتح للدفتر ينسجل بسجل الإدارة.</p></div>`;
+    document.body.appendChild(ov);ov.addEventListener("click",e=>{if(e.target===ov||e.target.closest("[data-x]"))ov.remove()})},D:null,q:"",c:"",f:"all",n:100,
   ago(iso){if(!iso)return"—";const m=(Date.now()-new Date(iso).getTime())/6e4;if(m<60)return"قبل شوية";const h=m/60;if(h<24)return`قبل ${Math.round(h)} ساعة`;const d=Math.round(h/24);return d===1?"أمس":`قبل ${d} يوم`},
   days(iso){return iso?Math.floor((Date.now()-new Date(iso).getTime())/864e5):999},
   st(r){const q=r.req||{},open=q.status==="open";
@@ -2003,7 +2016,7 @@ const V8S={D:null,q:"",c:"",f:"all",n:100,
         <td>${esc(r.course)}</td><td><span class="num">${r.done}/${r.total}</span><span class="v8s-pb"><i style="width:${p}%"></i></span></td>
         <td class="num">${r.avg!=null?r.avg+"%":"—"}</td><td><span class="chip ${r.s[1]==="g"?"up":r.s[1]==="r"?"down":r.s[1]==="b"?"blue":r.s[1]==="y"?"gold":""}">${r.s[2]}</span></td>
         <td class="muted" style="font-size:12.5px">${esc(V8S.ago(r.last||r.seen))}</td>
-        <td>${r.s[0]==="wait"?`<a class="btn sm" href="#admin/certs" data-v8sgo="1">🎓 الطلب</a>`:r.s[0]==="cert"?(V8S.D.admin?`<a class="btn sm" href="#admin/certs" data-v8sann="${esc(r.cert)}">📣 أعلن</a>`:""):`<button class="btn sm" type="button" data-v8srm="${esc(r.uid)}|${esc(r.cid)}">🔔 ذكّره</button>`}</td></tr>`}).join("")}</tbody></table></div>
+        <td>${r.s[0]==="wait"?`<a class="btn sm" href="#admin/certs" data-v8sgo="1">🎓 الطلب</a>`:r.s[0]==="cert"?(V8S.D.admin?`<a class="btn sm" href="#admin/certs" data-v8sann="${esc(r.cert)}">📣 أعلن</a>`:""):`<button class="btn sm" type="button" data-v8srm="${esc(r.uid)}|${esc(r.cid)}">🔔 ذكّره</button>`} <button class="btn sm" type="button" data-v8sjr="${esc(r.uid)}">📒 الدفتر</button></td></tr>`}).join("")}</tbody></table></div>
       ${L.length>V8S.n?`<button class="btn" type="button" id="v8sMore" style="margin-top:10px">اعرض أكثر (${L.length-V8S.n})</button>`:""}<p class="muted" style="font-size:12.5px;margin-top:8px">${L.length} صف</p>`
      :`<div class="empty">ماكو طلاب بهذا الفلتر.</div>`}`;
     const Q=$("v8sQ");Q.oninput=()=>{V8S.q=Q.value;clearTimeout(V8S.tm);V8S.tm=setTimeout(()=>{V8S.draw();const e=$("v8sQ");e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)};
@@ -2012,6 +2025,7 @@ const V8S={D:null,q:"",c:"",f:"all",n:100,
     $("aBody").onclick=async e=>{const f=e.target.closest("[data-v8sf]");if(f){V8S.f=f.dataset.v8sf;V8S.n=100;return V8S.draw()}
       if(e.target.closest("[data-v8sgo]")){ADM.tab="certs"}
       const an=e.target.closest("[data-v8sann]");if(an){ADM.tab="certs";V8A.pre=an.dataset.v8sann}
+      const jr=e.target.closest("[data-v8sjr]");if(jr){V8S.journal(jr.dataset.v8sjr);return}
       const b=e.target.closest("[data-v8srm]");if(b){const[u,c]=b.dataset.v8srm.split("|");b.disabled=true;try{const r=await V8.r("coach_remind",{uid:u,cid:c});toast(r==="exam"?"✅ وصله تذكير يطلب اختبار الشهادة":"✅ وصله تذكير يكمّل الدورة");b.textContent="✓ انذكّر"}catch(err){b.disabled=false;toast(V8.err(err))}}}}
 };
 render=(function(f){return function(){if(location.hash.slice(1)==="admin/students"){ADM.tab="students";renderWho();return adminPage()}return f.apply(this,arguments)}})(render);

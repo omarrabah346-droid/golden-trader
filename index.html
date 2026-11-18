@@ -633,6 +633,7 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 .v8s-pb{display:inline-block;vertical-align:middle;width:90px;height:7px;border-radius:9px;background:rgba(255,255,255,.08);overflow:hidden;margin-inline-start:8px}.v8s-pb i{display:block;height:100%;background:linear-gradient(90deg,#D4AF37,#f5d76e)}
 .v8s-t td{vertical-align:middle}
 @media (max-width:760px){.v8s-kp{grid-template-columns:repeat(2,minmax(0,1fr))}.v8s-pb{display:none}}
+.v8-ann summary{cursor:pointer}.v8-ann .v8-acts input{min-width:120px}
 </style>
 </head>
 <body><div class="glang glang-m" aria-label="اللغة"><button type="button" data-l="ar">AR</button><button type="button" data-l="en">EN</button><button type="button" data-l="fr">FR</button><button type="button" data-l="de">DE</button><button type="button" data-l="uz">UZ</button><button type="button" data-l="ckb">سۆ</button><button type="button" data-l="kmr">KU</button><button type="button" data-l="tr">TR</button></div>
@@ -1890,6 +1891,10 @@ const V8A={Q:null,
     const sec=(t,n,body)=>`<div class="v8-sec"><h3>${t} <span class="chip gold">${n}</span></h3>${body}</div>`;
     let h=`<p class="muted" style="font-size:13.5px">الطالب يخلص الدروس ويطلب اختبار ← الكوتش يحدد موعد ويسجل النتيجة والتحليل ← ${adm?"إنت توافق على الشهادة ← وبعدها توافق على النشر":"الإدارة توافق وتنشر"}.</p>`;
     if(adm&&!Q.tg)h+=`<p class="msg err" style="font-size:13px">قناة الأخبار مو محددة بالإعدادات (news_chat)، فالنشر بتيليجرام يتخطى لحد ما تحددها.</p>`;
+    if(adm)h+=`<details class="v8-card v8-ann"${V8A.pre?" open":""}><summary><b>📣 أعلن شهادة صادرة من قبل</b> <span class="muted" style="font-size:12.5px">للشهادات القديمة قبل نظام الاختبار</span></summary>
+      <div class="v8-acts"><input class="ltr" dir="ltr" id="v8aC" placeholder="VX-XXXXXX" value="${esc(V8A.pre||"")}" style="max-width:200px"><input id="v8aT" maxlength="600" placeholder="ملخص التحليل أو كلمة عن الطالب (اختياري، ينشر)"></div>
+      <label class="v8-cons"><input type="checkbox" id="v8aK"> الطالب موافق على نشر اسمه وشهادته ونسبته (يكدر يسحب موافقته من «شهاداتي» بأي وقت)</label>
+      <div class="v8-acts"><button class="btn gold sm" id="v8aGo" type="button">➕ جهّزها للنشر</button></div></details>`;V8A.pre="";
     if(adm)h+=sec("✅ بانتظار موافقتك على الشهادة",appr.length,appr.length?appr.map(r=>`<div class="v8-card"><div class="v8-row">${V8.ring(r.exam_score)}<div style="flex:1">${who(r)}<div class="muted" style="font-size:13px;margin-top:4px">الكوتش: ${esc(r.coach_name||"—")} · ${prog(r)}</div>
       ${r.analysis_text?`<div class="v8-an">📈 ${esc(r.analysis_text)}</div>`:""}${r.coach_note?`<div class="muted" style="font-size:12.5px">📝 ${esc(r.coach_note)}</div>`:""}
       <div class="muted" style="font-size:12.5px">${r.consent?"✓ الطالب موافق على النشر":"✗ الطالب ما وافق على النشر (تنصدر بدون إعلان)"}</div></div>
@@ -1915,7 +1920,9 @@ const V8A={Q:null,
     if(legacy.length&&V8A.old){const host=$("v8Old");host.innerHTML=`<div class="v8-sec"><h3>طلبات قديمة (قبل نظام الاختبار) <span class="chip gold">${legacy.length}</span></h3><button class="btn sm" id="v8OldB">اعرضها بالطريقة القديمة</button></div>`;$("v8OldB").onclick=()=>V8A.old()}
     pub.forEach(async r=>{const im=document.querySelector(`[data-v8cv="${r.id}"]`);if(!im||!r.cert)return;try{const b=await V8.certBlob(r.cert);im.src=URL.createObjectURL(b)}catch(e){}});
     $("aBody").onclick=V8A.click},
-  async click(e){const g=k=>{const b=e.target.closest(`[data-${k}]`);return b?[b,+b.dataset[k]]:null};let x;
+  async click(e){if(e.target.closest("#v8aGo")){const b=e.target.closest("#v8aGo");if(!$("v8aK").checked)return toast("أكّد إن الطالب موافق على النشر");b.disabled=true;
+      try{await V8.r("admin_cert_announce",{cc:$("v8aC").value.trim(),analysis:$("v8aT").value.trim()});toast("✅ انضافت لـ «بانتظار موافقتك على النشر». راجعها واضغط انشر");V8A.load()}catch(err){b.disabled=false;toast(V8.err(err))}return}
+const g=k=>{const b=e.target.closest(`[data-${k}]`);return b?[b,+b.dataset[k]]:null};let x;
     const busy=async(b,fn)=>{b.disabled=true;try{await fn()}catch(err){toast(V8.err(err))}finally{b.disabled=false}};
     if(x=g("v8sch"))return busy(x[0],async()=>{const v=$("v8at-"+x[1]).value;if(!v)throw new Error("اختار الموعد");await V8.r("coach_cert_schedule",{rid:x[1],at_ts:new Date(v).toISOString(),lnk:$("v8lk-"+x[1]).value.trim()});toast("✅ انحفظ الموعد ووصل إشعار للطالب");V8A.load()});
     if((x=g("v8pass"))||(x=g("v8fail"))){const ok=e.target.closest("[data-v8pass]")!=null,id=x[1],sc=parseInt($("v8sc-"+id).value,10);
@@ -1996,7 +2003,7 @@ const V8S={D:null,q:"",c:"",f:"all",n:100,
         <td>${esc(r.course)}</td><td><span class="num">${r.done}/${r.total}</span><span class="v8s-pb"><i style="width:${p}%"></i></span></td>
         <td class="num">${r.avg!=null?r.avg+"%":"—"}</td><td><span class="chip ${r.s[1]==="g"?"up":r.s[1]==="r"?"down":r.s[1]==="b"?"blue":r.s[1]==="y"?"gold":""}">${r.s[2]}</span></td>
         <td class="muted" style="font-size:12.5px">${esc(V8S.ago(r.last||r.seen))}</td>
-        <td>${r.s[0]==="wait"?`<a class="btn sm" href="#admin/certs" data-v8sgo="1">🎓 الطلب</a>`:r.s[0]!=="cert"?`<button class="btn sm" type="button" data-v8srm="${esc(r.uid)}|${esc(r.cid)}">🔔 ذكّره</button>`:""}</td></tr>`}).join("")}</tbody></table></div>
+        <td>${r.s[0]==="wait"?`<a class="btn sm" href="#admin/certs" data-v8sgo="1">🎓 الطلب</a>`:r.s[0]==="cert"?(V8S.D.admin?`<a class="btn sm" href="#admin/certs" data-v8sann="${esc(r.cert)}">📣 أعلن</a>`:""):`<button class="btn sm" type="button" data-v8srm="${esc(r.uid)}|${esc(r.cid)}">🔔 ذكّره</button>`}</td></tr>`}).join("")}</tbody></table></div>
       ${L.length>V8S.n?`<button class="btn" type="button" id="v8sMore" style="margin-top:10px">اعرض أكثر (${L.length-V8S.n})</button>`:""}<p class="muted" style="font-size:12.5px;margin-top:8px">${L.length} صف</p>`
      :`<div class="empty">ماكو طلاب بهذا الفلتر.</div>`}`;
     const Q=$("v8sQ");Q.oninput=()=>{V8S.q=Q.value;clearTimeout(V8S.tm);V8S.tm=setTimeout(()=>{V8S.draw();const e=$("v8sQ");e.focus();e.setSelectionRange(e.value.length,e.value.length)},250)};
@@ -2004,6 +2011,7 @@ const V8S={D:null,q:"",c:"",f:"all",n:100,
     const M=$("v8sMore");if(M)M.onclick=()=>{V8S.n+=200;V8S.draw()};
     $("aBody").onclick=async e=>{const f=e.target.closest("[data-v8sf]");if(f){V8S.f=f.dataset.v8sf;V8S.n=100;return V8S.draw()}
       if(e.target.closest("[data-v8sgo]")){ADM.tab="certs"}
+      const an=e.target.closest("[data-v8sann]");if(an){ADM.tab="certs";V8A.pre=an.dataset.v8sann}
       const b=e.target.closest("[data-v8srm]");if(b){const[u,c]=b.dataset.v8srm.split("|");b.disabled=true;try{const r=await V8.r("coach_remind",{uid:u,cid:c});toast(r==="exam"?"✅ وصله تذكير يطلب اختبار الشهادة":"✅ وصله تذكير يكمّل الدورة");b.textContent="✓ انذكّر"}catch(err){b.disabled=false;toast(V8.err(err))}}}}
 };
 render=(function(f){return function(){if(location.hash.slice(1)==="admin/students"){ADM.tab="students";renderWho();return adminPage()}return f.apply(this,arguments)}})(render);

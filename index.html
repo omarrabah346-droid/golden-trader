@@ -26,10 +26,12 @@ build();
 var N="([0-9\u0660-\u0669]+)",PT=[
  [N+" يوم و "+N+" ساعة",{en:"$1d $2h",fr:"$1 j $2 h",de:"$1 T. $2 Std.",uz:"$1 kun $2 soat",ckb:"$1 ڕۆژ و $2 کاتژمێر",kmr:"$1 roj $2 saet",tr:"$1 gün $2 sa"}],
  [N+" ساعة و "+N+" دقيقة",{en:"$1h $2m",fr:"$1 h $2 min",de:"$1 Std. $2 Min.",uz:"$1 soat $2 daqiqa",ckb:"$1 کاتژمێر و $2 خولەک",kmr:"$1 saet $2 deqe",tr:"$1 sa $2 dk"}],
+ [N+" من "+N,{en:"$1 of $2",fr:"$1 sur $2",de:"$1 von $2",uz:"$1 / $2",ckb:"$1 لە $2",kmr:"$1 ji $2",tr:"$1 / $2"}],
  ["قبل "+N+" دقيقة",{en:"$1 min ago",fr:"il y a $1 min",de:"vor $1 Min.",uz:"$1 daqiqa oldin",ckb:"پێش $1 خولەک",kmr:"$1 deqe berê",tr:"$1 dk önce"}],
  ["قبل "+N+" ساعة",{en:"$1 h ago",fr:"il y a $1 h",de:"vor $1 Std.",uz:"$1 soat oldin",ckb:"پێش $1 کاتژمێر",kmr:"$1 saet berê",tr:"$1 sa önce"}],
  ["قبل "+N+" (?:يوم|أيام)",{en:"$1 days ago",fr:"il y a $1 j",de:"vor $1 Tagen",uz:"$1 kun oldin",ckb:"پێش $1 ڕۆژ",kmr:"$1 roj berê",tr:"$1 gün önce"}],
  ["قبل "+N+" د(?![\u0600-\u06FF])",{en:"$1 min ago",fr:"il y a $1 min",de:"vor $1 Min.",uz:"$1 daqiqa oldin",ckb:"پێش $1 خولەک",kmr:"$1 deqe berê",tr:"$1 dk önce"}],
+ [N+" د(?![\u0600-\u06FF])",{en:"$1 min",fr:"$1 min",de:"$1 Min.",uz:"$1 daq",ckb:"$1 خولەک",kmr:"$1 deq",tr:"$1 dk"}],
  [N+" دقيقة",{en:"$1 min",fr:"$1 min",de:"$1 Min.",uz:"$1 daqiqa",ckb:"$1 خولەک",kmr:"$1 deqe",tr:"$1 dk"}],
  [N+" ساعة",{en:"$1 h",fr:"$1 h",de:"$1 Std.",uz:"$1 soat",ckb:"$1 کاتژمێر",kmr:"$1 saet",tr:"$1 sa"}],
  [N+" (?:يوم|أيام)",{en:"$1 days",fr:"$1 j",de:"$1 Tage",uz:"$1 kun",ckb:"$1 ڕۆژ",kmr:"$1 roj",tr:"$1 gün"}],

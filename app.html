@@ -1285,6 +1285,16 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 .vxi-end{position:absolute;inset:0;background:rgba(0,0,0,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center}.vxi-end b{font-size:20px;color:#f5d76e}.vxi-end[hidden]{display:none}
 .vxi-cta{display:grid;grid-template-columns:1fr 1fr;gap:8px}.vxi-cta .btn{text-decoration:none;text-align:center;justify-content:center;font-size:14px}
 @media (prefers-reduced-motion:reduce){.vxi-snd{animation:none}}
+.np-wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:900px){.np-wrap{grid-template-columns:1fr}}
+.np-chk{display:flex!important;flex-direction:row!important;align-items:center;gap:8px;align-self:end;padding-bottom:10px}
+.np-tg{background:#0e1621;border-radius:14px;padding:12px;min-height:160px}
+.np-empty{color:#7f91a4;font-size:13px;text-align:center;padding:40px 10px}
+.np-bub{background:#182533;border-radius:14px;overflow:hidden;color:#fff}.np-bub img{width:100%;display:block;aspect-ratio:16/9;object-fit:cover;background:#111}
+.np-tx{padding:8px 11px 10px;font-size:14px;line-height:1.55;word-wrap:break-word}.np-ch{display:block;color:#6ab3f3;font-weight:600;font-size:13px;margin-bottom:2px}
+.np-tx code{font-family:ui-monospace,monospace;color:#e8c96a;font-size:12.5px}.np-tx blockquote{margin:6px 0;padding:5px 10px;border-inline-start:3px solid #D4AF37;background:#2a2a1f;border-radius:6px}
+.np-kb{display:grid;gap:4px;margin-top:4px}.np-kb div{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:4px}
+.np-kb span{background:rgba(43,82,120,.6);color:#fff;border-radius:8px;padding:8px 4px;text-align:center;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -2959,7 +2969,7 @@ function mkV5Supa(sb,chk,meId){const R=(f,a)=>sb.rpc(f,a).then(chk);return{demo:
   event:id=>R("news_event",{eid:id}),feed:()=>R("news_feed",{lim:40}),
   myNews:()=>R("my_news"),savePrefs:p=>R("set_news_prefs",{p}),tgCode:()=>R("news_tg_code"),tgUnlink:()=>R("news_tg_unlink"),
   admNews:(a,b)=>R("admin_news_list",{dfrom:a,dto:b}),admStatus:()=>R("admin_news_status"),admEvent:e=>R("admin_news_event_save",{e}),
-  admArticle:a=>R("admin_news_article_save",{a}),admCfg:(k,v)=>R("admin_news_cfg",{k,v}),admTgTest:()=>R("admin_news_tg_test"),
+  admArticle:a=>R("admin_news_article_save",{a}),admCfg:(k,v)=>R("admin_news_cfg",{k,v}),admTgTest:()=>R("admin_news_tg_test"),admPost:p=>R("admin_news_post",{p}),
   admSync:()=>R("admin_news_sync_now"),admFeed:f=>R("admin_news_feed_save",{f}),
   // ---- partners ----
   portal:()=>R("partner_portal"),apply:d=>R("partner_apply",{d}),dash:()=>R("partner_dash"),
@@ -3044,7 +3054,7 @@ function mkV5Demo(get,put,meId){
       if(Object.keys(ch).length)(v.log[o.id]=v.log[o.id]||[]).unshift({at:iso(NOW()),kind:ch.at?"rescheduled":ch.actual?"actual":ch.status?"status":"updated",changes:ch});sav();return o.id},
     async admArticle(a){const v=S();if(!a.title)E("REQUIRED");if(a.id){const o=v.articles.find(x=>x.id==a.id);Object.assign(o,a,{published_at:a.status==="published"?(o.published_at||iso(NOW())):o.published_at})}else v.articles.unshift({...a,id:++v.seq,published_at:a.status==="published"?iso(NOW()):null});sav()},
     async admCfg(k,v){if(!isAdm())E("FORBIDDEN: الإعدادات للمالك بس");if(k==="news_rem"&&v.split(",").filter(x=>x.trim()).length>4)E("TOO_MANY: أقصى 4 تذكيرات حتى ما تنغرق القناة");S().cfg[k]=v;sav()},
-    async admTgTest(){E("TG_TOKEN_MISSING: بالمعاينة المحلية ماكو بوت حقيقي. بالسيرفر يشتغل بعد إضافة التوكن.")},
+    async admPost(p){const T={gold:"XAU",rates:"RATES",fx:"FX",oil:"OIL",stocks:"STOCKS",crypto:"CRYPTO",news:"NEWS"},es=s=>String(s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"})[c]);const k=p.cat||"news";if(!p.title)E("REQUIRED");const body=(p.urgent?"⚡️ <b>عاجل | "+T[k]+"</b>\n":"")+"<b>"+es(p.title)+"</b>"+(p.meaning?"\n\n<blockquote>🧭 <b>شنو يعني للسوق؟</b>\n"+es(p.meaning)+"</blockquote>":"")+"\n<code>"+[es(p.tags),es(p.src),new Date().toTimeString().slice(0,5)].filter(Boolean).join(" · ")+"</code>";const site=k==="gold"?"📈 شارت الذهب على فيكسورا":"🌐 فيكسورا";return{body,photo:"https://albashafx.com/media/news/"+(k==="rates"?"rates":k)+(p.urgent?"-u":"")+".jpg?v=1",kb:{inline_keyboard:[p.url?[{text:"📰 المصدر",url:p.url},{text:site}]:[{text:site}]]},queued:p.dry?undefined:0}},admTgTest(){E("TG_TOKEN_MISSING: بالمعاينة المحلية ماكو بوت حقيقي. بالسيرفر يشتغل بعد إضافة التوكن.")},
     async admSync(){S().sync.unshift({id:Date.now(),at:iso(NOW()),provider:"demo",ok:true,http:200,n_new:0,n_upd:0,n_resched:0,n_actual:0,err:""});sav()},
     async admFeed(f){},
     // ---------- partners ----------
@@ -5788,15 +5798,51 @@ const V5N={tab:"",cat:"all",calTab:"today",calQ:"",calCc:null,ev:[],evAt:0,
       <div class="panel"><span class="label" style="font-size:12px">${L5("شكل الرسالة بالقناة (مثال)","Channel message sample")}</span><div class="n-tgmsg" style="margin-top:8px">👑 <b>${L5("فيكسورا","VEXORA")}</b> | VEXORA NEWS<br>━━━━━━━━━━━━━━━<br>✅ <b>${L5("صدرت النتيجة","Result released")}</b><br>🇺🇸 <b>USD</b> · ${L5("مؤشر أسعار المستهلك CPI","CPI")}<br>${L5("السابق","Prev")}: 0.3% · ${L5("المتوقع","Fcst")}: 0.3%<br>${L5("الفعلي","Actual")}: <b>0.4%</b> ⬆️<br><br>🕐 15:30 · ${L5("المصدر","Source")}<br><a>🔗 ${L5("التفاصيل على فيكسورا","Details on VEXORA")}</a></div><p class="v3-note">${L5("الأرقام بالمثال توضيحية.","Sample figures are illustrative.")}</p></div></div>`}
 };
 
+/* ---------- V12: نشر خبر يدوي بقناة الأخبار (الأسلوب 3) ---------- */
+const V12NP={
+  CATS:[["gold","🪙 الذهب"],["rates","🏦 الفائدة والبنوك المركزية"],["fx","💱 الدولار والعملات"],["oil","🛢 النفط"],["stocks","📈 الأسهم"],["crypto","₿ الكريبتو"],["news","📰 أخبار الأسواق"]],
+  val(){const g=id=>{const e=document.getElementById(id);return e?(e.type==="checkbox"?e.checked:e.value.trim()):""};
+    return{cat:g("npCat"),urgent:g("npUrg"),title:g("npT"),meaning:g("npM"),tags:g("npTags"),src:g("npSrc"),url:g("npUrl")}},
+  ui(){const nb=document.getElementById("naBody");if(!nb)return;
+    nb.innerHTML=`<div class="panel np-wrap"><div><h3 style="margin:0 0 4px">📝 نشر خبر بالقناة</h3><p class="label" style="margin:0 0 12px">ينزل بقناة الأخبار ويّا صورة فيكسورا وزر الموقع. اكتب تحليلك بخانة «شنو يعني للسوق؟»، وشوف الشكل قبل النشر.</p>
+      <div class="k-form"><label>القسم<select class="f" id="npCat">${V12NP.CATS.map(([k,l])=>`<option value="${k}">${l}</option>`).join("")}</select></label>
+      <label class="np-chk"><input type="checkbox" id="npUrg"> ⚡️ عاجل</label>
+      <label class="w3">عنوان الخبر<input class="f" id="npT" maxlength="220" placeholder="مثال: الذهب يقفز لأعلى مستوى بأسبوعين بعد بيانات التضخم"></label>
+      <label class="w3">🧭 شنو يعني للسوق؟ <small class="label">(اختياري · 500 حرف)</small><textarea class="f" id="npM" maxlength="500" rows="3" placeholder="مثال: تضخم أعلى من المتوقع ← احتمال فائدة أعلى لفترة أطول ← عادةً ضغط على الذهب"></textarea></label>
+      <label>الرموز <small class="label">(اختياري)</small><input class="f" id="npTags" maxlength="40" placeholder="XAU ▲ · USD ▼"></label>
+      <label>المصدر <small class="label">(اختياري)</small><input class="f" id="npSrc" maxlength="40" placeholder="رويترز"></label>
+      <label class="w2">رابط المصدر <small class="label">(اختياري)</small><input class="f ltr" id="npUrl" placeholder="https://"></label></div>
+      <div class="n-btns" style="margin-top:12px"><button class="btn primary" type="button" id="npSend" disabled>📤 انشر بالقناة</button><span class="label" id="npMsg"></span></div>
+      <p class="v3-note">⚠️ لا تكتب توقع أكيد أو أرقام غير موثّقة. التحليل رأي تعليمي وليس نصيحة استثمارية.</p></div>
+      <div class="np-prev"><div class="label" style="margin-bottom:6px">👁 شكله بالقناة</div><div class="np-tg" id="npPrev"><div class="np-empty">اكتب العنوان حتى تشوف الشكل</div></div></div></div>`;
+    let t;const upd=()=>{clearTimeout(t);t=setTimeout(V12NP.preview,350)};
+    nb.querySelectorAll("#npCat,#npUrg,#npT,#npM,#npTags,#npSrc,#npUrl").forEach(e=>e.addEventListener("input",upd));
+    const s=document.getElementById("npSend");s.onclick=async()=>{
+      if(!s.dataset.ok){s.dataset.ok="1";s.textContent="✅ متأكد؟ اضغط مرة ثانية للنشر";setTimeout(()=>{if(s.dataset.ok){delete s.dataset.ok;s.textContent="📤 انشر بالقناة"}},5000);return}
+      delete s.dataset.ok;s.disabled=true;s.textContent="⏳ جاري النشر…";
+      try{const r=await V5.api().admPost({...V12NP.val(),dry:false});V5.toast("✅ انحط الخبر بطابور النشر. يوصل القناة خلال دقيقة.");
+        ["npT","npM","npTags","npSrc","npUrl"].forEach(id=>document.getElementById(id).value="");document.getElementById("npUrg").checked=false;V12NP.preview()}
+      catch(e){V5.toast(V5.err(e),1)}finally{s.textContent="📤 انشر بالقناة";s.disabled=!V12NP.val().title}};},
+  async preview(){const v=V12NP.val(),pv=document.getElementById("npPrev"),s=document.getElementById("npSend"),m=document.getElementById("npMsg");if(!pv)return;
+    s.disabled=!v.title;m.textContent="";
+    if(!v.title){pv.innerHTML=`<div class="np-empty">اكتب العنوان حتى تشوف الشكل</div>`;return}
+    if(v.url&&!/^https?:\/\//i.test(v.url)){m.textContent="⚠️ الرابط لازم يبدي بـ https://";s.disabled=true}
+    try{const r=await V5.api().admPost({...v,dry:true});const kb=(r.kb&&r.kb.inline_keyboard)||[];
+      const ph=r.photo?String(r.photo).replace(/^https?:\/\/[^/]+\//,""):"";
+      pv.innerHTML=`<div class="np-bub">${ph?`<img src="${escA(ph)}" alt="">`:""}<div class="np-tx"><span class="np-ch">أخبار فيكسورا</span>${String(r.body||"").replace(/\n/g,"<br>")}</div></div>
+        <div class="np-kb">${kb.map(row=>`<div>${row.map(b=>`<span>${esc(b.text)}</span>`).join("")}</div>`).join("")}</div>`}
+    catch(e){pv.innerHTML=`<div class="np-empty">⚠️ ${esc(V5.err(e))}</div>`;s.disabled=true}}
+};
+
 /* ---------- إدارة VEXORA NEWS (/admin/news) ---------- */
-const V5NA={tab:"events",
-  async open(a){V5NA.tab=a&&["events","articles","sources","telegram","auto","logs"].includes(a)?a:V5NA.tab;const b=$("v5NewsAdmBody");if(!b)return;
+const V5NA={tab:"events",post(){V12NP.ui()},
+  async open(a){V5NA.tab=a&&["events","articles","sources","telegram","post","auto","logs"].includes(a)?a:V5NA.tab;const b=$("v5NewsAdmBody");if(!b)return;
     if(!can("news")){b.innerHTML=`<div class="panel rc-empty">⛔ ${L5("هذي الصفحة للإدارة والطاقم المخوّل بس.","Admins and authorized staff only.")}</div>`;return}
     b.innerHTML=`<div class="panel label">${L5("جاري التحميل…","Loading…")}</div>`;
     try{const[st,ls]=await Promise.all([V5.api().admStatus(),V5.api().admNews(new Date(Date.now()-3*864e5).toISOString(),new Date(Date.now()+10*864e5).toISOString())]);V5NA.st=st;V5NA.ls=ls;V5NA.render()}
     catch(e){b.innerHTML=`<div class="panel rc-empty">⚠️ ${esc(V5.err(e))}</div>`}},
   render(){const st=V5NA.st,ls=V5NA.ls,c=st.counts||{},own=isAdminUser(),b=$("v5NewsAdmBody");
-    const T=[["events","📅 "+L5("الأحداث","Events")],["articles","🗞 "+L5("الأخبار والمقالات","Articles")],["sources","🌐 "+L5("المصادر","Sources")],["telegram","✈️ "+L5("تيليجرام","Telegram")],["auto","⚙️ "+L5("النشر التلقائي","Auto-posting")],["logs","📜 "+L5("السجلات","Logs")]];
+    const T=[["events","📅 "+L5("الأحداث","Events")],["articles","🗞 "+L5("الأخبار والمقالات","Articles")],["sources","🌐 "+L5("المصادر","Sources")],["telegram","✈️ "+L5("تيليجرام","Telegram")],["post","📝 "+L5("نشر خبر","Post news")],["auto","⚙️ "+L5("النشر التلقائي","Auto-posting")],["logs","📜 "+L5("السجلات","Logs")]];
     const dot=ok=>`<i class="n-dot ${ok===true?"g":ok===false?"r":"y"}"></i>`;
     b.innerHTML=`<div class="panel"><div class="n-hd"><h2>🛠 ${L5("إدارة VEXORA NEWS","VEXORA NEWS admin")}<small>${L5("المحتوى للطاقم المخوّل، والإعدادات للمالك بس. كل تعديل ينحفظ بسجل الإدارة.","Content for authorized staff; settings owner-only. Every change is audit-logged.")}</small></h2><div class="k-row">${V5.demoBadge()}<a class="btn v2s" href="#news">← ${L5("مركز الأخبار","News center")}</a></div></div>
       <div class="k-tabs" style="margin-top:12px">${T.map(([k,l])=>`<button type="button" data-at="${k}" class="${k===V5NA.tab?"on":""}">${l}</button>`).join("")}</div></div>

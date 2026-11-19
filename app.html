@@ -1323,6 +1323,13 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 .v13-acts{display:flex;gap:4px;flex-wrap:wrap}.v13-acts .btn{padding:5px 10px;font-size:12px}
 @media (max-width:980px){.v13-g,.v13-ga{grid-template-columns:1fr}.v13-steps{grid-template-columns:1fr 1fr}}
 @media (max-width:520px){.v13-f{grid-template-columns:1fr}.v13-steps{grid-template-columns:1fr}}
+
+.v13-dl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}.v13-dl .btn{font-size:15px;padding:12px 18px}.v13-off{opacity:.5;cursor:not-allowed}
+.v13-gl{list-style:none;margin:0;padding:0;display:grid;gap:10px}.v13-gs{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line,#2a2a30);border-radius:14px;background:rgba(255,255,255,.02)}
+.v13-gs>b{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#D4AF37;color:#14100a}.v13-gs strong{display:block;margin-bottom:3px}.v13-gb{font-size:13px;line-height:1.75;color:#cfcfd6}
+.v13-trb{margin-top:12px;border:1px solid var(--line,#2a2a30);border-radius:14px;padding:8px 12px}.v13-trb summary{cursor:pointer;font-weight:700}.v13-trb table{margin-top:8px;font-size:12.5px}
+.v13-guide,.v13-gs>div{min-width:0}.v13-tok{min-width:0}.v13-tok code{min-width:0;white-space:normal;word-break:break-all}
+.v13-trb{overflow-x:auto}.v13-trb code{word-break:break-word}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -5370,7 +5377,7 @@ const V13={tab:"me",d:null,
         <div class="n-btns">${a.active?`<button class="btn" type="button" data-v13a="off">⏸ إيقاف مؤقت</button>`:`<button class="btn primary" type="button" data-v13a="on" ${a.status!=="approved"?"disabled":""}>▶ تشغيل الناسخ</button>`}<button class="btn v13-danger" type="button" data-v13a="close_all">⛔ إغلاق كل صفقات الناسخ</button></div></div>
         ${a.status==="approved"||a.status==="paused"?`<div class="panel"><h3 class="v9-h3">🔑 رمز البوت الخاص بيك</h3><p class="label">حطه بإعدادات بوت فيكسورا على MT5. لا تشاركه ويّا أحد.</p>
           <div class="v13-tok"><code class="ltr" id="v13Tok">${a.token?esc(a.token.slice(0,6))+"••••••••••••"+esc(a.token.slice(-4)):"—"}</code><button class="btn" type="button" id="v13Cp">📋 نسخ</button></div>
-          <p class="v3-note">📥 ملف البوت <bdi dir="ltr">VEXORA Copier</bdi> لـ MT5 يوصلك من الإدارة بعد التجربة على Demo.</p></div>`:""}
+</div>${V13.guide(a)}`:""}
         ${a.status==="rejected"?`<div class="panel down">⛔ انرفض الطلب: ${esc(a.reason||"راسل الدعم")}</div>`:""}
         <div class="panel"><h3 class="v9-h3">🧾 آخر الصفقات المنسوخة</h3>${d.events.length?`<div class="v3-tw"><table class="n-tbl"><tr><th>الوقت</th><th>الزوج</th><th>اللوت</th><th>النتيجة</th></tr>${d.events.map(e=>`<tr><td>${new Date(e.at).toLocaleString("en-GB",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})}</td><td>${e.side==="buy"?"🟢 شراء":e.side==="sell"?"🔴 بيع":""} ${esc(e.sym||"")}</td><td class="ltr">${e.lot!=null?esc(e.lot):"—"}</td><td>${e.kind==="close"?`<span class="v13-tag ${+e.pnl>=0?"tg":"tr"}">${+e.pnl>=0?"+":""}$${V13.num(e.pnl)}</span>`:e.kind==="open"?`<span class="v13-tag ty">مفتوحة</span>`:e.kind==="skip"?`<span class="v13-tag ty">⏭ ${esc(e.reason||"تجاوز")}</span>`:`<span class="v13-tag tr">${esc(e.reason||e.kind)}</span>`}</td></tr>`).join("")}</table></div>`:`<p class="label">ماكو صفقات منسوخة بعد.</p>`}</div>
         ${d.consent?`<div class="v13-warn">⚠️ <b>${esc(d.consent.title)}</b><div class="v13-cb" data-noi18n>${esc(d.consent.body)}</div>${d.consent.ok?`<p class="up" style="margin:6px 0 0">✓ وافقت على الإفصاح</p>`:`<label class="v13-ok"><input type="checkbox" id="v13Cons"> قريت وأوافق على شروط الناسخ وإفصاح المخاطر</label>`}</div>`:""}</div></div>`;
@@ -5384,7 +5391,25 @@ const V13={tab:"me",d:null,
       if(act==="close_all"&&!b.dataset.ok){b.dataset.ok="1";b.textContent="⚠️ متأكد؟ اضغط مرة ثانية";setTimeout(()=>{if(b.isConnected){delete b.dataset.ok;b.textContent="⛔ إغلاق كل صفقات الناسخ"}},5000);return}
       if(act==="on"&&d.consent&&!d.consent.ok){const c=$("v13Cons");if(!c||!c.checked){V13.toast("وافق على إفصاح المخاطر أول (المربع جوّه)",1);return}try{await V13.api().consent(d.consent.code,d.consent.version)}catch(e){V13.toast(V13.err(e),1);return}}
       try{V13.d=await V13.api().toggle(act);V13.toast(act==="on"?"▶ انشغّل الناسخ":act==="off"?"⏸ توقف الناسخ":"⛔ انرسل أمر إغلاق كل صفقات الناسخ للبوت");V13.me()}catch(e){V13.toast(V13.err(e),1)}});
-    const cp=$("v13Cp");if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(a.token||"");V13.toast("📋 انتسخ الرمز")}catch(e){V13.toast("ما گدرت أنسخ، انسخه يدوي",1)}}},
+    V13.bindGuide();const cp=$("v13Cp");if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(a.token||"");V13.toast("📋 انتسخ الرمز")}catch(e){V13.toast("ما گدرت أنسخ، انسخه يدوي",1)}}},
+  EA:"downloads/VexoraCopier.ex5",URL:"https://rczvkpzxkwxzoivyiblo.supabase.co",
+  guide(a){const st=(n,t,b)=>`<li class="v13-gs"><b>${n}</b><div><strong>${t}</strong><div class="v13-gb">${b}</div></div></li>`;
+    return`<div class="panel v13-guide"><h3 class="v9-h3">📥 تحميل البوت وتفعيله <small class="label">خطوات مرة وحدة بس</small></h3>
+    <div class="v13-dl"><a class="btn primary" id="v13Dl" href="${V13.EA}" download="VexoraCopier.ex5">📥 تحميل البوت <bdi dir="ltr">VexoraCopier.ex5</bdi></a><span class="label" id="v13DlSt">لـ MetaTrader 5 · يشتغل بس على حسابك بـ INFINOX</span></div>
+    <ol class="v13-gl">
+      ${st(1,"حط الملف بمجلد البوتات",`بـ MT5 من فوك: <b>File ← Open Data Folder</b>، وادخل <b dir="ltr">MQL5 ← Experts</b>، وحط ملف <bdi dir="ltr">VexoraCopier.ex5</bdi> هناك. بعدين سد MT5 وافتحه، أو من «المستكشف» كلك يمين ← <b>Refresh</b>.`)}
+      ${st(2,"اسمح للبوت يتصل بالموقع",`<b>Tools ← Options ← Expert Advisors</b> ← علّم على <b>Allow WebRequest for listed URL</b> وضيف هذا الرابط:<div class="v13-tok" style="margin-top:6px"><code class="ltr">${V13.URL}</code><button class="btn" type="button" data-v13copy="${V13.URL}">📋 نسخ</button></div>`)}
+      ${st(3,"شغّل التداول الآلي",`اضغط زر <b>Algo Trading</b> فوك بـ MT5 لحد ما يصير أخضر.`)}
+      ${st(4,"حط البوت على شارت واحد",`اسحب <b>VexoraCopier</b> من «المستكشف» على أي شارت (مثلاً الذهب). <b>شارت واحد بس</b>، لأنه ينسخ كل الأزواج منه.`)}
+      ${st(5,"الصق رمزك",`بالنافذة اللي تطلع: تبويب <b>Inputs (المدخلات)</b> ← دبل كلك على <b dir="ltr">InpToken</b> ← الصق الرمز اللي فوك (زر «📋 نسخ»). بتبويب <b>Common</b> علّم على <b>Allow Algo Trading</b> ← <b>OK</b>.`)}
+      ${st(6,"شغّل الناسخ من هنا",`علّم على إفصاح المخاطر جوّه، واضغط <b>«▶ تشغيل الناسخ»</b>. خلال 10 ثواني يصير المربع «متصل» فوك، وبزاوية الشارت يطلع <b dir="ltr">[&gt;] شغّال</b>.`)}
+    </ol>
+    <details class="v13-trb"><summary>🛠 البوت ما يشتغل؟ شوف شنو مكتوب بزاوية الشارت</summary><table class="n-tbl">
+      ${[["[II] متوقف: GLOBAL_OFF","الناسخ متوقف من الإدارة حالياً. انتظر."],["[II] متوقف: USER_OFF","اضغط «▶ تشغيل الناسخ» بهاي الصفحة."],["[II] متوقف: NOT_APPROVED","طلبك بعده ما انقبل، أو موقوف."],["[II] متوقف: LIVE_LOCKED","الناسخ بمرحلة التجربة: يشتغل على حسابات Demo بس."],["[II] متوقف: DAY_TARGET / DAY_STOP","وصلت هدف الربح أو حد الخسارة لليوم. يرجع باچر."],["[II] متوقف: DAY_MAX_TRADES","وصلت أقصى صفقات اليوم."],["[II] متوقف: LOW_BALANCE","رصيدك أقل من الحد الأدنى."],["[X] BAD_TOKEN","الرمز غلط، أو رقم حساب MT5 غير الرقم المربوط هنا."],["[X] NOT_INFINOX","البوت يشتغل بس على حسابات INFINOX."],["[!] ما گدر يتصل بالموقع","الرابط مو مضاف بـ Allow WebRequest (الخطوة 2)."],["[!] زر Algo Trading مطفي","شغّل زر Algo Trading (الخطوة 3)."]].map(([k,v])=>`<tr><td class="ltr"><code>${k}</code></td><td>${v}</td></tr>`).join("")}</table></details>
+    <p class="v3-note">⚠️ لازم MT5 يبقى مفتوح حتى ينسخ. إذا تسد الكمبيوتر، استخدم VPS (مثل VPS اللي داخل MT5). لا تشارك الرمز ويّا أحد.</p></div>`},
+  bindGuide(){document.querySelectorAll("[data-v13copy]").forEach(b=>b.onclick=async()=>{try{await navigator.clipboard.writeText(b.dataset.v13copy);V13.toast("📋 انتسخ")}catch(e){V13.toast("انسخه يدوي",1)}});
+    const dl=$("v13Dl");if(dl&&!V13._dlChecked){V13._dlChecked=1;fetch(V13.EA,{method:"HEAD",cache:"no-store"}).then(r=>{V13._dlOk=r.ok;V13.markDl()}).catch(()=>{V13._dlOk=null})}else V13.markDl()},
+  markDl(){const dl=$("v13Dl"),st=$("v13DlSt");if(!dl||V13._dlOk!==false)return;dl.classList.add("v13-off");dl.removeAttribute("href");dl.onclick=e=>{e.preventDefault();V13.toast("ملف البوت بعده ما انرفع على الموقع. راسل الإدارة.",1)};if(st)st.textContent="⏳ ملف البوت بعده ما انرفع، يجهز قريباً"},
   // ---------- الإدارة ----------
   async adm(){const B=$("v13B");let r;try{r=await V13.api().aList()}catch(e){B.innerHTML=`<div class="panel down">${esc(V13.err(e))}</div>`;return}
     const L=r.limits,R=r.rows,live=x=>x.last_seen&&(Date.now()-new Date(x.last_seen))<120e3;

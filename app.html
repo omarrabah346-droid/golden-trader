@@ -1,5 +1,5 @@
 <meta charset="utf-8">
-<script>(function(){var l;try{l=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1]||localStorage.getItem("albasha_lang")}catch(e){}if(l&&l!=="ar")document.write('<script src="i18n-dict.js?v=439fe34d5d"><\/script>')})();</script>
+<script>(function(){var l;try{l=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1]||localStorage.getItem("albasha_lang")}catch(e){}if(l&&l!=="ar")document.write('<script src="i18n-dict.js?v=34d0f321f8"><\/script>')})();</script>
 <script>(function(){
 var LN={ar:"العربية",en:"English",fr:"Français",de:"Deutsch",uz:"O‘zbekcha",ckb:"کوردی",kmr:"Kurdî",tr:"Türkçe"},XL={uz:1,ckb:1,kmr:1,tr:1},RTL={ar:1,ckb:1};
 var L="ar";try{var q=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1];L=q||localStorage.getItem("albasha_lang")||"";if(!L)L="ar";if(q)localStorage.setItem("albasha_lang",q)}catch(e){}
@@ -1273,6 +1273,18 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 @media (max-width:1100px){.v11-cg{grid-template-columns:repeat(3,minmax(0,1fr))}.v11-lg,.v11-br,.v11-crm{grid-template-columns:minmax(0,1fr)}.v11-evg{grid-template-columns:1fr 1fr}.v11-rx{grid-column:1/-1}}
 @media (max-width:760px){.v11-cg,.v11-pt,.v11-bi,.v11-evg{grid-template-columns:minmax(0,1fr)}.v11-mk{grid-template-columns:minmax(0,1fr)}.v11-mk small{grid-column:1}.v11-m{max-width:100%}.v11-fn{grid-template-columns:90px minmax(0,1fr) 44px 36px}}
 .v11-cc small span,.v11-cc small bdi,.v11-evg small span,.v11-evg small bdi,#v11OpB .v2-t small span,#v11CrB .v2-t small span{display:inline!important}
+.vxi-ov{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:14px;backdrop-filter:blur(4px)}
+.vxi-box{position:relative;width:min(430px,100%);max-height:96vh;display:flex;flex-direction:column;gap:10px;background:#111113;border:1px solid rgba(212,175,55,.45);border-radius:22px;padding:12px;box-shadow:0 30px 90px rgba(0,0,0,.7)}
+.vxi-x{position:absolute;top:-14px;inset-inline-start:-14px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(212,175,55,.6);background:#1a1a1e;color:#fff;font-size:18px;cursor:pointer;z-index:3}
+.vxi-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}.vxi-tabs button{padding:9px 6px;border-radius:12px;border:1px solid #2a2a30;background:#18181c;color:#cfcfd6;font:600 13px inherit;font-family:inherit;cursor:pointer}
+.vxi-tabs button.on{border-color:#D4AF37;background:rgba(212,175,55,.14);color:#f5d76e}
+.vxi-vid{position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:9/16;max-height:72vh;margin:0 auto;width:100%}
+.vxi-vid video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.vxi-snd{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);padding:12px 22px;border-radius:99px;border:0;background:linear-gradient(180deg,#f5d76e,#D4AF37);color:#0b0903;font:700 16px inherit;font-family:inherit;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:vxiP 1.6s ease-in-out infinite}
+@keyframes vxiP{50%{transform:translateX(-50%) scale(1.07)}}
+.vxi-end{position:absolute;inset:0;background:rgba(0,0,0,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center}.vxi-end b{font-size:20px;color:#f5d76e}.vxi-end[hidden]{display:none}
+.vxi-cta{display:grid;grid-template-columns:1fr 1fr;gap:8px}.vxi-cta .btn{text-decoration:none;text-align:center;justify-content:center;font-size:14px}
+@media (prefers-reduced-motion:reduce){.vxi-snd{animation:none}}
 </style>
 
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -1308,6 +1320,7 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
       </ol>
       <div style="display:flex;flex-wrap:wrap;gap:8px">
         <a class="btn primary" id="brokerLink" href="#" target="_blank" rel="noopener" style="display:inline-block;padding:10px 18px;text-decoration:none">افتح حسابك مع INFINOX</a><div id="gOffer"></div>
+        <button type="button" class="btn" data-vxi="join" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;color:var(--accent);border-color:#5a4a16">▶️ شاهد الشرح</button>
         <a class="btn" href="./" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;text-decoration:none;color:var(--accent);border-color:#5a4a16">🏠 الرئيسية والأكاديمية</a>
         <a class="btn" href="https://t.me/sbworldmodel" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;text-decoration:none;color:var(--fg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 4L3 11l6 2 2 6 3-4 5 4z"/></svg>قناتنا الرسمية</a>
         <a class="btn" href="https://t.me/omo_rabah" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:8px;padding:10px 18px;text-decoration:none;color:var(--fg)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H8l-4 4z"/></svg>الدعم</a>
@@ -6557,5 +6570,40 @@ function open(){var bg=document.getElementById("vxSup");if(!bg){bg=document.crea
 document.addEventListener("click",function(ev){var a=ev.target.closest("[data-sup]");if(!a)return;ev.preventDefault();var sh=document.getElementById("gsheet");if(sh&&!sh.hidden){var c=sh.querySelector(".gs-x");if(c)c.click()}open()});
 document.addEventListener("keydown",function(ev){if(ev.key==="Escape"){var bg=document.getElementById("vxSup");if(bg)bg.hidden=true}});
 window.vxSupport=open;
+})();
+</script>
+<script>
+(function(){
+/* ================= V12 (المنصة): فيديوهات الترحيب (التسجيل بالأكاديمية + فتح حساب INFINOX) ================= */
+const VXI=window.VXI={K:"vx_intro_v1",
+  V:{join:{src:"media/vexora-join.mp4",poster:"media/vexora-join.jpg",t:"شلون تنضم للأكاديمية"},broker:{src:"media/vexora-broker.mp4",poster:"media/vexora-broker.jpg",t:"شلون تفتح حساب INFINOX"}},
+  seen(){try{return localStorage.getItem(VXI.K)==="1"}catch(e){return true}},
+  mark(){try{localStorage.setItem(VXI.K,"1")}catch(e){}},
+  open(tab){if(document.getElementById("vxiOv"))return;VXI.mark();const ov=document.createElement("div");ov.id="vxiOv";ov.className="vxi-ov";
+    ov.innerHTML=`<div class="vxi-box" role="dialog" aria-modal="true" aria-label="فيديو تعريفي"><button type="button" class="vxi-x" aria-label="إغلاق">✕</button>
+      <div class="vxi-tabs"><button type="button" data-v="join">🎓 التسجيل بالأكاديمية</button><button type="button" data-v="broker">🏦 فتح حساب INFINOX</button></div>
+      <div class="vxi-vid"><video id="vxiV" playsinline muted preload="metadata"></video><button type="button" class="vxi-snd" id="vxiS">🔊 شغّل الصوت</button>
+        <div class="vxi-end" id="vxiE" hidden></div></div>
+      <div class="vxi-cta"><a class="btn gold" href="${VXI.ib()}" target="_blank" rel="noopener">افتح حساب INFINOX</a><button type="button" class="btn" data-vxup>سجّل بالموقع</button></div></div>`;
+    document.body.appendChild(ov);document.body.style.overflow="hidden";
+    const v=ov.querySelector("#vxiV"),snd=ov.querySelector("#vxiS"),end=ov.querySelector("#vxiE");
+    const play=k=>{VXI.cur=k;ov.querySelectorAll(".vxi-tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===k));end.hidden=true;v.poster=VXI.V[k].poster;v.src=VXI.V[k].src;v.currentTime=0;const p=v.play();if(p&&p.catch)p.catch(()=>{v.controls=true})};
+    const close=()=>{v.pause();ov.remove();document.body.style.overflow=""};
+    ov.querySelector(".vxi-x").onclick=close;ov.querySelector("[data-vxup]").onclick=()=>{close();const t=document.getElementById("tabUp");if(t)t.click();setTimeout(()=>{const n=document.getElementById("aName");if(n)n.focus()},150)};ov.addEventListener("click",e=>{if(e.target===ov)close()});document.addEventListener("keydown",function k(e){if(e.key==="Escape"){close();document.removeEventListener("keydown",k)}});
+    ov.querySelectorAll(".vxi-tabs button").forEach(b=>b.onclick=()=>{play(b.dataset.v);if(!v.muted)snd.hidden=true});
+    snd.onclick=()=>{v.muted=false;v.controls=true;snd.hidden=true;if(v.paused)v.play()};
+    v.addEventListener("ended",()=>{end.hidden=false;end.innerHTML=VXI.cur==="join"?`<b>الخطوة الجاية</b><button type="button" class="btn gold" data-n="broker">▶️ شلون تفتح حساب INFINOX</button><button type="button" class="btn" data-n="join">↺ أعد التشغيل</button>`
+        :`<b>جاهز تبدي؟</b><a class="btn gold" href="${VXI.ib()}" target="_blank" rel="noopener">افتح حساب INFINOX</a><button type="button" class="btn" data-n="broker">↺ أعد التشغيل</button>`;
+      end.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>play(b.dataset.n))});
+    play(tab==="broker"?"broker":"join")},
+  ib(){const a=document.getElementById("brokerLink");const u=a&&a.href;return u&&/^https?:/.test(u)&&!/#$/.test(u)?u:"https://myaccount.infinox.com/ar/links/go/9935360"},
+  guest(){const g=document.getElementById("gate");return !!g&&!g.hidden},
+  // يطلع تلقائياً مرة وحدة للزائر الجديد بشاشة الدخول بس
+  auto(){if(VXI.seen()||/bot|crawl|spider|lighthouse/i.test(navigator.userAgent))return;let n=0;const t=setInterval(()=>{n++;if(VXI.guest()&&n>=3){clearInterval(t);if(!VXI.seen()&&!document.getElementById("vxiOv"))VXI.open("join")}else if(n>12)clearInterval(t)},500)},
+  btn(tab,txt,cls){return`<button type="button" class="btn ${cls||""}" data-vxi="${tab}">${txt}</button>`}
+};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-vxi]");if(b){e.preventDefault();VXI.open(b.dataset.vxi)}});
+window.__VXI=VXI;VXI.auto();
+
 })();
 </script>

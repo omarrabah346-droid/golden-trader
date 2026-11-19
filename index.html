@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-<script>(function(){var l;try{l=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1]||localStorage.getItem("albasha_lang")}catch(e){}if(l&&l!=="ar")document.write('<script src="i18n-dict.js?v=439fe34d5d"><\/script>')})();</script>
+<script>(function(){var l;try{l=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1]||localStorage.getItem("albasha_lang")}catch(e){}if(l&&l!=="ar")document.write('<script src="i18n-dict.js?v=34d0f321f8"><\/script>')})();</script>
 <script>(function(){
 var LN={ar:"العربية",en:"English",fr:"Français",de:"Deutsch",uz:"O‘zbekcha",ckb:"کوردی",kmr:"Kurdî",tr:"Türkçe"},XL={uz:1,ckb:1,kmr:1,tr:1},RTL={ar:1,ckb:1};
 var L="ar";try{var q=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1];L=q||localStorage.getItem("albasha_lang")||"";if(!L)L="ar";if(q)localStorage.setItem("albasha_lang",q)}catch(e){}
@@ -640,6 +640,18 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 .v8s-jk>div{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:10px}.v8s-jk span{display:block;font-size:12px;color:var(--muted,#9a9aa3)}.v8s-jk b{font-size:18px}
 .v8s-jt{overflow-x:auto}.v8s-jt table{width:100%;border-collapse:collapse;font-size:12.5px}.v8s-jt th,.v8s-jt td{padding:7px;border-bottom:1px solid rgba(255,255,255,.06);text-align:start;white-space:nowrap}.v8s-jn{font-size:12px;color:var(--muted,#9a9aa3);margin:10px 0 0}
 @media (max-width:700px){.v8s-jk{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.vxi-ov{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.82);display:grid;place-items:center;padding:14px;backdrop-filter:blur(4px)}
+.vxi-box{position:relative;width:min(430px,100%);max-height:96vh;display:flex;flex-direction:column;gap:10px;background:#111113;border:1px solid rgba(212,175,55,.45);border-radius:22px;padding:12px;box-shadow:0 30px 90px rgba(0,0,0,.7)}
+.vxi-x{position:absolute;top:-14px;inset-inline-start:-14px;width:40px;height:40px;border-radius:50%;border:1px solid rgba(212,175,55,.6);background:#1a1a1e;color:#fff;font-size:18px;cursor:pointer;z-index:3}
+.vxi-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px}.vxi-tabs button{padding:9px 6px;border-radius:12px;border:1px solid #2a2a30;background:#18181c;color:#cfcfd6;font:600 13px inherit;font-family:inherit;cursor:pointer}
+.vxi-tabs button.on{border-color:#D4AF37;background:rgba(212,175,55,.14);color:#f5d76e}
+.vxi-vid{position:relative;border-radius:14px;overflow:hidden;background:#000;aspect-ratio:9/16;max-height:72vh;margin:0 auto;width:100%}
+.vxi-vid video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+.vxi-snd{position:absolute;left:50%;bottom:18%;transform:translateX(-50%);padding:12px 22px;border-radius:99px;border:0;background:linear-gradient(180deg,#f5d76e,#D4AF37);color:#0b0903;font:700 16px inherit;font-family:inherit;cursor:pointer;box-shadow:0 10px 30px rgba(0,0,0,.5);animation:vxiP 1.6s ease-in-out infinite}
+@keyframes vxiP{50%{transform:translateX(-50%) scale(1.07)}}
+.vxi-end{position:absolute;inset:0;background:rgba(0,0,0,.78);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:20px;text-align:center}.vxi-end b{font-size:20px;color:#f5d76e}.vxi-end[hidden]{display:none}
+.vxi-cta{display:grid;grid-template-columns:1fr 1fr;gap:8px}.vxi-cta .btn{text-align:center;justify-content:center;font-size:14px}
+@media (prefers-reduced-motion:reduce){.vxi-snd{animation:none}}
 </style>
 </head>
 <body><div class="glang glang-m" aria-label="اللغة"><button type="button" data-l="ar">AR</button><button type="button" data-l="en">EN</button><button type="button" data-l="fr">FR</button><button type="button" data-l="de">DE</button><button type="button" data-l="uz">UZ</button><button type="button" data-l="ckb">سۆ</button><button type="button" data-l="kmr">KU</button><button type="button" data-l="tr">TR</button></div>
@@ -919,7 +931,7 @@ function home(){
       <h1>الكريبتو والفوركس<br><em>تعليم تداول بمعايير المؤسسات</em></h1>
       <p class="lead">أكاديمية تعمل تحت شركة مسجّلة رسمياً في أبوظبي. دورات من الصفر للاحتراف، دروس زوم مباشرة، أدوات تحليل، ومنصة توصيات ويا شرح كل صفقة.</p>
       <div class="dips"><span class="chip gold">📈 دبلوم التحليل الفني</span><span class="chip gold">📐 الكلاسيكي</span><span class="chip gold">🌊 الموجي</span><span class="chip gold">⏳ الزمني</span><span class="chip gold">🔢 الرقمي</span></div>
-      <div class="cta">${S.user&&isMember()?`<a class="btn gold" href="#courses">ابدأ التعلّم</a><a class="btn" href="app.html">📊 التوصيات</a>`:`<a class="btn gold" href="#join">شلون تنضم</a><a class="btn" href="${CONFIG.IB}" target="_blank" rel="noopener">افتح حساب INFINOX</a>`}</div>
+      <div class="cta">${S.user&&isMember()?`<a class="btn gold" href="#courses">ابدأ التعلّم</a><a class="btn" href="app.html">📊 التوصيات</a>`:`<a class="btn gold" href="#join">شلون تنضم</a><a class="btn" href="${CONFIG.IB}" target="_blank" rel="noopener">افتح حساب INFINOX</a>${VXI.btn("join","▶️ شاهد الشرح","ghost")}`}</div>
     </div>
     <div class="vx-coaches">${coachCards()}</div>
   </div>
@@ -1194,8 +1206,8 @@ function joinPage(){
     +`<section class="blk" style="padding-top:6px"><div class="wrap">${logged&&isMember()?`<div class="paywall"><div class="lockic">✅</div><h2>حسابك مفعّل</h2><p>كل شي مفتوح إلك: التوصيات والدروس المجانية ودروس الزوم.</p><div class="cta"><a class="btn gold" href="app.html">منصة التوصيات</a><a class="btn" href="#courses">الدورات</a></div></div>`
       :logged?brokerGate()
       :`<div class="tiles">
-        <div class="tile"><span class="ti">1️⃣</span><b>افتح حساب INFINOX</b><span>من رابط وكالتنا حصراً، حتى نگدر نفعّلك.</span><a class="btn gold sm" style="align-self:flex-start" href="${CONFIG.IB}" target="_blank" rel="noopener">افتح الحساب</a></div>
-        <div class="tile"><span class="ti">2️⃣</span><b>سجّل بالموقع</b><span>سوّ حساب واكتب رقم حسابك بـ INFINOX ويوزر تيليجرام.</span><a class="btn sm" style="align-self:flex-start" href="${CONFIG.SITE}#signup">سجّل الآن</a></div>
+        <div class="tile"><span class="ti">1️⃣</span><b>افتح حساب INFINOX</b><span>من رابط وكالتنا حصراً، حتى نگدر نفعّلك.</span><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn gold sm" href="${CONFIG.IB}" target="_blank" rel="noopener">افتح الحساب</a>${VXI.btn("broker","▶️ شلون أفتحه","sm")}</span></div>
+        <div class="tile"><span class="ti">2️⃣</span><b>سجّل بالموقع</b><span>سوّ حساب واكتب رقم حسابك بـ INFINOX ويوزر تيليجرام.</span><span style="display:flex;gap:8px;flex-wrap:wrap"><a class="btn sm" href="${CONFIG.SITE}#signup">سجّل الآن</a>${VXI.btn("join","▶️ شلون أسجّل","sm ghost")}</span></div>
         <div class="tile"><span class="ti">3️⃣</span><b>نفعّلك</b><span>نتأكد من حسابك وتنفتح لك التوصيات والأكاديمية وقناة الصفقات.</span></div>
       </div><div style="margin-top:14px">${offerHTML()}</div>`}</div></section>`;
 }
@@ -1503,7 +1515,7 @@ function brokerGate(){
   return`<div class="paywall"><div class="lockic">👑</div><h2>${head}</h2><p>${sub}</p>
     ${st==="pending"?"":`<ol class="steps"><li><b>افتح حساب INFINOX</b> من رابط الوكالة</li><li><b>أكمل ملفك</b> برقم حسابك ويوزر تيليجرام</li><li><b>نفعّلك</b> وتنفتح لك الدروس والتوصيات</li></ol>`}
     ${st==="pending"?"":offerHTML()}
-    <div class="cta">${st==="pending"?"":`<a class="btn gold" href="${CONFIG.IB}" target="_blank" rel="noopener">افتح حساب INFINOX</a>`}<a class="btn" href="${CONFIG.SITE}">${st==="pending"?"تحديث الحالة":"أكمل ملفي"}</a><a class="btn ghost" href="https://t.me/${esc(tgUser())}" target="_blank" rel="noopener">✈️ مساعدة</a></div></div>`;
+    <div class="cta">${st==="pending"?"":`<a class="btn gold" href="${CONFIG.IB}" target="_blank" rel="noopener">افتح حساب INFINOX</a>${VXI.btn("broker","▶️ شلون أفتحه وأوثّقه")}`}<a class="btn" href="${CONFIG.SITE}">${st==="pending"?"تحديث الحالة":"أكمل ملفي"}</a><a class="btn ghost" href="https://t.me/${esc(tgUser())}" target="_blank" rel="noopener">✈️ مساعدة</a></div></div>`;
 }
 function paywall(l,c){
   const need=!S.user;
@@ -2030,6 +2042,36 @@ const V8S={
 };
 render=(function(f){return function(){if(location.hash.slice(1)==="admin/students"){ADM.tab="students";renderWho();return adminPage()}return f.apply(this,arguments)}})(render);
 
+
+/* ================= V12: فيديوهات الترحيب (التسجيل بالأكاديمية + فتح حساب INFINOX) ================= */
+const VXI={K:"vx_intro_v1",
+  V:{join:{src:"media/vexora-join.mp4",poster:"media/vexora-join.jpg",t:"شلون تنضم للأكاديمية"},broker:{src:"media/vexora-broker.mp4",poster:"media/vexora-broker.jpg",t:"شلون تفتح حساب INFINOX"}},
+  seen(){try{return localStorage.getItem(VXI.K)==="1"}catch(e){return true}},
+  mark(){try{localStorage.setItem(VXI.K,"1")}catch(e){}},
+  open(tab){if(document.getElementById("vxiOv"))return;VXI.mark();const ov=document.createElement("div");ov.id="vxiOv";ov.className="vxi-ov";
+    ov.innerHTML=`<div class="vxi-box" role="dialog" aria-modal="true" aria-label="فيديو تعريفي"><button type="button" class="vxi-x" aria-label="إغلاق">✕</button>
+      <div class="vxi-tabs"><button type="button" data-v="join">🎓 التسجيل بالأكاديمية</button><button type="button" data-v="broker">🏦 فتح حساب INFINOX</button></div>
+      <div class="vxi-vid"><video id="vxiV" playsinline muted preload="metadata"></video><button type="button" class="vxi-snd" id="vxiS">🔊 شغّل الصوت</button>
+        <div class="vxi-end" id="vxiE" hidden></div></div>
+      <div class="vxi-cta"><a class="btn gold" href="${CONFIG.IB}" target="_blank" rel="noopener">افتح حساب INFINOX</a><a class="btn" href="${CONFIG.SITE}#signup">سجّل بالموقع</a></div></div>`;
+    document.body.appendChild(ov);document.body.style.overflow="hidden";
+    const v=ov.querySelector("#vxiV"),snd=ov.querySelector("#vxiS"),end=ov.querySelector("#vxiE");
+    const play=k=>{VXI.cur=k;ov.querySelectorAll(".vxi-tabs button").forEach(b=>b.classList.toggle("on",b.dataset.v===k));end.hidden=true;v.poster=VXI.V[k].poster;v.src=VXI.V[k].src;v.currentTime=0;const p=v.play();if(p&&p.catch)p.catch(()=>{v.controls=true})};
+    const close=()=>{v.pause();ov.remove();document.body.style.overflow=""};
+    ov.querySelector(".vxi-x").onclick=close;ov.addEventListener("click",e=>{if(e.target===ov)close()});document.addEventListener("keydown",function k(e){if(e.key==="Escape"){close();document.removeEventListener("keydown",k)}});
+    ov.querySelectorAll(".vxi-tabs button").forEach(b=>b.onclick=()=>{play(b.dataset.v);if(!v.muted)snd.hidden=true});
+    snd.onclick=()=>{v.muted=false;v.controls=true;snd.hidden=true;if(v.paused)v.play()};
+    v.addEventListener("ended",()=>{end.hidden=false;end.innerHTML=VXI.cur==="join"?`<b>الخطوة الجاية</b><button type="button" class="btn gold" data-n="broker">▶️ شلون تفتح حساب INFINOX</button><button type="button" class="btn" data-n="join">↺ أعد التشغيل</button>`
+        :`<b>جاهز تبدي؟</b><a class="btn gold" href="${CONFIG.IB}" target="_blank" rel="noopener">افتح حساب INFINOX</a><button type="button" class="btn" data-n="broker">↺ أعد التشغيل</button>`;
+      end.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>play(b.dataset.n))});
+    play(tab==="broker"?"broker":"join")},
+  // يطلع تلقائياً مرة وحدة للزائر الجديد بس (مو للأعضاء، ومو بصفحات الدروس أو الإدارة)
+  auto(){const h=location.hash.slice(1);if(S.user||VXI.seen()||/^(lesson|cert|admin|course)\//.test(h)||/bot|crawl|spider|lighthouse/i.test(navigator.userAgent))return;setTimeout(()=>{if(!S.user&&!document.getElementById("vxiOv"))VXI.open("join")},1400)},
+  btn(tab,txt,cls){return`<button type="button" class="btn ${cls||""}" data-vxi="${tab}">${txt}</button>`}
+};
+document.addEventListener("click",e=>{const b=e.target.closest("[data-vxi]");if(b){e.preventDefault();VXI.open(b.dataset.vxi)}});
+window.__VXI=VXI;
+
 /* ================= V2 PREMIUM ================= */
 // ===== المؤشرات بالدعوة: الطالب يطلب بيوزر TradingView، والإدارة تضيفه وتأكد =====
 const IND={mine:null};
@@ -2287,7 +2329,7 @@ setInterval(()=>{try{V4A.tick()}catch(e){}},1000);
 
 window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0);setTimeout(fillCertPrev,30);setTimeout(v2IndState,60)});
 API.onAuth(async()=>{await loadAll();render();setTimeout(fillCertPrev,30);IND.mine=null;setTimeout(v2IndState,60)});
-(async()=>{try{await loadAll()}catch(e){$("view").innerHTML=`<div class="wrap"><div class="empty" style="margin-top:30px">ما گدرنا نحمّل الأكاديمية: ${esc(e.message)}<br>تأكد إن ملفات academy.sql و academy_lessons.sql انشغلت بـ Supabase.</div></div>`;return}render();setTimeout(fillCertPrev,30);setTimeout(v2IndState,80);if(S.user&&API.pushSub)setTimeout(()=>PUSH.nudge(S.info.vapid_public,ipushSave,"خلي الدروس والتوصيات توصلك على الموبايل"),5000)})();
+(async()=>{try{await loadAll()}catch(e){$("view").innerHTML=`<div class="wrap"><div class="empty" style="margin-top:30px">ما گدرنا نحمّل الأكاديمية: ${esc(e.message)}<br>تأكد إن ملفات academy.sql و academy_lessons.sql انشغلت بـ Supabase.</div></div>`;return}render();setTimeout(fillCertPrev,30);setTimeout(v2IndState,80);VXI.auto();if(S.user&&API.pushSub)setTimeout(()=>PUSH.nudge(S.info.vapid_public,ipushSave,"خلي الدروس والتوصيات توصلك على الموبايل"),5000)})();
 })();
 </script>
 <script>

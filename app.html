@@ -3010,7 +3010,7 @@ function mkV13Demo(get,put,meId){
     if(!o.syms||!o.syms.length)E("BAD_SYMS: اختار زوج واحد على الأقل");return o};
   return{demo:true,
     async me(){return me()},
-    async join(p){sv(v=>{v.acct={account:"9935360",server:p.server||"INFINOX-Live",holder:p.holder||"",status:"pending",reason:"",active:false,token:null,settings:{...DEF},cmd:"",balance:null,equity:null,is_demo:null,ea_version:"",last_seen:null}});return me()},
+    async join(p){const ac=String(p.account||"9935360").trim();if(!/^[0-9]{5,12}$/.test(ac))E("BAD_ACCOUNT: اكتب رقم حساب MT5 صحيح (أرقام بس)");sv(v=>{v.acct={account:ac,server:p.server||"INFINOX-Live",holder:p.holder||"",status:"pending",reason:"",active:false,token:null,settings:{...DEF},cmd:"",balance:null,equity:null,is_demo:null,ea_version:"",last_seen:null}});return me()},
     async save(p){const o=clean(p);sv(v=>{v.acct.settings=o});return me()},
     async toggle(a){const v=S().v13;if(a==="on"){if(v.acct.status!=="approved")E("NOT_APPROVED: بانتظار موافقة الإدارة");if(!v.ok)E("CONSENT: وافق على إفصاح مخاطر الناسخ أول")}
       sv(x=>{x.acct.active=a==="on";if(a==="close_all"){x.acct.cmd="close_all";x.ev.unshift({kind:"cmd",reason:"طلب إغلاق كل صفقات الناسخ",at:new Date().toISOString()})}});return me()},
@@ -5337,13 +5337,13 @@ const V13={tab:"me",d:null,
   steps(d){const a=d.acct,s=[[!!d.eligible,"حسابك بـ INFINOX","من رابط فيكسورا · مفعّل"],[!!a,"ربط حساب MT5","رقم الحساب + السيرفر"],[a&&a.status==="approved","موافقة الإدارة","تتأكد من الحساب"],[a&&a.active&&a.last_seen,"تشغيل الناسخ","البوت متصل"]];
     let cur=s.findIndex(x=>!x[0]);return`<div class="v13-steps">${s.map((x,i)=>`<div class="v13-st ${x[0]?"ok":i===cur?"on":"off"}"><b>${x[0]?"✓":i+1}</b><span>${x[1]}<small>${x[2]}</small></span></div>`).join("")}</div>`},
   me(){const d=V13.d,B=$("v13B"),a=d.acct,L=d.limits;
-    if(!d.eligible){B.innerHTML=V13.steps(d)+`<div class="panel"><h3 class="v9-h3">🔒 الناسخ للأعضاء المفعّلين بس</h3><p class="label">لازم يكون حسابك بالموقع مفعّل، ورقم حساب INFINOX (المفتوح من رابط فيكسورا) مكتوب بملفك الشخصي.</p>
+    if(!d.eligible){B.innerHTML=V13.steps(d)+`<div class="panel"><h3 class="v9-h3">🔒 الناسخ للأعضاء المفعّلين بس</h3><p class="label">لازم يكون حسابك بالموقع مفعّل أول (يعني فاتح حساب INFINOX من رابط فيكسورا والإدارة فعّلتك).</p>
       <div class="v9-kv"><span>حالة حسابك</span><b>${esc(d.profile.status||"—")}</b><span>رقم حساب INFINOX</span><b class="ltr">${esc(d.profile.account||"ما مكتوب")}</b></div></div>`;return}
-    if(!a){B.innerHTML=V13.steps(d)+`<div class="panel v13-join"><h3 class="v9-h3">🔗 اربط حسابك MT5</h3><p class="label">الناسخ يشتغل بس على حساب INFINOX المسجّل بملفك (من رابط الوكالة).</p>
-      <div class="v13-f"><label>رقم حساب MT5<div class="v13-ro ltr ok">${esc(d.profile.account)} <em>✓ INFINOX · من رابطنا</em></div></label>
+    if(!a){B.innerHTML=V13.steps(d)+`<div class="panel v13-join"><h3 class="v9-h3">🔗 اربط حسابك MT5</h3><p class="label">الناسخ يشتغل بس على حساب INFINOX المفتوح من رابط الوكالة.</p>
+      <div class="v13-f"><label>رقم حساب MT5${d.profile.account?`<div class="v13-ro ltr ok">${esc(d.profile.account)} <em>✓ INFINOX · من ملفك</em></div>`:`<input class="f ltr" id="v13Acc" inputmode="numeric" maxlength="12" placeholder="مثال: 9935360"><span class="label">لازم يكون حساب INFINOX مفتوح من رابط فيكسورا. الإدارة تتأكد قبل الموافقة.</span>`}</label>
       <label>السيرفر<input class="f ltr" id="v13Srv" value="INFINOX-Live" maxlength="60"></label><label class="w">الاسم على الحساب<input class="f" id="v13Hol" value="${escA(d.profile.name||"")}" maxlength="80"></label></div>
       <button class="btn primary" type="button" id="v13Join" style="margin-top:12px">📨 اطلب ربط الناسخ</button><p class="v3-note">ما نطلب كلمة سر حسابك أبداً. بعد موافقة الإدارة تاخذ رمز خاص تحطه بالبوت على MT5.</p></div>`;
-      $("v13Join").onclick=async()=>{try{V13.d=await V13.api().join({server:$("v13Srv").value,holder:$("v13Hol").value});V13.toast("✅ انرسل الطلب. تنتظر موافقة الإدارة.");V13.me()}catch(e){V13.toast(V13.err(e),1)}};return}
+      $("v13Join").onclick=async()=>{try{V13.d=await V13.api().join({server:$("v13Srv").value,holder:$("v13Hol").value,account:($("v13Acc")||{}).value||""});V13.toast("✅ انرسل الطلب. تنتظر موافقة الإدارة.");V13.me()}catch(e){V13.toast(V13.err(e),1)}};return}
     const s={...d.defaults,...a.settings},bal=+a.balance||0,usd=p=>bal?` <span class="label">≈ $${V13.num(bal*p/100)}</span>`:"";
     const live=a.last_seen&&(Date.now()-new Date(a.last_seen))<120e3,st=V13.ST[a.status]||["ty",a.status];
     B.innerHTML=V13.steps(d)+`<div class="v13-g"><div class="panel"><h3 class="v9-h3">⚙️ إعدادات النسخ <small class="label">تتحفظ وتتطبق على الصفقة الجاية</small></h3><div class="v13-f">

@@ -97,6 +97,7 @@ html[dir=ltr] :is(.content th,.opt,.tbl th,.steps,th,td,.umenu button,.gate-bran
 <meta property="og:description" content="دورات التحليل الفني والكلاسيكي والموجي والزمني والرقمي، ودروس زوم مباشرة. أول درس مجاني.">
 <meta property="og:image" content="https://albashafx.com/coach.jpg">
 <meta property="og:url" content="https://albashafx.com/">
+<link rel="canonical" href="https://albashafx.com/">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -653,7 +654,7 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 .vxi-cta{display:grid;grid-template-columns:1fr 1fr;gap:8px}.vxi-cta .btn{text-decoration:none;text-align:center;justify-content:center;font-size:14px}
 @media (prefers-reduced-motion:reduce){.vxi-snd{animation:none}}
 </style>
-</head>
+<script src="marketing-attribution.js"></script></head>
 <body><div class="glang glang-m" aria-label="اللغة"><button type="button" data-l="ar">AR</button><button type="button" data-l="en">EN</button><button type="button" data-l="fr">FR</button><button type="button" data-l="de">DE</button><button type="button" data-l="uz">UZ</button><button type="button" data-l="ckb">سۆ</button><button type="button" data-l="kmr">KU</button><button type="button" data-l="tr">TR</button></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <linearGradient id="g3t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2619"/><stop offset="1" stop-color="#0f0e0b"/></linearGradient>
@@ -691,6 +692,7 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 <footer>
   <div class="wrap">
     <div id="footLinks" class="links" style="justify-content:center;margin:0 0 10px"></div>
+    <div class="links" style="justify-content:center;margin:0 0 10px"><a href="learn-trading.html">تعلّم التداول</a><a href="free-tools.html">حاسبة نقطة التعادل</a></div>
     أكاديمية فيكسورا · الدروس والتوصيات للتعليم وليست نصيحة مالية · التداول فيه مخاطر
     <div style="margin-top:6px"><a href="app.html">منصة التوصيات</a></div>
   </div>
@@ -799,6 +801,21 @@ function realApi(){
   };
 }
 const API=window.__ACADEMY_MOCK||realApi();
+function trackAcademyAttribution(){
+  if(window.__ACADEMY_MOCK)return;
+  window.VexoraAttribution?.visit("campaign",(c,a,pth)=>API.rpc7("track_visit",{c,a,pth}))?.catch(()=>{});
+  window.VexoraAttribution?.visit("partner",(c,a)=>API.rpc7("partner_visit",{c,a}))?.catch(()=>{});
+}
+function assignAcademyAttribution(user){
+  if(window.__ACADEMY_MOCK||!user)return;
+  window.VexoraAttribution?.assign("campaign",user.id,c=>API.rpc7("set_my_campaign",{c}))?.catch(()=>{});
+  window.VexoraAttribution?.assign("partner",user.id,c=>API.rpc7("set_my_partner",{c}))?.catch(()=>{});
+}
+trackAcademyAttribution();
+window.addEventListener("online",()=>{
+  trackAcademyAttribution();
+  API.user().then(assignAcademyAttribution).catch(()=>{});
+});
 
 /* ================= state ================= */
 const S={user:null,profile:null,info:{},courses:[],lessons:[],progress:{},purchases:[],sessions:[],rsvp:new Set(),certs:[]};
@@ -831,6 +848,7 @@ async function loadAll(){
   const [info,courses,lessons]=await Promise.all([API.info(),API.courses(),API.lessons()]);
   S.info=info;S.courses=courses;S.lessons=lessons;if(info.ib_link&&/^https?:\/\//i.test(info.ib_link))CONFIG.IB=info.ib_link;
   S.user=await API.user();S.profile=null;S.perms=[];S.progress={};S.purchases=[];S.rsvp=new Set();S.certs=[];
+  assignAcademyAttribution(S.user);
   if(S.user){
     const [pf,pr,pu,rs]=await Promise.all([API.profile(S.user.id).catch(()=>null),API.progress().catch(()=>[]),API.purchases().catch(()=>[]),API.rsvps().catch(()=>[])]);
     S.profile=pf;pr.forEach(x=>S.progress[x.lesson_id]=x.score);S.purchases=pu;S.rsvp=new Set(rs.map(x=>x.session_id));

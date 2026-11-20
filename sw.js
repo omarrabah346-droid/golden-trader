@@ -11,9 +11,15 @@ self.addEventListener("push", (e) => {
 });
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
-  const url = new URL((e.notification.data && e.notification.data.url) || "app.html", self.registration.scope).href;
+  const scope = new URL(self.registration.scope);
+  let target;
+  try { target = new URL(e.notification.data?.url || "app.html", scope); } catch (_) {}
+  const url = (target?.origin === scope.origin && target.pathname.startsWith(scope.pathname)
+    ? target : new URL("app.html", scope)).href;
   e.waitUntil(self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ws) => {
-    for (const w of ws) if (w.url.split("#")[0] === url.split("#")[0] && "focus" in w) { w.navigate(url); return w.focus(); }
+    for (const w of ws) if (w.url.split("#")[0] === url.split("#")[0] && "focus" in w) {
+      return w.navigate(url).then(client => (client || w).focus());
+    }
     return self.clients.openWindow(url);
   }));
 });

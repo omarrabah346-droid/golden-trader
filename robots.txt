@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /media/news/app.html
+Sitemap: https://albashafx.com/sitemap.xml

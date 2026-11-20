@@ -1,4 +1,4 @@
-<meta charset="utf-8">
+<meta charset="utf-8"><script src="marketing-attribution.js"></script><script src="marketing-workspace.js"></script>
 <script>(function(){var l;try{l=(location.search.match(/[?&]lang=(ar|en|fr|de|uz|ckb|kmr|tr)\b/)||[])[1]||localStorage.getItem("albasha_lang")}catch(e){}if(l&&l!=="ar")document.write('<script src="i18n-dict.js?v=34d0f321f8"><\/script>')})();</script>
 <script>(function(){
 var LN={ar:"العربية",en:"English",fr:"Français",de:"Deutsch",uz:"O‘zbekcha",ckb:"کوردی",kmr:"Kurdî",tr:"Türkçe"},XL={uz:1,ckb:1,kmr:1,tr:1},RTL={ar:1,ckb:1};
@@ -3312,6 +3312,14 @@ function supaBackend(){
     async mfaRemove(fid){const r=await sb.auth.mfa.unenroll({factorId:fid});if(r.error)throw r.error},
     async courses(){return chk(await sb.from("courses").select("id,title,icon").order("sort"))},
     async aiAsk(q,ctx,lang){return chk(await sb.rpc("ai_ask",{q,ctx,lang}))},
+    marketing:{rpc:async(name,args)=>chk(await sb.rpc(name,args)),ask:async q=>chk(await sb.rpc("ai_ask",{q,ctx:{},lang:"ar"})),result:async aid=>chk(await sb.rpc("ai_result",{aid})),
+      localVoice:location.origin==="http://127.0.0.1:4173"?async(action,payload)=>{
+        const {data}=await sb.auth.getSession();
+        if(!data.session)throw new Error("جلسة المالك غير متوفرة.");
+        const response=await fetch("/api/elevenlabs/"+action,{method:"POST",headers:{Authorization:"Bearer "+data.session.access_token,"Content-Type":"application/json"},body:JSON.stringify(payload??{})});
+        if(!response.ok){const error=await response.json().catch(()=>({}));throw new Error(error.code||"unavailable")}
+        return response.json();
+      }:null},
     async aiResult(id){return chk(await sb.rpc("ai_result",{aid:id}))},
     v4:mkV4Supa(sb,chk,()=>ME.user&&ME.user.id),
     v5:mkV5Supa(sb,chk,()=>ME.user&&ME.user.id),
@@ -3583,7 +3591,7 @@ function obClear(){try{localStorage.removeItem(obKey())}catch(e){}}
 function obRestore(){const d=obDraft();if(!d)return;OBF.forEach(k=>{if(d[k]!=null&&d[k]!==""){if(k==="obCountry")setCountry(k,d[k]);else $(k).value=d[k]}});
   if(d.photo&&!obPick.blob){fetch(d.photo).then(r=>r.blob()).then(b=>{obPick.blob=b;$("obAv").innerHTML=`<img class="av lg" src="${d.photo}" alt="">`}).catch(()=>{})}
   $("obMsg").className="msg ok";$("obMsg").textContent="✓ رجعنالك البيانات اللي كتبتها. كمّل من وين ما وكفت."}
-function fillOnboard(){const p=ME.profile;$("obAv").innerHTML=avHTML(p,"lg");obPick.blob=null;
+function fillOnboard(){const p=ME.profile;window.VexoraMarketing?.memberAutomation($("obAv"),DB.marketing,false);$("obAv").innerHTML=avHTML(p,"lg");obPick.blob=null;
   $("obName").value=p.full_name||"";$("obTg").value=p.telegram||"";$("obPhone").value=p.phone||"";setCountry("obCountry",p.country);$("obOffer").innerHTML=offerHTML();let rr="";try{rr=localStorage.getItem("albasha_ref")||""}catch(e){}$("obRef").value=p.referred_by?"":(rr?rr:"");$("obRef").closest("label").hidden=!!p.referred_by;$("obAcc").value=p.broker_account||"";
   $("obAgree").checked=false;$("obMsg").textContent=p.status==="rejected"&&p.note?"سبب الرفض: "+p.note:"";$("obMsg").className="msg err";
   if(["new","rejected"].includes(p.status))obRestore();obSave()}
@@ -3609,7 +3617,7 @@ async function demoJoinAlert(p){
 const joinText=p=>`👑 <b>فيكسورا</b>\n🆕 <b>طلب انضمام جديد</b>\n\n👤 الاسم: ${esc(p.full_name)}\n✈️ تيليجرام: ${esc(p.telegram)}\n📧 الإيميل: ${esc(p.email)}\n🏦 حساب ${esc(CONFIG.BROKER_NAME)}: <code>${esc(p.broker_account)}</code>\n📱 الهاتف: ${esc(p.phone||"—")}\n🌍 الدولة: ${esc(p.country||"—")}\n\nراجع الطلب من لوحة الإدارة.`;
 
 /* pending */
-function fillPending(){const p=ME.profile;
+function fillPending(){const p=ME.profile;window.VexoraMarketing?.memberAutomation($("pdInfo"),DB.marketing,false);
   $("pdAv").innerHTML=avHTML(p,"xl");$("pdName").textContent=p.full_name;$("pdBadge").innerHTML=badge(p);
   $("pdText").innerHTML=p.status==="rejected"
     ?`ما قدرنا نفعّل حسابك.${p.note?` <b class="down">السبب: ${esc(p.note)}</b>`:""} تأكد إنك فتحت حسابك مع ${esc(CONFIG.BROKER_NAME)} من <a class="gold" href="${esc(CONFIG.BROKER_LINK)}" target="_blank" rel="noopener">رابطنا</a>، وعدّل بياناتك وأرسلها مرة ثانية.`
@@ -3636,7 +3644,7 @@ function setPage(pg){
 }
 function showView(){
   if($("app").hidden)return;
-  let v=location.hash.slice(1),v4a="",v5a="";{let m5;if(m5=v.match(/^admin\/(news|partners|broker-support)$/)){v5a=m5[1]==="broker-support"?"brokers":"";v=m5[1]==="news"?"newsadm":"partadm"}else if(m5=v.match(/^(news|economic-calendar|calendar)(?:\/(.*))?$/)){v5a=m5[1]==="news"?(m5[2]||""):"calendar";v="news"}else if(v==="broker-help"){v="brokerhelp"}else if(m5=v.match(/^(partners|partner|broker-support)(?:\/(.*))?$/)){v5a=m5[1]==="partner"?"dashboard":m5[1]==="broker-support"?"support":(m5[2]||"");v="partners"}}if(v==="newsadm"&&!can("news"))v="news";if(v==="partadm"&&!isAdminUser())v="partners";{const m=v.match(/^(comp|gw|growth|rewards)\/(.+)$/);if(m){v=m[1];v4a=m[2]}}if(v==="admin"&&!can("members"))v="";if(v==="growth"&&!isAdminUser())v="";
+  let v=location.hash.slice(1),v4a="",v5a="";{let m5;if(m5=v.match(/^admin\/(news|partners|broker-support)$/)){v5a=m5[1]==="broker-support"?"brokers":"";v=m5[1]==="news"?"newsadm":"partadm"}else if(m5=v.match(/^(news|economic-calendar|calendar)(?:\/(.*))?$/)){v5a=m5[1]==="news"?(m5[2]||""):"calendar";v="news"}else if(v==="broker-help"){v="brokerhelp"}else if(m5=v.match(/^(partners|partner|broker-support)(?:\/(.*))?$/)){v5a=m5[1]==="partner"?"dashboard":m5[1]==="broker-support"?"support":(m5[2]||"");v="partners"}}if(v==="newsadm"&&!can("news"))v="news";if(v==="partadm"&&!isAdminUser())v="partners";{const m=v.match(/^(comp|gw|growth|rewards)\/(.+)$/);if(m){v=m[1];v4a=m[2]}}if(v==="admin"&&!can("members"))v="";if(v==="growth"&&v4a!=="marketing-ai"&&!isAdminUser())v="";
   if(!["","trades","deep","profile","admin","rewards","chart","settings","record","calendar","inbox","ai","strategy","scanner","risk","comp","gw","growth","news","partners","newsadm","partadm","brokerhelp","journal","radar","winrate","zones","analysis","forecast","brief","path","help","crm","ops","bi","compliance","copier"].includes(v))v="";if(["ops","bi","compliance"].includes(v)&&!isAdminUser())v="";
   if(v==="settings"&&!isAdminUser())v="";
   const term=v===""||v==="trades"||v==="deep";
@@ -3695,7 +3703,7 @@ async function enterApp(){
 
 /* profile page */
 const pfPick=avatarPicker("pfFile","pfAv",()=>ME.profile);
-function fillProfile(){const p=ME.profile;
+function fillProfile(){const p=ME.profile;window.VexoraMarketing?.memberAutomation($("pInfo"),DB.marketing,p.status==="approved");
   {const u=p.ref_code||(p.telegram||"").replace(/^@/,""),el=$("pInvite");el.hidden=!u;if(u){const link=refLink(u);
     el.innerHTML=`<div class="of-h">🎟 رابط دعوتك</div><span style="font-size:13px;color:#d6d6dc">ادعُ 10 أشخاص ينضمون للبروكر والمنصة من رابطك، وتدخل السحب على دورة أو اشتراك مجاني.</span><div style="display:flex;gap:8px;align-items:center"><input class="ltr" readonly value="${esc(link)}" style="flex:1;min-width:0" id="pInvLink"><button class="btn" type="button" id="pInvCopy">نسخ</button></div><a class="gold" href="#rewards" data-go="rewards" style="font-size:13px">🎁 شوف دعواتك ونقاطك والمسابقات ←</a>`;
     $("pInvCopy").onclick=async()=>{try{await navigator.clipboard.writeText(link)}catch(e){$("pInvLink").select();document.execCommand("copy")}$("pInvCopy").textContent="✓"}}}
@@ -5463,9 +5471,8 @@ const V4={tab:"comps",gt:"comps",cache:{},
   tick(){document.querySelectorAll("[data-cd]").forEach(el=>{let s=Math.max(0,Math.floor((new Date(el.dataset.cd)-Date.now())/1000));const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);s%=60;
     const p=v=>String(v).padStart(2,"0");el.innerHTML=[[s,"ثانية"],[m,"دقيقة"],[h,"ساعة"],[d,"يوم"]].reverse().map(([v,l])=>`<div><b>${p(v)}</b><small>${l}</small></div>`).join("")})},
   // ---- تتبّع الحملات (رابط ?c=) ----
-  anon(){try{let a=localStorage.getItem("vx_anon");if(!a){a=(crypto.randomUUID?crypto.randomUUID():String(Math.random()).slice(2)+Date.now());localStorage.setItem("vx_anon",a)}return a}catch(e){return"anon-"+Date.now()}},
-  track(){try{const c=new URLSearchParams(location.search).get("c");if(c&&/^[a-z0-9-]{2,40}$/i.test(c)){localStorage.setItem("vx_c",c.toLowerCase());DB.v4.track(c.toLowerCase(),V4.anon(),location.pathname).catch(()=>{})}}catch(e){}},
-  afterLogin(){try{const c=localStorage.getItem("vx_c");if(c&&ME.user&&!sessionStorage.getItem("vx_c_set")){sessionStorage.setItem("vx_c_set",1);DB.v4.setCamp(c).catch(()=>{})}}catch(e){}
+  track(){return window.VexoraAttribution?.visit("campaign",(c,a,p)=>DB.v4.track(c,a,p))?.catch(()=>{})},
+  afterLogin(){window.VexoraAttribution?.assign("campaign",ME.user?.id,c=>DB.v4.setCamp(c))?.catch(()=>{});
     setTimeout(()=>V4.popup(),1500)},
   // ================= البانر أعلى الصفحة الرئيسية =================
   async hero(){const el=$("v4Hero");if(!el)return;let L=[];try{L=await V4.api().adsHome()||[]}catch(e){L=[]}
@@ -5649,7 +5656,7 @@ window.__v4=V4;
 /* ================= V4: لوحة إدارة المسابقات والنمو ================= */
 Object.assign(V4,{
   GT:[["comps","🏆 المسابقات"],["review","📝 المراجعة والفائزين"],["rewards","🎁 الجوائز"],["gws","🎉 السحوبات"],["points","💠 النقاط"],["events","🎟 الفعاليات"],["mkt","📣 التسويق"],["refs","🔗 الإحالات"],["reports","📊 التقارير"],["audit","🧾 سجل التدقيق"]],
-  async growth(tab){const el=$("v4GrowthBody");if(!isAdminUser()){el.innerHTML='<div class="panel"><p class="label" style="margin:0">هذي الصفحة للمدير بس.</p></div>';return}
+  async growth(tab){const el=$("v4GrowthBody");if(tab==="marketing-ai"&&window.VexoraMarketing&&DB.marketing){el.onclick=null;return window.VexoraMarketing.open(el,DB.marketing)}if(!isAdminUser()){el.innerHTML='<div class="panel"><p class="label" style="margin:0">هذي الصفحة للمدير بس.</p></div>';return}
     if(tab&&V4.GT.some(t=>t[0]===tab))V4.gt=tab;
     el.innerHTML=`<div class="panel v3-hdr"><div class="v3-ttl"><span class="v3-logo">🏆</span><div><h2>إدارة المسابقات والنمو</h2><p>المسابقات · المشاركات · النتائج · الجوائز · السحوبات · النقاط · الفعاليات · الحملات · الإحالات · التقارير</p></div></div>
       <div class="k-tabs" id="gTabs">${V4.GT.map(([k,t])=>`<button type="button" class="${V4.gt===k?"on":""}" data-g="${k}">${t}</button>`).join("")}</div></div><div id="gBody" class="v3-wrap"></div>`;
@@ -5799,6 +5806,7 @@ Object.assign(V4,{
       if(!r.name||!/^[a-z0-9-]{2,40}$/.test(r.code))return V4.toast("اكتب اسم الحملة وكود بحروف إنكليزية صغيرة وأرقام",1);try{await A.aCampSave(r);V4.toast("✅ انشأت الحملة");V4.gRender()}catch(e){V4.toast(V4.err(e),1)}};
     $("pcGo").onclick=async()=>{const r={code:$("pcC").value.trim().toUpperCase(),pct:+$("pcP").value,max_uses:+$("pcM").value||null,ends_at:$("pcE").value?new Date($("pcE").value+"T23:59").toISOString():null,active:true};
       if(!/^[A-Z0-9]{3,20}$/.test(r.code)||!r.pct)return V4.toast("الكود 3–20 حرف إنكليزي/رقم والنسبة لازم",1);try{await A.aPromoSave(r);V4.gRender()}catch(e){V4.toast(V4.err(e),1)}};
+    if(DB.marketing)DB.marketing.rpc("vx_marketing_access").then(access=>{if(access?.owner&&el.isConnected&&V4.gt==="mkt"){const link=document.createElement("a");link.className="btn";link.href="#growth/marketing-ai";link.textContent="VEXORA AI MARKETING SYSTEM";el.prepend(link)}}).catch(()=>{});
     el.onclick=async e=>{const cp=e.target.closest("[data-cp]"),pt=e.target.closest("[data-pt]");if(cp)copyTxt(cp.dataset.cp,cp);if(pt){try{await A.aPromoSave({code:pt.dataset.pt,active:pt.dataset.on==="1"});V4.gRender()}catch(err){V4.toast(V4.err(err),1)}}}},
   // ---------- الإحالات ----------
   async g_refs(el){const R=await V4.api().aRef()||[];el.innerHTML=`<section class="panel"><h3 style="margin:0 0 10px;font-size:15px">🔗 مراقبة الإحالات</h3><div class="v3-tw"><table class="v3-tb"><thead><tr><th>العضو</th><th>سجّلوا</th><th>مؤهلة</th><th>حسابات مكررة</th><th>الحالة</th></tr></thead><tbody>
@@ -5834,10 +5842,8 @@ const V5={
   cd(at){return`<div class="n-tm" data-ncd="${escA(at)}"></div>`},
   tick(){document.querySelectorAll("[data-ncd]").forEach(el=>{let s=Math.max(0,Math.floor((new Date(el.dataset.ncd)-Date.now())/1000));const d=Math.floor(s/86400);s%=86400;const h=Math.floor(s/3600);s%=3600;const m=Math.floor(s/60);s%=60;const p=x=>String(x).padStart(2,"0");
     const parts=(d?[[d,L5("يوم","day")]]:[]).concat([[h,L5("ساعة","hr")],[m,L5("دقيقة","min")],[s,L5("ثانية","sec")]]);el.innerHTML=parts.map(([v,l])=>`<div><b>${p(v)}</b><span>${l}</span></div>`).join("")})},
-  anon(){try{return V4.anon()}catch(e){return"a"+Date.now()}},
-  // رابط الشريك ?p=CODE
-  track(){try{const c=new URLSearchParams(location.search).get("p");if(c&&/^[A-Za-z0-9]{4,12}$/.test(c)){localStorage.setItem("vx_p",c.toUpperCase());if(!sessionStorage.getItem("vx_pv")){sessionStorage.setItem("vx_pv",1);V5.api()&&V5.api().visit(c.toUpperCase(),V5.anon()).catch(()=>{})}}}catch(e){}},
-  afterLogin(){try{const c=localStorage.getItem("vx_p");if(c&&ME.user&&!sessionStorage.getItem("vx_p_set")){sessionStorage.setItem("vx_p_set",1);V5.api().setRef(c).catch(()=>{})}}catch(e){}}
+  track(){return window.VexoraAttribution?.visit("partner",(c,a)=>V5.api().visit(c,a))?.catch(()=>{})},
+  afterLogin(){window.VexoraAttribution?.assign("partner",ME.user?.id,c=>V5.api().setRef(c))?.catch(()=>{})}
 };
 
 /* ---------- VEXORA NEWS ---------- */
@@ -6525,6 +6531,12 @@ const VBH={async open(){const b=$("v6BrokerBody");if(!b)return;b.innerHTML=`<div
 
 window.__V5={db:()=>DB.v5,me:()=>ME,V5:V5};V5.sideInit=async function(){try{document.querySelectorAll(".need-news").forEach(x=>x.hidden=!can("news"));const r=await DB.v5.portal();void r}catch(e){}};
 setTimeout(()=>{try{V5.track()}catch(e){}},0);
+window.addEventListener("online",()=>{
+  V4.track();
+  V5.track();
+  window.VexoraAttribution?.assign("campaign",ME.user?.id,c=>DB.v4.setCamp(c))?.catch(()=>{});
+  V5.afterLogin();
+});
 // زر «الإعدادات» لوحته موجودة بالصفحة الرئيسية: من أي صفحة ثانية نرجع للرئيسية ونفتحها
 (function(){const b=document.getElementById("setBtn");if(!b)return;b.addEventListener("click",()=>{const tv=$("terminalView"),show=()=>{const pn=$("settings");if(!pn)return;pn.hidden=false;b.setAttribute("aria-expanded","true");pn.scrollIntoView({behavior:"smooth",block:"start"})};
   if(tv&&tv.hidden){location.hash="";setTimeout(show,350)}else setTimeout(()=>{const pn=$("settings");if(pn&&!pn.hidden)pn.scrollIntoView({behavior:"smooth",block:"start"})},30)})})();

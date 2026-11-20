@@ -118,7 +118,7 @@
       if (access.owner) {
         tabs.append(button("التكاملات", () => showIntegrations(view, api)));
         tabs.append(button("صلاحيات الموظفين", () => staff(view, api)));
-        tabs.append(button("الحملات والتقارير", () => { location.hash = "growth/mkt"; }));
+        if (!root.closest(".pp")) tabs.append(button("الحملات والتقارير", () => { location.hash = "growth/mkt"; }));
         tabs.append(button("الحسابات غير المكتملة", () => recovery(view, api)));
         tabs.append(button("السفراء والتقارير اليومية", () => reviewAutomation(view, api)));
       }

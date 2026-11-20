@@ -3030,7 +3030,7 @@ function mkV13Demo(get,put,meId){
     async aKill(c){let n=0;sv(v=>{v.L.on=false;if(v.acct){v.acct.active=false;if(c)v.acct.cmd="close_all";n++}v.others.forEach(o=>{if(o.active){o.active=false;n++}})});return n}}}
 
 /* V5 backend adapters: VEXORA NEWS + PARTNERS */
-function mkV5Supa(sb,chk,meId){const R=(f,a)=>sb.rpc(f,a).then(chk);return{demo:false,...v7Supa(R),grad:()=>R("grad_banner").catch(()=>null),
+function mkV5Supa(sb,chk,meId){const R=(f,a)=>sb.rpc(f,a).then(chk);return{demo:false,ownerPolicyRead:()=>R("vexora_v3_owner_policy_read"),ownerPolicySave:a=>R("vexora_v3_owner_policy_save",a),...v7Supa(R),grad:()=>R("grad_banner").catch(()=>null),
   // ---- news ----
   events:async(a,b)=>chk(await sb.from("econ_events").select("*").gte("at",a).lte("at",b).order("at")),
   event:id=>R("news_event",{eid:id}),feed:()=>R("news_feed",{lim:40}),
@@ -6649,6 +6649,27 @@ const P7={
   const team0=PP.team.bind(PP);PP.team=async function(){await team0();await P7.teamTop()};
   const links0=PP.links.bind(PP);PP.links=async function(){await links0();await P7.linksBottom()};
   const open0=PP.open.bind(PP);PP.open=async function(tab){if(tab==="plan"||tab==="lead"){await PP.mount(tab);const me=V5P.po&&V5P.po.me;if(!(me&&me.status==="APPROVED")&&!isAdminUser())return PP.locked();try{await P7[tab]()}catch(e){$("v5PartBody").innerHTML=`<div class="q-c">⚠️ ${esc(V5.err(e))}</div>`}return}return open0(tab)};
+})();
+
+/* PARTNERS 3.0 — staging only; existing financial ledger unchanged */
+(function(){
+ const nav=PP.nav.bind(PP); PP.nav=function(){const r=nav(); if(r.ok||isAdminUser())r.items.splice(1,0,["royal","♛",L5("الصندوق الملكي","Royal pool"),"#partners/royal",1],["marketing","✦",L5("مركز التسويق AI","AI marketing"),"#partners/marketing",1]);return r};
+ const title=PP.title.bind(PP);PP.title=function(){if(PP.tab==="royal")return ["VEXORA","ROYAL POOL",L5("معاينة النظام المالي الجديد — غير مفعل","New financial plan preview — inactive")];if(PP.tab==="marketing")return ["VEXORA","AI MARKETING",L5("مركز التسويق داخل الشركاء","Partner marketing workspace")];return title()};
+ const open=PP.open.bind(PP);PP.open=async function(tab){if(!["royal","marketing"].includes(tab))return open(tab);await PP.mount(tab);if(!PP.nav().ok&&!isAdminUser())return PP.locked();const el=$("v5PartBody");if(tab==="marketing"){if(window.VexoraMarketing&&DB.marketing)return window.VexoraMarketing.open(el,DB.marketing);el.textContent="Marketing unavailable";return;}el.innerHTML=`<div class="q-c"><h2>♛ VEXORA ROYAL POOL</h2><p>معاينة فقط — لم يتم تفعيل النظام المالي أو تغيير الأرصدة.</p><div class="q-g4"><div class="q-k">المسوق<b>40%</b></div><div class="q-k">الصندوق<b>30%</b></div><div class="q-k">قائد الفريق المباشر<b>10%</b></div><div class="q-k">الأكاديمية<b>20–30%</b></div></div><p>التوزيع حسب المبيعات الشخصية المؤهلة. عند عدم وجود قائد تعود حصته للأكاديمية.</p><p>شروط التأهل المقترحة: 10 مبيعات و2500 دولار شهرياً. لا توجد أرصدة جديدة معتمدة.</p></div>`;};
+ const oldIb=V5P.ib.bind(V5P); V5P.ib=async function(){await oldIb();const host=document.getElementById("v5PartBody");if(!host)return;const panel=document.createElement("div");panel.className="q-c";panel.innerHTML=`<h2>VEXORA IB NETWORK</h2><div class="q-g4"><div class="q-k">العمولة المستهدفة<b>$10 / LOT</b></div><div class="q-k">استقطاع فيكسورا<b>0%</b></div><div class="q-k">حوافز الإيداعات المستهدفة<b>حتى 10%</b></div><div class="q-k">Cashback<b>حسب الاتفاقية</b></div></div><p>مقترح غير مفعل. تخضع المزايا لموافقة البروكر والقيود القانونية. رابط الوكيل الرسمي يصدر من INFINOX؛ لا يعتبر رابط الأكاديمية رابط وكالة.</p>`;host.prepend(panel)};
+ const css=document.createElement("style");css.textContent=`#v5PartView .pp{--b1:#d5ae58;--b2:#f4d58a;--b3:#8f692d;--pl:rgba(213,174,88,.35);--py:#f4d58a;--glass:linear-gradient(145deg,#172235,#0b101a)}#v5PartView .pp-bg{background:radial-gradient(ellipse at top right,#1d2a42,transparent 65%),#080d16}#v5PartView .pp-brand .lg,#v5PartView .pp-it.on{background:linear-gradient(145deg,#82602c,#302719);border-color:#d5ae58}#v5PartView .pp-it i{background:linear-gradient(145deg,#344052,#101720);border:1px solid #8f7445;box-shadow:inset 0 1px 2px #ffffff33,0 4px 8px #0008}#v5PartView .pp-top h1 em{background:linear-gradient(90deg,#f4d58a,#b98a39);background-clip:text;color:transparent}#v5PartView .q-c,#v5PartView .q-k{border-color:#76613b;background:linear-gradient(145deg,#172235,#0b101a)}#v5PartView .pp-it.on{box-shadow:0 0 15px #d5ae5822}`;document.head.append(css);
+})();
+
+
+/* V3 owner settings — isolated policy, not live commission activation */
+(function(){
+ const fields=[["seller_bp","s","الشريك المباشر %",100],["leader_bp","l","قائد الفريق %",100],["academy_bp","a","الأكاديمية %",100],["pool_bp","p","الصندوق الملكي %",100],["min_sales","n","المبيعات الشهرية",1],["min_net_cents","m","صافي المبيعات بالدولار",100],["ib_lot_cents","i","دولار لكل لوت",100],["deposit_bp","d","حوافز الإيداع %",100],["cashback_bp","c","الكاش باك %",100]];
+ const nav=PP.nav.bind(PP);PP.nav=function(){const r=nav();if(isAdminUser())r.items.push(["owner-policy","⚙️","إعدادات المالك V3","#partners/owner-policy",0]);return r};
+ const open=PP.open.bind(PP);PP.open=async function(tab){if(tab!=="owner-policy")return open(tab);await PP.mount(tab);const host=$("v5PartBody"),api=V5.api();host.textContent="جاري التحقق من صلاحية المالك…";if(!isAdminUser()||api.demo||!api.ownerPolicyRead){host.textContent="غير متاح في هذه البيئة";return}let row;try{row=await api.ownerPolicyRead()}catch(e){host.textContent="غير متاح: تحقق من صلاحية المالك وتركيب SQL في بيئة الاختبار";return}if(!row){host.textContent="لا توجد سياسة مالية";return}
+ host.innerHTML='<div class="q-c"><h2>إعدادات المالك V3</h2><p>سياسة اختبارية منفصلة — لا تغير الأرصدة أو العمولات الفعلية</p><form id="vxPolicyForm" class="q-form"></form><div id="vxPolicyStatus" role="status"></div></div>';
+ const form=$("vxPolicyForm"),status=$("vxPolicyStatus");for(const [key,arg,label,scale] of fields){const l=document.createElement("label"),i=document.createElement("input");l.textContent=label;i.name=arg;i.type="number";i.min="0";i.step=scale===100?"0.01":"1";i.required=arg!=="c";i.value=row[key]==null?"":String(row[key]/scale);i.className="f";l.append(i);form.append(l)}const btn=document.createElement("button");btn.className="q-btn";btn.textContent="حفظ سياسة جديدة";form.append(btn);
+ form.onsubmit=async e=>{e.preventDefault();const args={expected_version:row.version};for(const [key,arg,label,scale] of fields){const raw=form.elements.namedItem(arg).value;const v=Number(raw)*scale;if(raw===""&&arg==="c"){args[arg]=null;continue}if(raw===""||!Number.isSafeInteger(Math.round(v))||Math.abs(v-Math.round(v))>1e-6||v<0){status.textContent="قيمة غير صحيحة";return}args[arg]=Math.round(v)}if(args.s+args.l+args.a+args.p!==10000||args.n<1||args.m<1||args.d>1000||(args.c!==null&&args.c>10000)){status.textContent="تحقق من النسب والحدود؛ المجموع يجب أن يكون 100%";return}btn.disabled=true;try{await api.ownerPolicySave(args);row=await api.ownerPolicyRead();status.textContent="تم حفظ نسخة السياسة الاختبارية"}catch(e){status.textContent="تعذر الحفظ؛ أعد فتح الصفحة للتحقق من أحدث نسخة"}finally{btn.disabled=false}};
+ };
 })();
 
 /* ================= V7: إدارة — الخطة الشبكية + إعدادات إضافية ================= */

@@ -6405,7 +6405,11 @@ const PP={
     return T[PP.tab]||T[""]},
   async mount(tab){PP.tab=tab;const host=$("v5PartView");if(!host)return;
     try{V5P.po=await V5.api().portal();PP._pt=Date.now()}catch(e){V5P.po=V5P.po||{levels:[],contracts:[],me:null}}
-    V5P.me=V5P.po&&V5P.po.me;const{items}=PP.nav(),[t1,t2,sub]=PP.title(),nm=(ME.profile&&ME.profile.full_name||"").trim(),ini=(nm[0]||"V").toUpperCase();
+    V5P.me=V5P.po&&V5P.po.me;const{items}=PP.nav();
+    let marketingAccess=null;try{if(DB.marketing)marketingAccess=await DB.marketing.rpc("vx_marketing_access")}catch(e){}
+    if(PP.tab!==tab||!host.isConnected)return;
+    if(marketingAccess&&(marketingAccess.owner===true||(Array.isArray(marketingAccess.scopes)&&marketingAccess.scopes.length>0)))items.push(["marketing-ai","📣",L5("مركز التسويق AI","AI Marketing Center"),"#growth/marketing-ai",0]);
+    const [t1,t2,sub]=PP.title(),nm=(ME.profile&&ME.profile.full_name||"").trim(),ini=(nm[0]||"V").toUpperCase();
     host.innerHTML=`<div class="pp"><div class="pp-bg" aria-hidden="true"></div>
       <aside class="pp-side"><a class="pp-brand" href="#partners"><span class="lg">🤝</span><span><b>${L5("شركاء فيكسورا","VEXORA Partners")}</b><small>VEXORA PARTNERS</small></span></a><div class="pp-sec">${L5("بوابة الشركاء","Partner portal")}</div>
         ${items.map(([k,ic,l,h,lk])=>`<a class="pp-it${k===PP.tab?" on":""}${lk&&!PP.nav().ok?" lock":""}" href="${h}"><i>${ic}</i>${esc(l)}${lk&&!PP.nav().ok?"<em style='background:#94a9c9'>🔒</em>":""}</a>`).join("")}

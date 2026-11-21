@@ -3334,6 +3334,7 @@ function v7Demo(H){const{S,sav,uid,isAdm,E,NOW,iso}=H;
 
 function supaBackend(){
   const sb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY);
+  window.__vxIbClient=sb;
   const chk=({data,error})=>{if(error)throw new Error(tr(error));return data};
   return{
     demo:false,
@@ -7020,8 +7021,8 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
 (function(){'use strict';
  const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  async function rpc(name,args){
-   if(!window.supabase||typeof CONFIG==='undefined'||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY)throw Error('إعدادات اتصال Supabase غير متاحة');
-   const sb=window.__vxIbSb||(window.__vxIbSb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY));
+   const sb=window.__vxIbClient;
+   if(!sb)throw Error('اتصال Supabase الرئيسي لم يكتمل. حدّث الصفحة وحاول مجدداً.');
    const {data:{session},error:authError}=await sb.auth.getSession();
    if(authError)throw authError;
    if(!session)throw Error('سجّل الدخول حتى تستخدم إدارة IB');
@@ -7056,7 +7057,7 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
        list.innerHTML=rows.map(r=>`<div style="padding:12px;border-bottom:1px solid #654389;overflow-wrap:anywhere">
          <strong>${safe(r.broker)} — ${safe(r.ib_number)}</strong> <span>(${safe(r.status)})</span>
          <div style="font-size:12px">الشريك: ${safe(r.user_id)}</div>
-         <a href="${safe(r.referral_url)}" target="_blank" rel="noopener noreferrer">فحص رابط البروكر الرسمي</a>
+         <a href="${safe(/^https:\/\//i.test(String(r.referral_url||''))?r.referral_url:'#')}" target="_blank" rel="noopener noreferrer">فحص رابط البروكر الرسمي</a>
          ${r.status==='PENDING'?`<div style="display:flex;gap:8px;margin-top:8px"><button class="q-btn" data-review="yes" data-id="${safe(r.user_id)}">موافقة</button><button class="q-btn" data-review="no" data-id="${safe(r.user_id)}">رفض</button></div>`:''}
        </div>`).join('');
        list.querySelectorAll('[data-review]').forEach(btn=>btn.addEventListener('click',async()=>{

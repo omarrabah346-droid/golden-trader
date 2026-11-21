@@ -109,7 +109,7 @@
         loading.textContent = "هذا القسم يتطلب صلاحية تسويق يمنحها مالك المنصة.";
         return;
       }
-      const header = element("section", "", "panel");
+      const header = element("section", "", "panel vx-marketing-header");
       header.append(element("h2", "VEXORA AI MARKETING SYSTEM"));
       const tabs = element("div", "", "k-tabs");
       const view = element("div");
@@ -118,7 +118,7 @@
       if (access.owner) {
         tabs.append(button("التكاملات", () => showIntegrations(view, api)));
         tabs.append(button("صلاحيات الموظفين", () => staff(view, api)));
-        if (!root.closest(".pp")) tabs.append(button("الحملات والتقارير", () => { location.hash = "growth/mkt"; }));
+        tabs.append(button("الحملات والتقارير", () => { location.hash = "growth/mkt"; }));
         tabs.append(button("الحسابات غير المكتملة", () => recovery(view, api)));
         tabs.append(button("السفراء والتقارير اليومية", () => reviewAutomation(view, api)));
       }

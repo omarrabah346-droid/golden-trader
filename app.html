@@ -7088,3 +7088,48 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
  document.addEventListener('DOMContentLoaded',()=>{obs.observe(document.body,{childList:true,subtree:true});setTimeout(render,500)});
 })();
 </script>
+
+
+<!-- VEXORA IB AUTO ROUTING: install vexora_ib_auto_redirect.sql before deployment. -->
+<script id="vx-ib-auto-routing">
+(function(){'use strict';
+ const DEFAULT='https://myaccount.infinox.com/ar/links/go/9935360';
+ const KEY='vx_partner_code_attribution';
+ const params=new URLSearchParams(location.search);
+ const incoming=(params.get('p')||'').trim().toUpperCase();
+ if(/^[A-Z0-9_-]{3,64}$/.test(incoming)){
+   try{sessionStorage.setItem(KEY,incoming)}catch(e){}
+ }
+ function code(){try{return sessionStorage.getItem(KEY)||''}catch(e){return incoming}}
+ function brokerLink(a){
+   if(!a||!a.href)return false;
+   try{const u=new URL(a.href);return u.protocol==='https:' &&
+     (u.hostname==='myaccount.infinox.com'||u.href===DEFAULT)}catch(e){return false}
+ }
+ async function resolve(){
+   const c=code();if(!c)return DEFAULT;
+   const sb=window.__vxIbClient;
+   if(!sb)throw Error('Supabase not initialized');
+   const {data,error}=await sb.rpc('vx_resolve_partner_broker_url',{p_code:c});
+   if(error)throw error;
+   const u=new URL(String(data||DEFAULT));
+   if(u.protocol!=='https:'||u.username||u.password)throw Error('Unsafe broker URL');
+   return u.href;
+ }
+ // Only broker registration clicks are routed; the marketing link stays unchanged.
+ document.addEventListener('click',async function(ev){
+   const a=ev.target.closest&&ev.target.closest('a[href]');
+   if(!brokerLink(a)||!code()||ev.defaultPrevented)return;
+   ev.preventDefault();
+   const tab=window.open('about:blank','_blank');
+   if(tab)try{tab.opener=null}catch(e){}
+   try{
+     const url=await resolve();
+     if(tab)tab.location.replace(url);else location.assign(url);
+   }catch(e){
+     console.error('VEXORA IB route unavailable; default used',e);
+     if(tab)tab.location.replace(DEFAULT);else location.assign(DEFAULT);
+   }
+ },true);
+})();
+</script>

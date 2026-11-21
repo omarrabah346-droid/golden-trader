@@ -7032,7 +7032,7 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
    const host=document.getElementById('v5PartBody');
    if(!host||!location.hash.startsWith('#partners/ib')||host.querySelector('#vxIbExisting'))return;
    const panel=document.createElement('section');panel.id='vxIbExisting';panel.className='vx-ib-card';
-   panel.innerHTML=`<h3>🔗 ربط IB الشريك</h3><p>أضف رقم IB ورابط تسجيل البروكر الرسمي. لن يُعتمد الرابط إلا بعد موافقة المالك.</p>
+   panel.innerHTML=`<h3>🔗 ربط IB الشريك</h3><p>أضف رقم IB ورابط تسجيل البروكر الرسمي. لن يتم تفعيل رابط IB إلا بعد مراجعة الطلب والموافقة عليه.</p>
    <form id="vxIbExistingForm" class="vx-ib-grid">
    <label>البروكر<input name="broker" value="INFINOX" required maxlength="80"></label>
    <label>رقم IB الرسمي<input name="ib" required maxlength="100"></label>
@@ -7045,14 +7045,22 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
    const form=panel.querySelector('form'),msg=panel.querySelector('#vxIbMsg'),status=panel.querySelector('#vxIbStatus');
    async function loadMine(){
      try{const d=await rpc('vx_partner_ib_my');
-       if(d){const st=String(d.status||'');status.textContent='حالة IB: '+({PENDING:'بانتظار موافقة المالك',APPROVED:'معتمد',REJECTED:'مرفوض'}[st]||st);
-       if(st==='APPROVED'){form.querySelector('button').disabled=true;msg.textContent='IB معتمد. تغييره يتطلب مراجعة المالك.';}
+       if(d){const st=String(d.status||'');status.textContent='حالة IB: '+({PENDING:'بانتظار الموافقة',APPROVED:'معتمد',REJECTED:'مرفوض'}[st]||st);
+       if(st==='APPROVED'){form.querySelector('button').disabled=true;msg.textContent='IB معتمد. تغييره يتطلب مراجعة الإدارة.';}
        }else status.textContent='لا يوجد طلب IB حالياً';
      }catch(e){status.textContent='تعذر جلب حالة IB: '+(e.message||e);}
    }
    async function loadOwner(){
      try{const rows=await rpc('vx_partner_ib_admin_list');
        const owner=panel.querySelector('#vxIbOwner'),list=panel.querySelector('#vxIbOwnerRows');owner.style.display='block';
+       // Admin role is verified by the server-side admin_list RPC, not by a browser flag.
+       form.hidden=true;
+       status.textContent='إعدادات الرابط الرسمي: يمكن تعديل رابط INFINOX من إعدادات الإدارة دون إرسال طلب IB.';
+       if(!panel.querySelector('#vxIbOfficial')){
+         const official=document.createElement('div');official.id='vxIbOfficial';official.style.cssText='margin:12px 0;padding:12px;border:1px solid #9856e0;border-radius:12px;overflow-wrap:anywhere';
+         official.innerHTML='<strong>الرابط الرسمي</strong><div style="direction:ltr;text-align:left;margin:8px 0"><a href="https://myaccount.infinox.com/ar/links/go/9935360" target="_blank" rel="noopener noreferrer">https://myaccount.infinox.com/ar/links/go/9935360</a></div><small>لتعديل الرابط المحفوظ فعلياً استخدم إعدادات الإدارة ← رابط الوكالة (INFINOX).</small>';
+         form.before(official);
+       }
        if(!rows||!rows.length){list.textContent='لا توجد طلبات IB بعد';return;}
        list.innerHTML=rows.map(r=>`<div style="padding:12px;border-bottom:1px solid #654389;overflow-wrap:anywhere">
          <strong>${safe(r.broker)} — ${safe(r.ib_number)}</strong> <span>(${safe(r.status)})</span>
@@ -7071,7 +7079,7 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
      e.preventDefault();const f=new FormData(form),url=String(f.get('url')||'').trim();
      try{const u=new URL(url);if(u.protocol!=='https:'||u.username||u.password)throw Error('يجب استخدام رابط HTTPS رسمي');
        msg.textContent='جارٍ إرسال الطلب…';await rpc('vx_partner_ib_submit',{p_broker:String(f.get('broker')||''),p_ib_number:String(f.get('ib')||''),p_referral_url:url});
-       msg.textContent='تم إرسال الطلب، بانتظار موافقة المالك.';await loadMine();await loadOwner();
+       msg.textContent='تم إرسال الطلب، بانتظار الموافقة.';await loadMine();await loadOwner();
      }catch(err){msg.textContent='تعذر إرسال الطلب: '+(err.message||err);}
    });
    await loadMine();await loadOwner();

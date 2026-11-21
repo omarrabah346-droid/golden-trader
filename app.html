@@ -7018,15 +7018,64 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
 </style>
 <script id="vx-partner-2026-fixes-js">
 (function(){'use strict';
-  function escHtml(v){return String(v||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-  async function callRpc(name,args){if(!window.supabase||!window.CONFIG)throw Error('Supabase unavailable');const sb=window.__vxIbSb||(window.__vxIbSb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY));const r=await sb.rpc(name,args||{});if(r.error)throw r.error;return r.data;}
-  async function renderIb(){const host=document.getElementById('v5PartBody');if(!host||!location.hash.startsWith('#partners/ib')||host.querySelector('#vxIbExisting'))return;
-    const panel=document.createElement('section');panel.className='vx-ib-card';panel.id='vxIbExisting';panel.innerHTML='<h3>🔗 ربط IB موجود مسبقاً</h3><p>إذا عندك رقم IB رسمي من INFINOX، قدّمه مع رابط إحالة البروكر الرسمي. بعد مراجعة المالك يظهر رابط البروكر للزائر القادم من رابطك الموحد.</p><form id="vxIbExistingForm" class="vx-ib-grid"><label>اسم البروكر<input name="broker" value="INFINOX" required maxlength="80"></label><label>رقم IB الرسمي<input name="ib" required maxlength="100"></label><label style="grid-column:1/-1">رابط التسجيل الرسمي المرتبط برقم IB<input name="url" type="url" placeholder="https://..." required></label><button class="q-btn" type="submit">إرسال طلب ربط IB</button><span id="vxIbMsg" role="status"></span></form><div id="vxIbStatus" style="margin-top:12px"></div>';
-    host.prepend(panel);const form=panel.querySelector('form');const msg=panel.querySelector('#vxIbMsg');
-    try{const state=await callRpc('vx_partner_ib_my');if(state){panel.querySelector('#vxIbStatus').textContent='حالة الربط: '+({PENDING:'بانتظار موافقة المالك',APPROVED:'تمت الموافقة',REJECTED:'مرفوض'}[state.status]||state.status);}}catch(e){msg.textContent='تفعيل هذه الخدمة يحتاج تشغيل ملف SQL المرفق أولاً.';}
-    form.onsubmit=async function(e){e.preventDefault();const f=new FormData(form);const url=String(f.get('url')||'');try{const u=new URL(url);if(u.protocol!=='https:'||u.username||u.password)throw Error('استخدم رابط HTTPS رسمي');msg.textContent='جارٍ الإرسال…';await callRpc('vx_partner_ib_submit',{p_broker:String(f.get('broker')||''),p_ib_number:String(f.get('ib')||''),p_referral_url:url});msg.textContent='تم إرسال طلبك، بانتظار مراجعة المالك.';}catch(err){msg.textContent='تعذر إرسال الطلب: '+(err.message||err);}};
-  }
-  const obs=new MutationObserver(()=>{if(location.hash.startsWith('#partners/ib')&&!document.getElementById('vxIbExisting'))setTimeout(renderIb,80)});
-  document.addEventListener('DOMContentLoaded',()=>{obs.observe(document.body,{childList:true,subtree:true});setTimeout(renderIb,500)});
+ const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ async function rpc(name,args){
+   if(!window.supabase||!window.CONFIG)throw Error('Supabase غير جاهز');
+   const sb=window.__vxIbSb||(window.__vxIbSb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY));
+   const {data:{session},error:authError}=await sb.auth.getSession();
+   if(authError)throw authError;
+   if(!session)throw Error('سجّل الدخول حتى تستخدم إدارة IB');
+   const {data,error}=await sb.rpc(name,args||{});if(error)throw error;return data;
+ }
+ async function render(){
+   const host=document.getElementById('v5PartBody');
+   if(!host||!location.hash.startsWith('#partners/ib')||host.querySelector('#vxIbExisting'))return;
+   const panel=document.createElement('section');panel.id='vxIbExisting';panel.className='vx-ib-card';
+   panel.innerHTML=`<h3>🔗 ربط IB الشريك</h3><p>أضف رقم IB ورابط تسجيل البروكر الرسمي. لن يُعتمد الرابط إلا بعد موافقة المالك.</p>
+   <form id="vxIbExistingForm" class="vx-ib-grid">
+   <label>البروكر<input name="broker" value="INFINOX" required maxlength="80"></label>
+   <label>رقم IB الرسمي<input name="ib" required maxlength="100"></label>
+   <label style="grid-column:1/-1">رابط التسجيل الرسمي الخاص بـ IB<input name="url" type="url" placeholder="https://..." required></label>
+   <button class="q-btn" type="submit">إرسال طلب موافقة المالك</button><span id="vxIbMsg" role="status"></span></form>
+   <div id="vxIbStatus" role="status" style="margin-top:12px"></div>
+   <section id="vxIbOwner" style="display:none;margin-top:20px;border-top:1px solid #9856e0;padding-top:14px">
+   <h3>👑 طلبات IB — موافقة المالك</h3><div id="vxIbOwnerRows"></div></section>`;
+   host.prepend(panel);
+   const form=panel.querySelector('form'),msg=panel.querySelector('#vxIbMsg'),status=panel.querySelector('#vxIbStatus');
+   async function loadMine(){
+     try{const d=await rpc('vx_partner_ib_my');
+       if(d){const st=String(d.status||'');status.textContent='حالة IB: '+({PENDING:'بانتظار موافقة المالك',APPROVED:'معتمد',REJECTED:'مرفوض'}[st]||st);
+       if(st==='APPROVED'){form.querySelector('button').disabled=true;msg.textContent='IB معتمد. تغييره يتطلب مراجعة المالك.';}
+       }else status.textContent='لا يوجد طلب IB حالياً';
+     }catch(e){status.textContent='تعذر جلب حالة IB: '+(e.message||e);}
+   }
+   async function loadOwner(){
+     try{const rows=await rpc('vx_partner_ib_admin_list');
+       const owner=panel.querySelector('#vxIbOwner'),list=panel.querySelector('#vxIbOwnerRows');owner.style.display='block';
+       if(!rows||!rows.length){list.textContent='لا توجد طلبات IB بعد';return;}
+       list.innerHTML=rows.map(r=>`<div style="padding:12px;border-bottom:1px solid #654389;overflow-wrap:anywhere">
+         <strong>${safe(r.broker)} — ${safe(r.ib_number)}</strong> <span>(${safe(r.status)})</span>
+         <div style="font-size:12px">الشريك: ${safe(r.user_id)}</div>
+         <a href="${safe(r.referral_url)}" target="_blank" rel="noopener noreferrer">فحص رابط البروكر الرسمي</a>
+         ${r.status==='PENDING'?`<div style="display:flex;gap:8px;margin-top:8px"><button class="q-btn" data-review="yes" data-id="${safe(r.user_id)}">موافقة</button><button class="q-btn" data-review="no" data-id="${safe(r.user_id)}">رفض</button></div>`:''}
+       </div>`).join('');
+       list.querySelectorAll('[data-review]').forEach(btn=>btn.addEventListener('click',async()=>{
+         const ok=btn.dataset.review==='yes';if(!confirm(ok?'تأكيد اعتماد IB هذا الشريك؟':'تأكيد رفض طلب IB؟'))return;
+         btn.disabled=true;try{await rpc('vx_partner_ib_admin_review',{p_user_id:btn.dataset.id,p_approve:ok});await loadOwner();await loadMine();}
+         catch(e){alert('فشلت المراجعة: '+(e.message||e));btn.disabled=false;}
+       }));
+     }catch(e){if(!/forbidden|permission|403|42501/i.test(String(e.message||e)))console.warn('IB admin list:',e.message||e);}
+   }
+   form.addEventListener('submit',async e=>{
+     e.preventDefault();const f=new FormData(form),url=String(f.get('url')||'').trim();
+     try{const u=new URL(url);if(u.protocol!=='https:'||u.username||u.password)throw Error('يجب استخدام رابط HTTPS رسمي');
+       msg.textContent='جارٍ إرسال الطلب…';await rpc('vx_partner_ib_submit',{p_broker:String(f.get('broker')||''),p_ib_number:String(f.get('ib')||''),p_referral_url:url});
+       msg.textContent='تم إرسال الطلب، بانتظار موافقة المالك.';await loadMine();await loadOwner();
+     }catch(err){msg.textContent='تعذر إرسال الطلب: '+(err.message||err);}
+   });
+   await loadMine();await loadOwner();
+ }
+ const obs=new MutationObserver(()=>{if(location.hash.startsWith('#partners/ib')&&!document.getElementById('vxIbExisting'))setTimeout(render,80)});
+ document.addEventListener('DOMContentLoaded',()=>{obs.observe(document.body,{childList:true,subtree:true});setTimeout(render,500)});
 })();
 </script>

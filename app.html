@@ -7020,7 +7020,7 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
 (function(){'use strict';
  const safe=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  async function rpc(name,args){
-   if(!window.supabase||!window.CONFIG)throw Error('Supabase غير جاهز');
+   if(!window.supabase||typeof CONFIG==='undefined'||!CONFIG.SUPABASE_URL||!CONFIG.SUPABASE_ANON_KEY)throw Error('إعدادات اتصال Supabase غير متاحة');
    const sb=window.__vxIbSb||(window.__vxIbSb=window.supabase.createClient(CONFIG.SUPABASE_URL,CONFIG.SUPABASE_ANON_KEY));
    const {data:{session},error:authError}=await sb.auth.getSession();
    if(authError)throw authError;

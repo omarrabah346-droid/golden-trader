@@ -7037,10 +7037,10 @@ let queued=false;function schedule(){if(queued)return;queued=true;requestAnimati
    <label>البروكر<input name="broker" value="INFINOX" required maxlength="80"></label>
    <label>رقم IB الرسمي<input name="ib" required maxlength="100"></label>
    <label style="grid-column:1/-1">رابط التسجيل الرسمي الخاص بـ IB<input name="url" type="url" placeholder="https://..." required></label>
-   <button class="q-btn" type="submit">إرسال طلب موافقة المالك</button><span id="vxIbMsg" role="status"></span></form>
+   <button class="q-btn" type="submit">إرسال طلب الموافقة</button><span id="vxIbMsg" role="status"></span></form>
    <div id="vxIbStatus" role="status" style="margin-top:12px"></div>
    <section id="vxIbOwner" style="display:none;margin-top:20px;border-top:1px solid #9856e0;padding-top:14px">
-   <h3>👑 طلبات IB — موافقة المالك</h3><div id="vxIbOwnerRows"></div></section>`;
+   <h3>👑 طلبات IB — بانتظار الموافقة</h3><div id="vxIbOwnerRows"></div></section>`;
    host.prepend(panel);
    const form=panel.querySelector('form'),msg=panel.querySelector('#vxIbMsg'),status=panel.querySelector('#vxIbStatus');
    async function loadMine(){

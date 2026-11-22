@@ -3,7 +3,7 @@
 
   // Server-dependent features stay off until they pass a live test on the
   // published site. Enable them here after the backend is deployed.
-  const flags = Object.assign({ voice: true, publishing: false }, window.VEXORA_MARKETING_FLAGS || {});
+  const flags = { voice: false, publishing: false };
 
   const sections = {
     agent: "وكيل التسويق", research: "فرص الإعلان والمؤثرون",
@@ -174,7 +174,11 @@
     try { render(await api.rpc("vx_marketing_staff")); } catch { output.textContent = "تعذر تحميل صلاحيات الموظفين."; }
   }
 
+  const studios = new WeakMap();
+
   async function show(view, api, kind, owner, active, initial = null) {
+    let studio;
+    let disposeVoicePreview;
     const form = element("form", "", "panel k-form");
     const title = field(form, "title", "العنوان");
     title.required = true;
@@ -234,7 +238,7 @@
       save.disabled = true;
       try {
         const row = await api.rpc("vx_marketing_items", { section: kind, changes: data() });
-        await show(view, api, kind, owner, active, row);
+        if (form.isConnected && active()) await show(view, api, kind, owner, active, row);
       } catch (error) { feedback.textContent = error.message || "تعذر الحفظ."; }
       finally { save.disabled = locked; }
     };
@@ -392,8 +396,14 @@
         player.hidden = true;
         const audioStatus = element("p", "", "label");
         audioStatus.setAttribute("role", "status");
+        let voiceAvailable = false;
         let audio;
         let audioUrl;
+        disposeVoicePreview = () => {
+          if (audioUrl) URL.revokeObjectURL(audioUrl);
+          player.pause();
+          player.removeAttribute("src");
+        };
         let srt;
         let catalog = [{ id: "21m00Tcm4TlvDq8ikWAM", name: "Rachel · صوت تجريبي متعدد اللغات", gender: "female" }];
         function showVoices() {
@@ -420,6 +430,7 @@
           } catch { audioStatus.textContent = "تعذر تحميل قائمة الأصوات."; }
         });
         const preview = button("توليد معاينة · يُحتسب من الرصيد", async () => {
+          if (!voiceAvailable) return;
           if (!body.value.trim() || body.value.trim().length > 1200) {
             audioStatus.textContent = "اكتب نصاً بالعربية الفصحى لا يتجاوز 1200 حرف في حقل المسودة.";
             return;
@@ -447,7 +458,26 @@
               ? "توقف التوليد عند حد الرصيد." : "تعذر توليد المعاينة. راجع حالة ElevenLabs في التكاملات.";
           } finally { preview.disabled = false; }
         });
-        voicePanel.append(load, preview, player, saveAudio, saveTiming, audioStatus);
+        const addToVideo = button("إضافة الصوت والترجمة إلى الفيديو", async () => {
+          if (!studio || !audio) return;
+          try {
+            await studio.setVoice(audio, srt);
+            audioStatus.textContent = "أضيف الصوت والترجمة إلى الخط الزمني.";
+          } catch (error) { audioStatus.textContent = error.message; }
+        });
+        load.disabled = preview.disabled = true;
+        audioStatus.textContent = "جارٍ التحقق من اتصال ElevenLabs…";
+        voicePanel.append(load, preview, player, addToVideo, saveAudio, saveTiming, audioStatus);
+        api.localVoice("status").then(state => {
+          if (!voicePanel.isConnected) return;
+          load.disabled = state?.configured !== true;
+          voiceAvailable = state?.configured === true && Number.isFinite(state.remaining) && state.remaining > 0;
+          preview.disabled = !voiceAvailable;
+          audioStatus.textContent = state?.readOnly ? "هذا الربط يتيح فحص الحالة وعرض الأصوات. توليد الصوت معطّل." : voiceAvailable ? "التعليق الصوتي متاح ضمن الحد الحالي." :
+            "التعليق الصوتي غير متاح أو انتهت الحصة الحالية. يمكن إضافة ملف صوتي من الجهاز.";
+        }).catch(() => {
+          audioStatus.textContent = "تعذّر الاتصال بخادم ElevenLabs لهذا الموقع. يمكن إضافة ملف صوتي من الجهاز.";
+        });
         form.append(voicePanel);
       }
     }
@@ -526,7 +556,24 @@
       loadQueue().catch(() => queue.replaceChildren(element("p", "قائمة الإرسال غير متاحة.", "label")));
     }
     form.append(feedback);
-    view.replaceChildren(form, results);
+    if (kind === "studio" && window.VexoraVideoStudio) {
+      const previous = studios.get(view);
+      const host = previous?.host.isConnected ? previous.host : element("div");
+      const drafts = element("details", "", "panel");
+      drafts.open = Boolean(initial);
+      drafts.append(element("summary", "النص والتعليق الصوتي ومسودات التسويق"), form, results);
+      view.replaceChildren(host, drafts);
+      studio = host === previous?.host ? previous.studio : window.VexoraVideoStudio.mount(host, { partnerLinks: api.partnerLinks, active });
+      studios.set(view, { host, studio });
+      if (disposeVoicePreview) {
+        const observer = new MutationObserver(() => {
+          if (form.isConnected) return;
+          observer.disconnect();
+          disposeVoicePreview();
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+      }
+    } else view.replaceChildren(form, results);
     try {
       const rows = await api.rpc("vx_marketing_items", { section: kind });
       if (!results.isConnected) return;

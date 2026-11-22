@@ -6,6 +6,26 @@
     partner: { param: "p", key: "vx_p", pattern: /^[a-z0-9]{4,12}$/i, normalize: c => c.toUpperCase() }
   };
   const pending = new Set();
+  const teamKey = "vx_t";
+  const teamPattern = /^[a-z0-9]{4,12}$/i;
+
+  function captureTeam() {
+    const raw = new URLSearchParams(location.search).get("t");
+    try {
+      if (raw !== null) {
+        if (!teamPattern.test(raw)) { sessionStorage.removeItem(teamKey); return null; }
+        const code = raw.toUpperCase();
+        sessionStorage.setItem(teamKey, code);
+        return code;
+      }
+      const code = sessionStorage.getItem(teamKey);
+      return teamPattern.test(code || "") ? code.toUpperCase() : null;
+    } catch {
+      return raw && teamPattern.test(raw) ? raw.toUpperCase() : null;
+    }
+  }
+
+  captureTeam();
 
   async function recordOnce(key, send) {
     if (pending.has(key) || sessionStorage.getItem(key)) return;
@@ -28,6 +48,22 @@
   }
 
   window.VexoraAttribution = {
+    async applyWithTeam(payload, send) {
+      const code = captureTeam();
+      if (!code) return send(payload);
+      // partner_apply resolves approved, non-self sponsors and preserves saved attribution.
+      const result = await send({ ...payload, sponsor: code });
+      try {
+        if (sessionStorage.getItem(teamKey) === code) sessionStorage.removeItem(teamKey);
+        const url = new URL(location.href);
+        if (url.searchParams.get("t")?.toUpperCase() === code) {
+          url.searchParams.delete("t");
+          history.replaceState(history.state, "", url);
+        }
+      } catch { /* Submission already succeeded. */ }
+      return result;
+    },
+
     async visit(type, send) {
       const source = sources[type];
       const raw = new URLSearchParams(location.search).get(source.param);

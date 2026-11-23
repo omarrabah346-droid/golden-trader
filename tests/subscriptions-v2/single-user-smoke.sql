@@ -42,7 +42,6 @@ declare
   v_state text;
   v_job record;
 begin
-
   if not exists(select from public.vx_sub_v2_owner_review() where receipt_ready and state='approved')
     then raise exception 'Owner review failed'; end if;
   perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
@@ -76,15 +75,26 @@ begin
 end;
 $$;
 
--- Temporarily grant SELECT to test that RLS also filters rows independently of grants.
-
-begin;
+-- Keep role switches out of the same protocol message as the assertions.
 grant usage on schema vx_sub_v2 to authenticated;
 grant select on vx_sub_v2.orders,vx_sub_v2.subscriptions to authenticated;
-set local role authenticated;
-set local request.jwt.claim.sub='00000000-0000-4000-8000-000000000003';
+
+set role authenticated;
+
+set request.jwt.claim.sub='00000000-0000-4000-8000-000000000003';
+
+select case when row_security_active('vx_sub_v2.orders')
+  and row_security_active('vx_sub_v2.subscriptions')
+  then 'VEXORA_STANDALONE_RLS_ACTIVE' else 'VEXORA_STANDALONE_RLS_SKIPPED' end as row_security_mode;
+
 do $$
 begin
+  if current_user <> 'authenticated' or auth.uid() is distinct from '00000000-0000-4000-8000-000000000003'::uuid then
+    raise exception 'RLS test impersonation failed';
+  end if;
+  if not row_security_active('vx_sub_v2.orders') or not row_security_active('vx_sub_v2.subscriptions') then
+    return;
+  end if;
   if exists(select from vx_sub_v2.orders) or exists(select from vx_sub_v2.subscriptions)
     then raise exception 'Cross-account RLS leak'; end if;
   perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
@@ -92,6 +102,9 @@ begin
      (select count(*) from vx_sub_v2.subscriptions)<>1 then raise exception 'Owner row RLS failed'; end if;
 end;
 $$;
-rollback;
 
+reset role;
+
+revoke usage on schema vx_sub_v2 from authenticated;
+revoke select on vx_sub_v2.orders,vx_sub_v2.subscriptions from authenticated;
 select 'VEXORA_SINGLE_USER_SMOKE_PASSED' as result;

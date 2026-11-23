@@ -8,27 +8,49 @@ function Run([string]$Exe, [string[]]$Arguments) {
     & $Exe @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Exe failed (exit $LASTEXITCODE)." }
 }
-function Invoke-Supabase([string[]]$Arguments) {
-    # Use the Windows npm shim. Offline mode prevents npx from fetching packages.
-    $env:npm_config_offline = 'true'
-    $stdoutPath = [IO.Path]::GetTempFileName()
-    $stderrPath = [IO.Path]::GetTempFileName()
+function Invoke-Supabase([string[]]$Arguments, [switch]$CaptureOutput) {
+    # Invoke the .cmd shim through cmd.exe so PowerShell 5.1 never interprets
+    # native stderr as an ErrorRecord. Drain both streams concurrently to avoid
+    # pipe deadlocks while Supabase starts its local services.
+    $npxPath = (Get-Command 'npx.cmd' -ErrorAction Stop).Source
+    foreach ($argument in $Arguments) {
+        if ($argument -match '[\r\n"&|<>^%!()]') {
+            throw 'Unsafe shell character in Supabase CLI argument.'
+        }
+    }
+    $commandArgs = @('supabase') + @($Arguments) | ForEach-Object { '"' + $_ + '"' }
+    $commandLine = '"' + $npxPath + '" ' + ($commandArgs -join ' ')
+
+    $startInfo = New-Object Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $env:ComSpec
+    $startInfo.Arguments = '/d /s /c "' + $commandLine + '"'
+    $startInfo.WorkingDirectory = (Get-Location).Path
+    $startInfo.UseShellExecute = $false
+    $startInfo.CreateNoWindow = $true
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.EnvironmentVariables['npm_config_offline'] = 'true'
+
+    $process = New-Object Diagnostics.Process
+    $process.StartInfo = $startInfo
     try {
-        # Redirect native streams to files so Windows PowerShell 5.1 does not
-        # promote ordinary stderr text to NativeCommandError under Stop.
-        & npx.cmd supabase @Arguments 1> $stdoutPath 2> $stderrPath
-        $exitCode = $LASTEXITCODE
+        if (!$process.Start()) { throw 'Could not start Supabase CLI process.' }
+        $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+        $stderrTask = $process.StandardError.ReadToEndAsync()
+        $process.WaitForExit()
+        $stdout = $stdoutTask.Result
+        $stderr = $stderrTask.Result
+        $exitCode = $process.ExitCode
         if ($exitCode -ne 0) {
-            $stdout = Get-Content -LiteralPath $stdoutPath -Raw
-            $stderr = Get-Content -LiteralPath $stderrPath -Raw
             $details = @(
                 if ($stdout) { "stdout:`r`n$stdout" }
                 if ($stderr) { "stderr:`r`n$stderr" }
             ) -join "`r`n"
             throw "npx.cmd supabase $($Arguments[0]) failed (exit $exitCode).`r`n$details"
         }
+        if ($CaptureOutput) { return $stdout }
     } finally {
-        Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
+        $process.Dispose()
     }
 }
 function Check-Api([int]$Port) {
@@ -134,9 +156,8 @@ try {
         Copy-Item -LiteralPath (Join-Path $repo 'supabase/functions/vexora-v2-receipts') -Destination $functions -Recurse
         $stackAttempted = $true
         Invoke-Supabase @('start','-x','studio,imgproxy,realtime,logflare,vector,supavisor')
-        $statusText = & npx.cmd supabase status -o json 2>$null
-        if ($LASTEXITCODE) { throw 'Isolated Supabase status failed.' }
-        $status = ($statusText -join [Environment]::NewLine) | ConvertFrom-Json
+        $statusText = Invoke-Supabase @('status','-o','json') -CaptureOutput
+        $status = $statusText | ConvertFrom-Json
         $api = [Uri]$status.API_URL
         if ($api.Scheme -ne 'http' -or $api.Host -notin @('127.0.0.1','localhost') -or $api.Port -ne $apiPort) {
             throw 'Unexpected isolated API URL.'
@@ -153,8 +174,8 @@ try {
     } finally {
         Remove-Item Env:VX_SUB_LOCAL_SERVICE_KEY,Env:VX_SUB_TEST_ANON_KEY -ErrorAction SilentlyContinue
         if ($stackAttempted) {
-            $null = & npx.cmd supabase stop --project-id $tag --no-backup 2>&1
-            if ($LASTEXITCODE) { $failures.Add("Cleanup failed for isolated project $tag.") }
+            try { Invoke-Supabase @('stop','--project-id',$tag,'--no-backup') }
+            catch { $failures.Add("Cleanup failed for isolated project ${tag}: $($_.Exception.Message)") }
         }
     }
 } finally {

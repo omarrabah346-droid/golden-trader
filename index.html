@@ -737,6 +737,11 @@ function realApi(){
     async info(){const r=chk(await sb.from("site_info").select("key,value"));const o={};r.forEach(x=>o[x.key]=x.value);return o},
     async courses(){return chk(await sb.from("courses").select("*").order("sort"))},
     async lessons(){return chk(await sb.from("lessons").select("*").order("course_id").order("idx"))},
+    async mayReadV2Lesson(id){return chk(await sb.rpc("vx_sub_v2_can_read_lesson",{p_lesson:id}))===true},
+    async v2LessonMedia(id){
+      const query=new URLSearchParams({media:id});
+      return chk(await sb.functions.invoke("vexora-v2-lesson-media?"+query));
+    },
     async body(id){return chk(await sb.from("lesson_bodies").select("body,quiz").eq("lesson_id",id).maybeSingle())},
     async progress(){return chk(await sb.from("lesson_progress").select("lesson_id,score"))},
     async saveProgress(id,score){chk(await sb.from("lesson_progress").upsert({lesson_id:id,score}))},
@@ -1520,7 +1525,11 @@ async function lessonPage(id){
     return`<a class="lrow ${dn?"done":ok?"":"lock"}" style="padding:8px 10px;${x.id===id?"border-color:var(--accent)":""}" href="#lesson/${esc(x.id)}"><span class="n" style="width:28px;height:28px;font-size:13px">${dn?"✓":ok?x.idx:"🔒"}</span><span style="font-size:13.5px">${esc(x.title)}</span><span></span></a>`}).join("")}</div></div>${coachMini()}</aside>`;
   $("view").innerHTML=`<div class="wrap">${head}<div class="lesson"><article class="content" id="lc"><p class="muted">جاري تحميل الدرس…</p></article>${side}</div></div>`;
   window.scrollTo(0,0);
-  if(!canRead(l))return paywall(l,c);
+  let lessonAllowed=canRead(l);
+  if(CONFIG.SUBSCRIPTIONS_V2_ENABLED&&API.mayReadV2Lesson){
+    try{lessonAllowed=await API.mayReadV2Lesson(id)}catch(e){lessonAllowed=false}
+  }
+  if(!lessonAllowed)return paywall(l,c);
   let b=null;try{b=await API.body(id)}catch(e){}
   if(!b){return paywall(l,c)}
   $("lc").innerHTML=`<span class="chip gold">الدرس ${l.idx} من ${ls.length} · ${l.minutes} دقيقة</span>
@@ -1529,6 +1538,25 @@ async function lessonPage(id){
     ${quizHTML(b.quiz||[])}
     ${l.idx<=freeN()&&!ownsCourse(c.id)?`<div class="paywall" style="margin-top:26px"><div class="lockic">🔓</div><h2>عجبك الدرس؟ هذا بس البداية</h2><p>الدروس الجاية فيها الأدوات اللي أستخدمها كل يوم من ${esc(S.info.coach_since||"2018")}. افتح الدورة كاملة وكمّل الطريق.</p><div class="cta">${pendingFor("course",c.id)?'<span class="chip gold">⏳ طلبك بانتظار التفعيل</span>':`<button class="btn gold" type="button" data-buy="course" data-course="${esc(c.id)}">افتح الدورة · ${money(c.price)}</button>`}<button class="btn" type="button" data-buy="monthly">كل الدورات + الزوم شهرياً</button></div></div>`:""}
     <div class="lnav">${prev?`<a class="btn" href="#lesson/${esc(prev.id)}">→ الدرس السابق</a>`:"<span></span>"}${next?`<a class="btn gold" href="#lesson/${esc(next.id)}">الدرس التالي ←</a>`:`<a class="btn gold" href="#course/${esc(c.id)}">رجوع للدورة</a>`}</div>`;
+  if(CONFIG.SUBSCRIPTIONS_V2_ENABLED&&API.v2LessonMedia){
+    for(const marker of $("lc").querySelectorAll("button[data-vx-lesson-media]")){
+      marker.onclick=async()=>{
+        marker.disabled=true;
+        try{
+          const {url}=await API.v2LessonMedia(marker.dataset.vxLessonMedia);
+          if(!marker.isConnected||new URL(url).protocol!=="https:")return;
+          const link=document.createElement("a");
+          link.href=url;
+          link.target="_blank";
+          link.rel="noopener noreferrer";
+          link.textContent="فتح الوسائط";
+          marker.after(link);
+          setTimeout(()=>link.remove(),55000);
+        }catch(e){toast("تعذر الوصول إلى الوسائط")}
+        finally{marker.disabled=false}
+      };
+    }
+  }
   bindQuiz(l,b.quiz||[]);
   try{localStorage.setItem("vx_last_lesson",JSON.stringify({id:l.id,t:Date.now(),title:`الدرس ${l.idx}: ${l.title}`,course:c.title}))}catch(e){}
   v2Tutor(l,c);

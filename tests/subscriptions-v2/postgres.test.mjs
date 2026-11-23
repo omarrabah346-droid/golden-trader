@@ -197,3 +197,24 @@ test('isolated RPC enforcement and direct lesson RLS', { skip: process.env.VX_SU
   assert.equal(await as(3, "select public.ai_ask('fixture','{}','ar');"), '42');
   assert.equal(await as(3, "select public.vx_marketing_items('fixture');"), '"fixture"');
 });
+
+
+test('isolated signal policy and AI result ownership', { skip: process.env.VX_SUB_RUN_POSTGRES !== '1' }, async () => {
+  await sql(`create table public.signals(id text primary key);
+    create table public.signal_events(id bigint primary key,signal_id text);
+    alter table public.signals enable row level security;
+    alter table public.signal_events enable row level security;
+    create policy fixture_signals on public.signals for select to authenticated using(true);
+    create policy fixture_events on public.signal_events for select to authenticated using(true);
+    grant select on public.signals,public.signal_events to authenticated;
+    insert into public.signals values ('public-signal'),('private-signal');
+    insert into public.signal_events values (1,'public-signal'),(2,'private-signal');`);
+  await sql(await readFile(new URL('../../docs/security/subscriptions-v2/013-signal-and-ai-ownership.cutover.sql', import.meta.url), 'utf8'));
+  await sql("insert into vx_sub_v2.public_signals values ('public-signal');");
+  assert.equal(await as(5, 'select count(*) from public.signals;'), '1');
+  assert.equal(await as(5, 'select count(*) from public.signal_events;'), '0');
+  assert.equal(await as(3, 'select count(*) from public.signals;'), '2');
+  assert.equal(await as(3, "select public.ai_ask('fixture','{}','ar');"), '42');
+  assert.equal(await as(3, 'select public.ai_result(42);'), '42');
+  await assert.rejects(as(4, 'select public.ai_result(42);'), /AI result unavailable/);
+});

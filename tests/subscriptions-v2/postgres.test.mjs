@@ -154,6 +154,9 @@ test('isolated owner grant lifecycle', { skip: process.env.VX_SUB_RUN_POSTGRES !
 
 
 test('isolated receipt permissions and legacy cutover', { skip: process.env.VX_SUB_RUN_POSTGRES !== '1' }, async () => {
+  await sql(`insert into public.purchases(user_id,kind,status,pay_ref,amount,course_id)
+    values('${id(3)}','course','paid','fixture-lifetime',300,'a');`);
+
   for (const name of ['007-private-receipts.review.sql', '008-receipt-intake.review.sql',
     '011-confirmed-legacy-grants.review.sql', '009-disable-legacy-payment.cutover.sql']) {
     await sql(await readFile(new URL('../../docs/security/subscriptions-v2/' + name, import.meta.url), 'utf8'));
@@ -177,7 +180,7 @@ test('isolated receipt permissions and legacy cutover', { skip: process.env.VX_S
   const userId = id(2);
   await assert.rejects(sql(`insert into public.purchases(user_id,kind,status) values('${userId}','monthly','paid');`),
     /Legacy payment approval disabled/);
-  assert.equal(await sql("select count(*) from public.purchases where status='paid';"), '1');
+  assert.equal(await sql("select count(*) from public.purchases where status='paid' and kind='monthly';"), '1');
   assert.equal(await as(2, "select vx_sub_v2_has_legacy_grant('academy');"), 't');
   assert.equal(await as(3, "select not vx_sub_v2_has_legacy_grant('academy');"), 't');
 });
@@ -217,4 +220,17 @@ test('isolated signal policy and AI result ownership', { skip: process.env.VX_SU
   assert.equal(await as(3, "select public.ai_ask('fixture','{}','ar');"), '42');
   assert.equal(await as(3, 'select public.ai_result(42);'), '42');
   await assert.rejects(as(4, 'select public.ai_result(42);'), /AI result unavailable/);
+});
+
+
+test('expired V2 preserves lifetime and free rights without expanding their scope', { skip: process.env.VX_SUB_RUN_POSTGRES !== '1' }, async () => {
+  await sql(`update public.purchases set paid_at=now() where pay_ref='fixture-lifetime';
+    update vx_sub_v2.subscriptions set starts_at=now()-interval '2 days',expires_at=now()-interval '1 day'
+    where user_id in ('${id(3)}','${id(4)}');`);
+  assert.equal(await as(3, "select vx_sub_v2_can_access('academy');"), 'f');
+  assert.equal(await as(3, "select vx_sub_v2_can_read_lesson('paid-a');"), 't');
+  assert.equal(await as(3, "select vx_sub_v2_can_read_lesson('paid-b');"), 'f');
+  await as(1, `select vx_sub_v2_manage_grant('${id(4)}','create',null,now()+interval '1 day');`);
+  assert.equal(await as(4, "select state from vx_sub_v2_my_status();"), 'expired');
+  assert.equal(await as(4, "select vx_sub_v2_can_access('ai');"), 't');
 });

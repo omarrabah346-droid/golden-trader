@@ -1,4 +1,7 @@
-param([string]$PgBin = 'C:\Program Files\PostgreSQL\17\bin')
+param(
+    [string]$PgBin = 'C:\Program Files\PostgreSQL\17\bin',
+    [switch]$SkipPostgres
+)
 $ErrorActionPreference = 'Stop'
 $repo = $PSScriptRoot
 $env:NO_PROXY = '127.0.0.1,localhost,::1'
@@ -81,6 +84,27 @@ function Wait-ForApi([Uri]$ApiUrl, [int]$Attempts = 30) {
     }
     throw "Supabase API was not ready after $Attempts bounded checks (phase: isolated API readiness; URL: $healthUrl). Last result: $lastError"
 }
+function Show-IsolatedContainerHealth([string]$ProjectTag) {
+    # Restrict inspection to this run's random project tag; do not inspect or
+    # alter containers belonging to any other Supabase project.
+    try {
+        $names = @(& docker ps --all --filter "name=$ProjectTag" --format '{{.Names}}' 2>$null)
+        if ($LASTEXITCODE -ne 0 -or !$names.Count) {
+            Write-Warning "No containers found for isolated project $ProjectTag."
+            return
+        }
+        foreach ($name in $names) {
+            $state = & docker inspect --format '{{json .State}}' $name 2>$null
+            if ($LASTEXITCODE -eq 0 -and $state) {
+                Write-Host "Isolated container health ($name): $state"
+            } else {
+                Write-Warning "Could not inspect isolated container $name."
+            }
+        }
+    } catch {
+        Write-Warning "Could not collect health state for isolated project ${ProjectTag}: $($_.Exception.Message)"
+    }
+}
 foreach ($tool in @('node','docker','npx.cmd','curl.exe')) {
     if (!(Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Missing command: $tool" }
 }
@@ -110,27 +134,31 @@ $stackAttempted = $false
 
 Push-Location $work
 try {
-    try {
-        Run (Join-Path $PgBin 'initdb.exe') @('-D',$pgData,'-U','vx_test_admin',
-            '--auth=trust','--encoding=UTF8','--no-locale')
-        Add-Content -LiteralPath (Join-Path $pgData 'postgresql.conf') -Encoding ascii -Value @(
-            "listen_addresses = '127.0.0.1'","port = $pgPort","cluster_name = 'vexora-subscriptions-fixture'")
-        Run $pgCtl @('-D',$pgData,'-l',(Join-Path $work 'postgres.log'),'-w','start')
-        $pgStarted = $true
-        Run (Join-Path $PgBin 'createdb.exe') @('-h','127.0.0.1','-p',"$pgPort",'-U','vx_test_admin','vx_sub_test')
-        $env:VX_SUB_TEST_SOCKET = '127.0.0.1'
-        $env:VX_SUB_TEST_PORT = "$pgPort"
-        $env:VX_SUB_TEST_PSQL = Join-Path $PgBin 'psql.exe'
-        $env:VX_SUB_RUN_POSTGRES = '1'
-        Run 'node' @('--test',(Join-Path $repo 'tests/subscriptions-v2/postgres.test.mjs'))
-    } catch {
-        $failures.Add("PostgreSQL/RLS/concurrency: $($_.Exception.Message)")
-        Write-Warning $failures[$failures.Count - 1]
-    } finally {
-        $env:VX_SUB_RUN_POSTGRES = '0'
-        if ($pgStarted) {
-            & $pgCtl -D $pgData -m fast -w stop
-            if ($LASTEXITCODE) { $failures.Add('Isolated PostgreSQL cleanup failed.') }
+    if ($SkipPostgres) {
+        Write-Host 'Skipping PostgreSQL/RLS/concurrency by request.'
+    } else {
+        try {
+            Run (Join-Path $PgBin 'initdb.exe') @('-D',$pgData,'-U','vx_test_admin',
+                '--auth=trust','--encoding=UTF8','--no-locale')
+            Add-Content -LiteralPath (Join-Path $pgData 'postgresql.conf') -Encoding ascii -Value @(
+                "listen_addresses = '127.0.0.1'","port = $pgPort","cluster_name = 'vexora-subscriptions-fixture'")
+            Run $pgCtl @('-D',$pgData,'-l',(Join-Path $work 'postgres.log'),'-w','start')
+            $pgStarted = $true
+            Run (Join-Path $PgBin 'createdb.exe') @('-h','127.0.0.1','-p',"$pgPort",'-U','vx_test_admin','vx_sub_test')
+            $env:VX_SUB_TEST_SOCKET = '127.0.0.1'
+            $env:VX_SUB_TEST_PORT = "$pgPort"
+            $env:VX_SUB_TEST_PSQL = Join-Path $PgBin 'psql.exe'
+            $env:VX_SUB_RUN_POSTGRES = '1'
+            Run 'node' @('--test',(Join-Path $repo 'tests/subscriptions-v2/postgres.test.mjs'))
+        } catch {
+            $failures.Add("PostgreSQL/RLS/concurrency: $($_.Exception.Message)")
+            Write-Warning $failures[$failures.Count - 1]
+        } finally {
+            $env:VX_SUB_RUN_POSTGRES = '0'
+            if ($pgStarted) {
+                & $pgCtl -D $pgData -m fast -w stop
+                if ($LASTEXITCODE) { $failures.Add('Isolated PostgreSQL cleanup failed.') }
+            }
         }
     }
     try {
@@ -177,7 +205,15 @@ try {
         New-Item -ItemType Directory -Path $functions | Out-Null
         Copy-Item -LiteralPath (Join-Path $repo 'supabase/functions/vexora-v2-receipts') -Destination $functions -Recurse
         $stackAttempted = $true
-        Invoke-Supabase @('start','-x','studio,imgproxy,realtime,logflare,vector,supavisor')
+        try {
+            # Storage and Edge Functions are required by receipt tests. Analytics
+            # (Logflare/Vector), Studio, imgproxy, Realtime, and Supavisor are not.
+            Invoke-Supabase @('start','-x','studio,imgproxy,realtime,logflare,vector,supavisor')
+        } catch {
+            Write-Warning "Supabase start failed for isolated project ${tag}; collecting only its container health state."
+            Show-IsolatedContainerHealth $tag
+            throw
+        }
         $statusText = Invoke-Supabase @('status','-o','json') -CaptureOutput
         $status = $statusText | ConvertFrom-Json
         $api = [Uri]$status.API_URL
@@ -204,4 +240,5 @@ try {
     Pop-Location
 }
 if ($failures.Count) { throw ($failures -join [Environment]::NewLine) }
-Write-Host 'Both local integration groups completed.'
+if ($SkipPostgres) { Write-Host 'Supabase HTTP/Storage integration group completed.' }
+else { Write-Host 'Both local integration groups completed.' }

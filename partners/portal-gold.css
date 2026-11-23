@@ -88,3 +88,14 @@
 #v5PartView .pp #v5PartBody :is(h1,h2,h3) em{color:#d8b46a!important;-webkit-text-fill-color:#d8b46a!important;background:none!important}
 #v5PartView .pp #v5PartBody button:disabled{background:rgba(10,9,7,.55)!important;color:#8f877a!important;border:1px solid rgba(216,180,106,.25)!important}
 #v5PartView .pp #v5PartBody .q-bar{background:rgba(216,180,106,.12)!important}
+/* line icons that replace emoji */
+.vxg-ic{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;fill:none;stroke:#d8b46a;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.vxg-medal{width:1.35em;height:1.35em;stroke:none}
+#v5PartView .pp :is(.pp-it.on,.q-btn,.q-k,.px-logo,.q-badge) .vxg-ic:not(.vxg-medal){stroke:#5c4522}
+#v5PartView .pp .q-badge .vxg-ic,#v5PartView .pp .q-gift .vxg-ic{width:60%;height:60%}
+.vxg-t{display:contents}
+#v5PartView .pp :is(.px,.px-c,.px-type,.q-c,.q-k,.q-gift,.q-rank,.p-warn,.px-strip,.px-lv,.top)::before{background:linear-gradient(90deg,transparent,rgba(216,180,106,.55),transparent)!important;box-shadow:none!important}
+#v5PartView .pp :is(.v3-stage)::after{border-color:rgba(216,180,106,.3)!important;box-shadow:none!important}
+#v5PartView .pp :is(.p7-tabs,.px-cta){background:rgba(10,9,7,.55)!important;border-color:rgba(216,180,106,.3)!important;box-shadow:none!important}
+#v5PartView .pp :is(.p7-tag,.vio,.q-s b){background:rgba(216,180,106,.14)!important;color:#f0d79b!important;border-color:rgba(216,180,106,.4)!important}
+#v5PartView .pp #v5PartBody .vxg-ic:not(.vxg-medal){max-width:52px;max-height:52px}

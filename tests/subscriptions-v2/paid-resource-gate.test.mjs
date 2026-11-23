@@ -33,6 +33,7 @@ test('a free grant works independently of V2 and prior term clearance', async ()
     operation: 'aiRequest', resourceId: 'ai:ask',
     readLegacy: async () => ({ ...legacy, ownerCleared: false }),
     userClient: { rpc: async (name, args) => {
+      if (name === 'vx_sub_v2_has_legacy_grant') return { data: false };
       assert.equal(name, 'vx_sub_v2_has_free_grant');
       assert.deepEqual(args, { p_feature: 'ai' });
       return { data: true };

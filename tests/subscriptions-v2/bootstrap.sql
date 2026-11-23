@@ -24,7 +24,8 @@ grant select,insert on storage.objects to authenticated;
 create policy permissive_fixture on storage.objects to authenticated using(true) with check(true);
 create table public.purchases(
   id bigint generated always as identity primary key,
-  user_id uuid not null,kind text not null,status text not null,expires_at timestamptz
+  user_id uuid not null,kind text not null,status text not null,expires_at timestamptz,
+  pay_ref text not null default 'GRANT',amount numeric not null default 0,course_id text
 );
 insert into public.purchases(user_id,kind,status,expires_at)
 values('00000000-0000-4000-8000-000000000002','monthly','paid',now()+interval '1 day');
@@ -32,3 +33,5 @@ values('00000000-0000-4000-8000-000000000002','monthly','paid',now()+interval '1
 alter table public.purchases enable row level security;
 grant select on public.purchases to authenticated;
 create policy fixture_purchase_owner on public.purchases for select to authenticated using(user_id=auth.uid());
+
+create function public.has_perm(text) returns boolean language sql stable as $$ select auth.uid()='00000000-0000-4000-8000-000000000001'::uuid $$;

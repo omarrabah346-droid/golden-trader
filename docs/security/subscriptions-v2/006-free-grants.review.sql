@@ -28,6 +28,13 @@ begin
   case p_action
     when 'create' then
       if p_grant is not null then raise exception 'Unexpected grant ID'; end if;
+      if exists (select 1 from vx_sub_v2.free_grants g where g.user_id=p_user
+           and g.revoked_at is null and g.expires_at>v_now)
+         or exists (select 1 from public.purchases p where p.user_id=p_user
+           and p.pay_ref='GRANT' and p.amount=0 and p.status='paid'
+           and p.kind='monthly' and p.expires_at>v_now) then
+        raise exception 'An active grant already exists';
+      end if;
       insert into vx_sub_v2.free_grants(user_id,starts_at,expires_at)
       values(p_user,v_now,p_expiry) returning id into v_id;
     when 'extend' then

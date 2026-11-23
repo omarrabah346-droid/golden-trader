@@ -140,6 +140,7 @@ test('isolated owner grant lifecycle', { skip: process.env.VX_SUB_RUN_POSTGRES !
   await assert.rejects(as(4, create), /Owner approval required/);
   const grant = await as(1, create);
   assert.match(grant, /^\d+$/);
+  await assert.rejects(as(1, create), /An active grant already exists/);
   assert.equal(await as(4, "select vx_sub_v2_has_free_grant('academy');"), 't');
   assert.equal(await as(3, "select vx_sub_v2_has_free_grant('academy');"), 'f');
   await as(1, `select vx_sub_v2_manage_grant('${user}','extend',${grant},now()+interval '2 days');`);
@@ -154,12 +155,20 @@ test('isolated owner grant lifecycle', { skip: process.env.VX_SUB_RUN_POSTGRES !
 
 test('isolated receipt permissions and legacy cutover', { skip: process.env.VX_SUB_RUN_POSTGRES !== '1' }, async () => {
   for (const name of ['007-private-receipts.review.sql', '008-receipt-intake.review.sql',
-    '009-disable-legacy-payment.cutover.sql', '010-legacy-academy-reader.review.sql']) {
+    '011-confirmed-legacy-grants.review.sql', '009-disable-legacy-payment.cutover.sql']) {
     await sql(await readFile(new URL('../../docs/security/subscriptions-v2/' + name, import.meta.url), 'utf8'));
   }
   await sql("insert into storage.objects values ('vexora-v2-receipts','fixture'),('another-bucket','fixture');");
   assert.equal(await as(2, "select count(*) from storage.objects;"), '1');
   await assert.rejects(as(2, "insert into storage.objects values ('vexora-v2-receipts','fixture-write');"), /row-level security/);
+  assert.equal(await as(2, "select vx_sub_v2_has_legacy_grant('vip');"), 'f');
+  assert.equal(await as(2, "select vx_sub_v2_has_legacy_grant('indicators');"), 'f');
+  assert.equal(await as(2, "select vx_sub_v2_has_legacy_grant('marketing');"), 'f');
+  assert.equal(await as(2, "select vx_sub_v2_has_legacy_grant('ai');"), 'f');
+  const payment = await sql(`insert into public.purchases(user_id,kind,status,pay_ref,amount)
+    values('${id(2)}','monthly','pending','fixture-real-payment',300) returning id;`);
+  await as(1, `select admin_revoke(${payment});`);
+  assert.equal(await sql("select count(*) from public.purchases where pay_ref='fixture-real-payment';"), '1');
   const order = await request(3, 198);
   assert.equal(await as(3, `select vx_sub_v2_may_upload_receipt('${order}');`), 't');
   assert.equal(await as(2, `select vx_sub_v2_may_upload_receipt('${order}');`), 'f');
@@ -169,6 +178,6 @@ test('isolated receipt permissions and legacy cutover', { skip: process.env.VX_S
   await assert.rejects(sql(`insert into public.purchases(user_id,kind,status) values('${userId}','monthly','paid');`),
     /Legacy payment approval disabled/);
   assert.equal(await sql("select count(*) from public.purchases where status='paid';"), '1');
-  assert.equal(await as(2, "select vx_sub_v2_legacy_academy_until() > now();"), 't');
-  assert.equal(await as(3, "select vx_sub_v2_legacy_academy_until() is null;"), 't');
+  assert.equal(await as(2, "select vx_sub_v2_has_legacy_grant('academy');"), 't');
+  assert.equal(await as(3, "select not vx_sub_v2_has_legacy_grant('academy');"), 't');
 });

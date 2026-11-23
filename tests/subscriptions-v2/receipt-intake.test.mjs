@@ -14,8 +14,8 @@ test('existing academy monthly access survives expiry of unrelated V2 access', a
     operation: 'lessonBody', resourceId: 'course:fixture',
     readLegacy: async () => ({ state: 'unresolved', lifetimeResources: [], activeResources: [] }),
     userClient: { rpc: async (name) => {
-      assert.equal(name, 'vx_sub_v2_legacy_academy_until');
-      return { data: '9999-01-01T00:00:00Z' };
+      assert.equal(name, 'vx_sub_v2_has_legacy_grant');
+      return { data: true };
     }}
   });
   assert.equal(source, 'legacy');

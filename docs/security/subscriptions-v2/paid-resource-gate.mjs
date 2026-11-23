@@ -20,7 +20,7 @@ const paidOperations = Object.freeze({
 // Endpoint code selects the operation and resolves the actual resource.
 // The verified-session client and the scoped legacy reader must refer to
 // the same authenticated caller. Check resource ownership separately.
-export async function requirePaidResource({ operation, resourceId, userClient, readLegacy }) {
+export async function requirePaidResource({ operation, resourceId, userClient, readLegacy, courseId = null }) {
   if (!Object.hasOwn(paidOperations, operation) || typeof resourceId !== 'string' || !resourceId) {
     throw new TypeError('Unknown paid operation or resource');
   }
@@ -30,10 +30,12 @@ export async function requirePaidResource({ operation, resourceId, userClient, r
   const input = { feature, resourceId, legacy, at };
   const decision = resolveEntitlement({ ...input, v2Allowed: false });
   if (decision === 'lifetime' || decision === 'legacy') return decision;
-  if (feature === 'academy') {
-    const academy = await userClient.rpc('vx_sub_v2_legacy_academy_until');
-    if (academy.error) throw Object.assign(new Error('Academy grant verification unavailable'), { status: 503 });
-    if (typeof academy.data === 'string' && Date.parse(academy.data) > Date.parse(at)) return 'legacy';
+  if (feature === 'academy' || feature === 'ai') {
+    const prior = await userClient.rpc('vx_sub_v2_has_legacy_grant', {
+      p_feature: feature, p_course: feature === 'academy' ? courseId : null
+    });
+    if (prior.error) throw Object.assign(new Error('Legacy grant verification unavailable'), { status: 503 });
+    if (prior.data === true) return 'legacy';
   }
   if (await hasFreeGrant(userClient, feature)) return 'grant';
   if (decision === 'review') {

@@ -788,6 +788,10 @@ function realApi(){
     // admin
     async aStats(){return chk(await sb.rpc("admin_academy_stats"))},
     async myPerms(){return chk(await sb.rpc("my_perms"))||[]},
+    async mountV2Order(root){
+      const module=await import("./docs/security/subscriptions-v2/v2-browser.mjs");
+      await module.mountV2Order(root,sb);
+    },
     async mountV2Owner(root){
       const module=await import("./docs/security/subscriptions-v2/v2-browser.mjs");
       await module.mountV2Owner(root,sb);
@@ -946,8 +950,15 @@ async function realNums(){const el=$("realNums");if(!el||!API.publicStats)return
   $("realNumsG").innerHTML=items.map(([b,t])=>`<div><b><bdi dir="ltr">${b}</bdi></b><span>${t}</span></div>`).join("");el.hidden=false}
 function home(){
   setNav("home");setTimeout(()=>V4A.hero(),0);
+  if(CONFIG.SUBSCRIPTIONS_V2_ENABLED&&S.user&&API.mountV2Order){
+    setTimeout(()=>{
+      const panel=$("v2-order-panel");
+      if(panel)API.mountV2Order(panel).catch(()=>{panel.textContent="تعذر تحميل طلبات V2";});
+    },0);
+  }
   const nL=S.lessons.length,next=S.sessions.find(s=>new Date(s.starts_at).getTime()>Date.now());
   $("view").innerHTML=`<div class="wrap" id="v4AHero" hidden style="padding-top:14px"></div>
+  ${CONFIG.SUBSCRIPTIONS_V2_ENABLED&&S.user?'<section class="wrap" id="v2-order-panel"></section>':""}
   <section class="hero"><div class="wrap">
     <div>
       <span class="kicker">⟡ أكاديمية فيكسورا ⟡</span>

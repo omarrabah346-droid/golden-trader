@@ -117,6 +117,10 @@ test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent s
   assert.equal(await sql("select source from vx_sub_v2.payment_claims where payment_key='bank:fixture:legacy_race';"), 'legacy');
   assert.equal(await as(4, 'select count(*) from vx_sub_v2_my_status();'), '0');
 
+  await sql("begin; select vx_sub_v2.claim_legacy_payment('bank:fixture:legacy_rollback','fixture'); rollback;");
+  await approve(partners[1], 'legacy_rollback', 30000);
+  assert.equal(await sql("select source from vx_sub_v2.payment_claims where payment_key='bank:fixture:legacy_rollback';"), 'v2');
+
   await as(1, `select vx_sub_v2_revoke('${id(2)}','fixture');`);
   assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'revoked|{}');
   assert.equal(await as(2, "select vx_sub_v2_can_access('extras');"), 'f');

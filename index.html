@@ -654,7 +654,7 @@ html[dir=ltr] .v8-steps>div:before{left:auto;right:50%}
 .vxi-cta{display:grid;grid-template-columns:1fr 1fr;gap:8px}.vxi-cta .btn{text-decoration:none;text-align:center;justify-content:center;font-size:14px}
 @media (prefers-reduced-motion:reduce){.vxi-snd{animation:none}}
 </style>
-<script src="marketing-attribution.js"></script></head>
+<link rel="stylesheet" href="docs/security/subscriptions-v2/subscriptions-ui.css"><script src="marketing-attribution.js"></script></head>
 <body><div class="glang glang-m" aria-label="اللغة"><button type="button" data-l="ar">AR</button><button type="button" data-l="en">EN</button><button type="button" data-l="fr">FR</button><button type="button" data-l="de">DE</button><button type="button" data-l="uz">UZ</button><button type="button" data-l="ckb">سۆ</button><button type="button" data-l="kmr">KU</button><button type="button" data-l="tr">TR</button></div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <linearGradient id="g3t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2619"/><stop offset="1" stop-color="#0f0e0b"/></linearGradient>
@@ -795,11 +795,11 @@ function realApi(){
     async myPerms(){return chk(await sb.rpc("my_perms"))||[]},
     async mountV2Order(root){
       const module=await import("./docs/security/subscriptions-v2/v2-browser.mjs");
-      await module.mountV2Order(root,sb);
+      await module.mountV2Order(root,sb,S.profile&&S.profile.role);
     },
     async mountV2Owner(root){
       const module=await import("./docs/security/subscriptions-v2/v2-browser.mjs");
-      await module.mountV2Owner(root,sb);
+      await module.mountV2Owner(root,sb,CONFIG.SUPABASE_URL);
     },
     async aPurchases(){return chk(await sb.rpc("admin_purchases"))},
     async aSetPurchase(id,f){chk(await sb.from("purchases").update(f).eq("id",id))},

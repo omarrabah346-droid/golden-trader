@@ -710,6 +710,7 @@ if(/(access_token|refresh_token|type=recovery|error_description)/.test(location.
 const CONFIG={
   SUPABASE_URL:"https://rczvkpzxkwxzoivyiblo.supabase.co",
   SUPABASE_ANON_KEY:"sb_publishable_S4Huon2QXOIltvxoFIDdXQ_h79LR245",
+  SUBSCRIPTIONS_V2_ENABLED:false,
   SITE:"app.html",
   IB:"https://myaccount.infinox.com/ar/links/go/9935360",
 };
@@ -787,6 +788,10 @@ function realApi(){
     // admin
     async aStats(){return chk(await sb.rpc("admin_academy_stats"))},
     async myPerms(){return chk(await sb.rpc("my_perms"))||[]},
+    async mountV2Owner(root){
+      const module=await import("./docs/security/subscriptions-v2/v2-browser.mjs");
+      await module.mountV2Owner(root,sb);
+    },
     async aPurchases(){return chk(await sb.rpc("admin_purchases"))},
     async aSetPurchase(id,f){chk(await sb.from("purchases").update(f).eq("id",id))},
     async aSessions(){return chk(await sb.rpc("admin_sessions"))},
@@ -1643,6 +1648,19 @@ async function adminPage(){
     <div class="tabs" id="aTabs"></div>
     <div id="aBody"><p class="muted">جاري التحميل…</p></div></div>`;
   $("aRef").onclick=adminPage;
+  if(CONFIG.SUBSCRIPTIONS_V2_ENABLED&&API.mountV2Owner){
+    const link=document.createElement("button");
+    link.type="button";
+    link.className="btn";
+    link.textContent="إدارة اشتراكات V2";
+    $("aRef").after(link);
+    link.onclick=async()=>{
+      const panel=document.createElement("section");
+      $("aStats").before(panel);
+      link.disabled=true;
+      try{await API.mountV2Owner(panel)}catch(e){panel.textContent="تعذر فتح إدارة V2";link.disabled=false;}
+    };
+  }
   try{const [st,rows,sess]=await Promise.all([API.aStats().catch(()=>({})),canP("payments")?API.aPurchases():[],canP("zoom")?API.aSessions():[]]);ADM.rows=rows||[];ADM.sess=sess||[];
     const s=st||{};$("aStats").innerHTML=[["طلبات بانتظارك",s.pending||0],["طلبات مفعّلة",s.paid||0],["مشتركين شهري فعّالين",s.monthly||0],["طلاب بدأوا الدروس",s.students||0],["مجموع المبيعات",money(s.revenue||0)]].map(([a,b])=>`<div><span class="muted" style="font-size:12.5px">${a}</span><b>${b}</b></div>`).join("");
   }catch(e){$("aBody").innerHTML=`<p class="msg err">${esc(e.message)}</p>`;return}

@@ -150,3 +150,25 @@ test('isolated owner grant lifecycle', { skip: process.env.VX_SUB_RUN_POSTGRES !
     values('${user}',now()-interval '2 days',now()-interval '1 day');`);
   assert.equal(await as(4, "select vx_sub_v2_has_free_grant('academy');"), 'f');
 });
+
+
+test('isolated receipt permissions and legacy cutover', { skip: process.env.VX_SUB_RUN_POSTGRES !== '1' }, async () => {
+  for (const name of ['007-private-receipts.review.sql', '008-receipt-intake.review.sql',
+    '009-disable-legacy-payment.cutover.sql', '010-legacy-academy-reader.review.sql']) {
+    await sql(await readFile(new URL('../../docs/security/subscriptions-v2/' + name, import.meta.url), 'utf8'));
+  }
+  await sql("insert into storage.objects values ('vexora-v2-receipts','fixture'),('another-bucket','fixture');");
+  assert.equal(await as(2, "select count(*) from storage.objects;"), '1');
+  await assert.rejects(as(2, "insert into storage.objects values ('vexora-v2-receipts','fixture-write');"), /row-level security/);
+  const order = await request(3, 198);
+  assert.equal(await as(3, `select vx_sub_v2_may_upload_receipt('${order}');`), 't');
+  assert.equal(await as(2, `select vx_sub_v2_may_upload_receipt('${order}');`), 'f');
+  await bind(3, order);
+  assert.equal(await as(3, `select vx_sub_v2_may_upload_receipt('${order}');`), 'f');
+  const userId = id(2);
+  await assert.rejects(sql(`insert into public.purchases(user_id,kind,status) values('${userId}','monthly','paid');`),
+    /Legacy payment approval disabled/);
+  assert.equal(await sql("select count(*) from public.purchases where status='paid';"), '1');
+  assert.equal(await as(2, "select vx_sub_v2_legacy_academy_until() > now();"), 't');
+  assert.equal(await as(3, "select vx_sub_v2_legacy_academy_until() is null;"), 't');
+});

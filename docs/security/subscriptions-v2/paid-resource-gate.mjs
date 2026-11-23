@@ -30,6 +30,11 @@ export async function requirePaidResource({ operation, resourceId, userClient, r
   const input = { feature, resourceId, legacy, at };
   const decision = resolveEntitlement({ ...input, v2Allowed: false });
   if (decision === 'lifetime' || decision === 'legacy') return decision;
+  if (feature === 'academy') {
+    const academy = await userClient.rpc('vx_sub_v2_legacy_academy_until');
+    if (academy.error) throw Object.assign(new Error('Academy grant verification unavailable'), { status: 503 });
+    if (typeof academy.data === 'string' && Date.parse(academy.data) > Date.parse(at)) return 'legacy';
+  }
   if (await hasFreeGrant(userClient, feature)) return 'grant';
   if (decision === 'review') {
     throw Object.assign(new Error('Prior entitlement requires review'), { status: 503 });

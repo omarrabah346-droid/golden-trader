@@ -16,6 +16,7 @@ test('the resource gate preserves a lifetime purchase independently of V2 availa
 test('the resource gate checks the endpoint-selected feature and blocks unresolved history', async () => {
   const input = { operation: 'videoStudio', resourceId: 'studio:render',
     readLegacy: async () => legacy, userClient: { rpc: async (name, params) => {
+      if (name === 'vx_sub_v2_has_free_grant') return { data: false };
       assert.equal(name, 'vx_sub_v2_can_access');
       assert.deepEqual(params, { p_feature: 'marketing' });
       return { data: true };
@@ -25,4 +26,17 @@ test('the resource gate checks the endpoint-selected feature and blocks unresolv
     ...legacy, state: 'unresolved'
   }) }), { status: 503 });
   await assert.rejects(requirePaidResource({ ...input, operation: 'constructor' }), TypeError);
+});
+
+test('a free grant works independently of V2 and prior term clearance', async () => {
+  const decision = await requirePaidResource({
+    operation: 'aiRequest', resourceId: 'ai:ask',
+    readLegacy: async () => ({ ...legacy, ownerCleared: false }),
+    userClient: { rpc: async (name, args) => {
+      assert.equal(name, 'vx_sub_v2_has_free_grant');
+      assert.deepEqual(args, { p_feature: 'ai' });
+      return { data: true };
+    }}
+  });
+  assert.equal(decision, 'grant');
 });

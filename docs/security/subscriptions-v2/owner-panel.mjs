@@ -19,7 +19,60 @@ export async function mountOwnerSubscriptions(root, client, receiptUrl) {
   status.setAttribute('role', 'status');
   const orders = element('section');
   const refresh = element('button', 'تحديث الطلبات');
-  root.replaceChildren(heading, status, refresh, orders);
+  const grants = element('section');
+  const account = element('input');
+  account.placeholder = 'معرّف حساب المستخدم';
+  account.setAttribute('aria-label', account.placeholder);
+  const date = element('input');
+  date.type = 'datetime-local';
+  date.setAttribute('aria-label', 'موعد الانتهاء بتوقيت جهازك');
+  const grantList = element('ul');
+  const expiry = () => new Date(date.value).toISOString();
+
+  async function showGrants() {
+    const user = account.value.trim();
+    const rows = await rpc(client, 'owner_grants', { p_user: user });
+    if (account.value.trim() !== user) return;
+    grantList.replaceChildren(...rows.map(row => {
+      const item = element('li', new Date(row.expires_at).toLocaleString('ar'));
+      if (row.revoked_at) {
+        item.append(element('span', ' · ملغاة'));
+        return item;
+      }
+      item.append(
+        grantButton('تمديد', () => changeGrant(user, 'extend', row.id)),
+        grantButton('إلغاء', () => changeGrant(user, 'revoke', row.id))
+      );
+      return item;
+    }));
+  }
+
+  function grantButton(label, run) {
+    const button = element('button', label);
+    button.type = 'button';
+    button.onclick = async () => {
+      button.disabled = true;
+      try { await run(); }
+      catch { status.textContent = 'تعذرت إدارة المنحة. تحقق من الحساب وتاريخ الانتهاء.'; }
+      finally { button.disabled = false; }
+    };
+    return button;
+  }
+
+  async function changeGrant(user, action, id = null) {
+    await rpc(client, 'manage_grant', {
+      p_user: user, p_action: action, p_grant: id,
+      p_expiry: action === 'revoke' ? null : expiry()
+    });
+    await showGrants();
+    status.textContent = 'تم حفظ تغيير المنحة.';
+  }
+
+  account.oninput = () => grantList.replaceChildren();
+  grants.append(element('h2', 'المنح المجانية'), account, date,
+    grantButton('عرض المنح', showGrants),
+    grantButton('إضافة منحة', () => changeGrant(account.value.trim(), 'create')), grantList);
+  root.replaceChildren(heading, status, grants, refresh, orders);
 
   async function reload() {
     refresh.disabled = true;

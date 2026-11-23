@@ -132,3 +132,21 @@ test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent s
   assert.equal(await sql('select count(*) from vx_sub_v2.provider_attempts;'), '2');
   assert.equal(await sql('select access_active from public.legacy_payment_fixture where id=1;'), 't');
 });
+
+test('isolated owner grant lifecycle', { skip: process.env.VX_SUB_RUN_POSTGRES !== '1' }, async () => {
+  await sql(await readFile(new URL('../../docs/security/subscriptions-v2/006-free-grants.review.sql', import.meta.url), 'utf8'));
+  const user = id(4);
+  const create = `select vx_sub_v2_manage_grant('${user}','create',null,now()+interval '1 day');`;
+  await assert.rejects(as(4, create), /Owner approval required/);
+  const grant = await as(1, create);
+  assert.match(grant, /^\d+$/);
+  assert.equal(await as(4, "select vx_sub_v2_has_free_grant('academy');"), 't');
+  assert.equal(await as(3, "select vx_sub_v2_has_free_grant('academy');"), 'f');
+  await as(1, `select vx_sub_v2_manage_grant('${user}','extend',${grant},now()+interval '2 days');`);
+  await as(1, `select vx_sub_v2_manage_grant('${user}','revoke',${grant});`);
+  assert.equal(await as(4, "select vx_sub_v2_has_free_grant('academy');"), 'f');
+  assert.equal(await as(4, "select vx_sub_v2_can_access('academy');"), 't');
+  await sql(`insert into vx_sub_v2.free_grants(user_id,starts_at,expires_at)
+    values('${user}',now()-interval '2 days',now()-interval '1 day');`);
+  assert.equal(await as(4, "select vx_sub_v2_has_free_grant('academy');"), 'f');
+});

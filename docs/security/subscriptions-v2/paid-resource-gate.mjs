@@ -1,3 +1,4 @@
+import { hasFreeGrant } from './free-grant-access.mjs';
 import { requireV2Feature } from './server-entitlements.mjs';
 import { resolveEntitlement } from './legacy-entitlements.mjs';
 
@@ -29,11 +30,9 @@ export async function requirePaidResource({ operation, resourceId, userClient, r
   const input = { feature, resourceId, legacy, at };
   const decision = resolveEntitlement({ ...input, v2Allowed: false });
   if (decision === 'lifetime' || decision === 'legacy') return decision;
+  if (await hasFreeGrant(userClient, feature)) return 'grant';
   if (decision === 'review') {
     throw Object.assign(new Error('Prior entitlement requires review'), { status: 503 });
-  }
-  if (resolveEntitlement({ ...input, v2Allowed: true }) !== 'v2') {
-    throw Object.assign(new Error('Resource entitlement required'), { status: 403 });
   }
   await requireV2Feature(userClient, feature);
   return 'v2';

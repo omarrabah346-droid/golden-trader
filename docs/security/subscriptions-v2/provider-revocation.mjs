@@ -10,7 +10,8 @@ export async function revokeProviderAccess({ provider, userId, resourceId, revis
   const target = Object.freeze({ provider, userId, resourceId, revision });
   return withCurrentRights(target, async rights => {
     if (!rights || rights.revision !== revision || rights.mappingVerified !== true ||
-        rights.legacy !== false || rights.lifetime !== false || rights.v2 !== false) {
+        rights.legacy !== false || rights.lifetime !== false ||
+        rights.grant !== false || rights.v2 !== false) {
       return 'retained';
     }
     await revoke(target);

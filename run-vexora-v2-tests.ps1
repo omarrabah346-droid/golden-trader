@@ -53,9 +53,33 @@ function Invoke-Supabase([string[]]$Arguments, [switch]$CaptureOutput) {
         $process.Dispose()
     }
 }
-function Check-Api([int]$Port) {
-    Run 'curl.exe' @('--noproxy','*','--fail','--silent','--show-error','--output','NUL',
-        '--max-time','5',"http://127.0.0.1:$Port/auth/v1/health")
+function Wait-ForApi([Uri]$ApiUrl, [int]$Attempts = 30) {
+    if ($ApiUrl.Scheme -ne 'http' -or $ApiUrl.Host -notin @('127.0.0.1','localhost')) {
+        throw 'Refusing readiness check: API URL is not loopback HTTP.'
+    }
+    $healthUrl = $ApiUrl.GetLeftPart([UriPartial]::Authority) + '/auth/v1/health'
+    $lastError = 'No response received.'
+    for ($attempt = 1; $attempt -le $Attempts; $attempt++) {
+        $stdoutFile = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString('N') + '.out')
+        $stderrFile = Join-Path ([IO.Path]::GetTempPath()) ([guid]::NewGuid().ToString('N') + '.err')
+        $process = $null
+        try {
+            $process = Start-Process -FilePath 'curl.exe' -ArgumentList @(
+                '--noproxy','*','--fail','--silent','--show-error','--output','NUL',
+                '--connect-timeout','2','--max-time','4',$healthUrl
+            ) -PassThru -Wait -WindowStyle Hidden -RedirectStandardOutput $stdoutFile -RedirectStandardError $stderrFile
+            if ($process.ExitCode -eq 0) { return }
+            $stderr = if (Test-Path -LiteralPath $stderrFile) { (Get-Content -LiteralPath $stderrFile -Raw).Trim() } else { '' }
+            $lastError = "curl exit $($process.ExitCode)" + $(if ($stderr) { ": $stderr" } else { '.' })
+        } catch {
+            $lastError = $_.Exception.Message
+        } finally {
+            if ($process) { $process.Dispose() }
+            Remove-Item -LiteralPath $stdoutFile,$stderrFile -Force -ErrorAction SilentlyContinue
+        }
+        if ($attempt -lt $Attempts) { Start-Sleep -Seconds 2 }
+    }
+    throw "Supabase API was not ready after $Attempts bounded checks (phase: isolated API readiness; URL: $healthUrl). Last result: $lastError"
 }
 foreach ($tool in @('node','docker','npx.cmd','curl.exe')) {
     if (!(Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Missing command: $tool" }
@@ -70,8 +94,6 @@ if ($env:DOCKER_HOST -and $env:DOCKER_HOST -notmatch '^npipe://') { throw 'Docke
 if ((Run 'docker' @('context','inspect','--format','{{.Endpoints.docker.Host}}')) -notmatch '^npipe://') {
     throw 'Docker context must use a Windows named pipe.'
 }
-Check-Api 55321
-Run (Join-Path $PgBin 'pg_isready.exe') @('-h','127.0.0.1','-p','55322','-t','4')
 Run 'docker' @('info','--format','{{.ServerVersion}}')
 
 $tag = 'vxv2-' + [guid]::NewGuid().ToString('N').Substring(0,12)
@@ -162,7 +184,7 @@ try {
         if ($api.Scheme -ne 'http' -or $api.Host -notin @('127.0.0.1','localhost') -or $api.Port -ne $apiPort) {
             throw 'Unexpected isolated API URL.'
         }
-        Check-Api $apiPort
+        Wait-ForApi $api
         $env:VX_SUB_LOCAL_URL = $api.GetLeftPart([UriPartial]::Authority)
         $env:VX_SUB_TEST_ANON_KEY = $status.ANON_KEY
         $env:VX_SUB_LOCAL_SERVICE_KEY = $status.SERVICE_ROLE_KEY

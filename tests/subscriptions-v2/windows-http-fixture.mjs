@@ -68,6 +68,24 @@ sql(`begin;
 insert into vx_sub_v2.owner_identity values(true,'${owner.id}');
 insert into vx_sub_v2.enrollment(user_id,plan_id) values('${member.id}','${plan}');
 commit;`);
+// Verify the fixture is inspecting the isolated database that recorded migration 001.
+// This is read-only and helps distinguish an unapplied migration from an ACL reset.
+const migrationContext = sql(`select jsonb_build_object(
+  'database', current_database(),
+  'current_user', current_user,
+  'session_user', session_user,
+  'core_migration_001_applied', exists (
+    select 1 from supabase_migrations.schema_migrations where version='20260101000000'
+  ),
+  'executor_auth_usage', has_schema_privilege('vx_sub_v2_executor','auth','USAGE'),
+  'executor_auth_usage_direct', exists (
+    select 1 from pg_namespace n,
+      lateral aclexplode(coalesce(n.nspacl,acldefault('n',n.nspowner))) a
+    where n.nspname='auth' and a.grantee=(select oid from pg_roles where rolname='vx_sub_v2_executor')
+      and a.privilege_type='USAGE'
+  )
+)::text;`);
+console.log('Isolated migration context (read-only): ' + migrationContext);
 // Read-only privilege report: effective access, direct ACL, inherited role ACL, and PUBLIC ACL.
 const executorSchemaPrivileges = sql(`with recursive membership(roleid) as (
   select oid from pg_roles where rolname='vx_sub_v2_executor'

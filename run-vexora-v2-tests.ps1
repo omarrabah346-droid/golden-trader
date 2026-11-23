@@ -11,8 +11,25 @@ function Run([string]$Exe, [string[]]$Arguments) {
 function Invoke-Supabase([string[]]$Arguments) {
     # Use the Windows npm shim. Offline mode prevents npx from fetching packages.
     $env:npm_config_offline = 'true'
-    $null = & npx.cmd supabase @Arguments 2>&1
-    if ($LASTEXITCODE -ne 0) { throw "npx.cmd supabase $($Arguments[0]) failed (exit $LASTEXITCODE)." }
+    $stdoutPath = [IO.Path]::GetTempFileName()
+    $stderrPath = [IO.Path]::GetTempFileName()
+    try {
+        # Redirect native streams to files so Windows PowerShell 5.1 does not
+        # promote ordinary stderr text to NativeCommandError under Stop.
+        & npx.cmd supabase @Arguments 1> $stdoutPath 2> $stderrPath
+        $exitCode = $LASTEXITCODE
+        if ($exitCode -ne 0) {
+            $stdout = Get-Content -LiteralPath $stdoutPath -Raw
+            $stderr = Get-Content -LiteralPath $stderrPath -Raw
+            $details = @(
+                if ($stdout) { "stdout:`r`n$stdout" }
+                if ($stderr) { "stderr:`r`n$stderr" }
+            ) -join "`r`n"
+            throw "npx.cmd supabase $($Arguments[0]) failed (exit $exitCode).`r`n$details"
+        }
+    } finally {
+        Remove-Item -LiteralPath $stdoutPath,$stderrPath -Force -ErrorAction SilentlyContinue
+    }
 }
 function Check-Api([int]$Port) {
     Run 'curl.exe' @('--noproxy','*','--fail','--silent','--show-error','--output','NUL',

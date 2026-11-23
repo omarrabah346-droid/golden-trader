@@ -34,6 +34,15 @@ const API={
   decide:(pid,st,nt)=>PREVIEW?Promise.resolve():rpc("admin_partner_decide",{pid,st,nt}),
   payoutDecide:(pid,act,nt,ref)=>PREVIEW?Promise.resolve():rpc("admin_payout_decide",{pid,act,nt,ref}),
   payoutReq:(meth,det)=>PREVIEW?Promise.resolve():rpc("partner_payout_request",{meth,det}),
+  dash6:()=>PREVIEW?DEMO.dash6:rpc("partner_dash_v6"),
+  team:()=>PREVIEW?DEMO.team:rpc("partner_team"),
+  lb:(scope,period)=>PREVIEW?DEMO.lb:rpc("partner_leaderboard",{scope,period}),
+  claim:iid=>PREVIEW?Promise.resolve("PENDING"):rpc("partner_claim_incentive",{iid}),
+  apply:d=>PREVIEW?Promise.resolve("PENDING"):(window.VexoraAttribution&&window.VexoraAttribution.applyWithTeam?window.VexoraAttribution.applyWithTeam(d,body=>rpc("partner_apply",{d:body})):rpc("partner_apply",{d})),
+  ticket:(subj,bdy)=>PREVIEW?Promise.resolve(1):rpc("partner_ticket",{subj,bdy}),
+  myIb:()=>PREVIEW?DEMO.ib:rpc("my_ib"),
+  ibSave:(d,submit)=>PREVIEW?Promise.resolve(submit?"SUBMITTED":"DRAFT"):rpc("ib_save",{d,submit}),
+  upload:async file=>{if(PREVIEW)return"demo/ib/x";const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,5);const path=`${session.user.id}/ib/${Date.now()}-${Math.random().toString(36).slice(2,7)}.${ext}`;const r=await sb.storage.from("partner-docs").upload(path,file,{contentType:file.type,upsert:false});if(r.error)throw r.error;return path},
 };
 
 /* Preview-only sample data. Shown with a visible banner; never sent anywhere. */
@@ -46,6 +55,11 @@ const DEMO={
     payouts:[{id:1,amount:120,currency:"$",status:"paid",created_at:day(12)}],
     referrals:[{name:"عميل تجريبي 1",plan:"شهري",at:day(1),status:"APPROVED"},{name:"عميل تجريبي 2",plan:"أول اشتراك",at:day(3),status:"APPROVED"},{name:"عميل تجريبي 3",plan:"شهري",at:day(6),status:"APPROVED"},{name:"عميل تجريبي 4",plan:"شهري",at:day(8),status:"PENDING"}],
     assets:[],min_payout:"50"},
+  dash6:null,team:{code:"DEMO01",team_on:true,size:5,team_month:85,team_sales_month:4,legs:{L:3,R:2,L_sales:6,R_sales:3},
+    direct:[{name:"سارة م.",status:"APPROVED",leg:"L",at:day(2)},{name:"علي ح.",status:"PENDING",leg:"R",at:day(5)}],
+    tree:[{id:"a",parent:"me",leg:"L",depth:1,name:"سارة م.",level:"Silver",status:"APPROVED"},{id:"b",parent:"me",leg:"R",depth:1,name:"علي ح.",level:"Starter",status:"APPROVED"},{id:"c",parent:"a",leg:"L",depth:2,name:"نور ك.",level:"Starter",status:"APPROVED"}]},
+  lb:[{name:"Kh*** A",country:"SA",level:"gold",n:16},{name:"أنت",me:true,country:"IQ",level:"silver",n:11},{name:"Ra*** H",country:"JO",level:"silver",n:9}],
+  ib:{app:null,contract:{id:1,version:"1.0",title:"عقد IB",body:"نص العقد يظهر هنا من قاعدة البيانات."},earnings:[]},
   admin:{partners:[
     {user_id:"d1",full_name:"شريك تجريبي أ",country:"العراق",status:"PENDING",created_at:day(1),channels:"تيليجرام",referred:0,pending:0,approved:0,paid:0},
     {user_id:"d2",full_name:"شريك تجريبي ب",country:"الأردن",status:"PENDING",created_at:day(2),channels:"يوتيوب",referred:0,pending:0,approved:0,paid:0},
@@ -57,10 +71,16 @@ const DEMO={
     ib:[],tickets:[],audit:[{at:day(1),action:"partner_decide",detail:"معاينة"}],levels:[],cfg:{partner_min_payout:"50"}}
 };
 
+DEMO.dash6=Object.assign({},DEMO.dash,{level:{code:"silver",name:"Silver",min_sales:10},next:{code:"gold",name:"Gold",min_sales:30},confirmed:14,rate:15,team1_pct:5,team_on:true,
+  levels:[{code:"starter",name:"Starter",min_sales:0,rate:10},{code:"silver",name:"Silver",min_sales:10,rate:15},{code:"gold",name:"Gold",min_sales:30,rate:20},{code:"diamond",name:"Diamond",min_sales:75,rate:25}],
+  incentives:[{id:1,title:"كورس مجاني",descr:"عند 10 مبيعات شخصية مؤكدة",target:10,value:10,done:true,claim:null},{id:2,title:"اشتراك VIP شهرين",descr:"عند 50 مبيعة مؤكدة لفريقك",target:50,value:36,done:false},{id:3,title:"جلسة خاصة مع الكوتش",descr:"عند الوصول لرتبة Gold",target:30,value:14,done:false}],
+  contract:{title:"عقد شريك مبيعات",version:"1.0",signed_at:day(30),sign_name:"شريك تجريبي",body:"نص العقد الموقّع يظهر هنا."},tickets:[{id:3,subject:"سؤال عن العمولة",body:"متى تتحول العمولة لمعتمدة؟",status:"answered",reply:"بعد انتهاء فترة المراجعة المكتوبة بالعقد.",created_at:day(3)}]});
+DEMO.portal={me:null,min_payout:"50",levels:DEMO.dash6.levels,contracts:[{id:1,ptype:"sales",version:"1.0",title:"عقد شريك مبيعات",body:"1. الأطراف: VEXORA والشريك.\n2. العمولة على المبيعات المؤكدة فقط.\n3. يمنع وعد العملاء بأرباح مضمونة.\n4. السحب يتم بعد اعتماد الإدارة."},{id:2,ptype:"distributor",version:"1.0",title:"عقد موزع معتمد",body:"نص عقد الموزع."}]};
+
 /* ---------------- shared pieces ---------------- */
 function sideNav(items,active,extra=""){
   return`<aside class="side"><a class="wm" href="partners.html#join" style="background:none;height:auto;padding:0">VEXORA</a>
-  ${items.map(([h,n,t,b])=>`<a href="#${h}" class="${h===active?"on":""}">${ic(n)}<span>${t}</span>${b?`<span class="badge">${b}</span>`:""}</a>`).join("")}${extra}</aside>`;
+  ${items.map(([h,n,t,b])=>`<a href="${h.includes(".html")?h:"#"+h}" class="${h===active?"on":""}">${ic(n)}<span>${t}</span>${b?`<span class="badge">${b}</span>`:""}</a>`).join("")}${extra}</aside>`;
 }
 function areaChart(series,opts={}){
   const W=760,H=190,P={l:34,r:8,t:10,b:24};
@@ -88,13 +108,13 @@ const lastDays=(rows,days,key="at",val=r=>1)=>{const m=new Map();for(let i=days-
 async function landing(){
   document.body.className="";
   let me=null;try{const p=await API.portal();me=p&&p.me}catch(e){}
-  const applyHref=CFG.APP+"#partners/apply";
+  const applyHref="#apply";
   const status=me?`<span class="tag">حالة طلبك: ${esc((STATUS[me.status]||[me.status])[0])}</span>`:`<span class="tag">برنامج شركاء VEXORA</span>`;
   const dashBtn=me&&me.status==="APPROVED"?`<a class="btn gold" href="#partner">${ic("arrowup")} لوحة الشريك</a>`:`<a class="btn gold" href="${applyHref}">${ic("arrowup")} قدم طلب الشراكة</a>`;
   $("#app").innerHTML=`
   <header class="lnav"><a class="wm" href="index.html">VEXORA</a>
     <nav><a href="index.html">الرئيسية</a><a href="academy.html">الأكاديمية</a><a href="${CFG.APP}#indicators">المؤشرات</a><a href="${CFG.APP}#ai">الذكاء الاصطناعي</a><a href="${CFG.APP}#marketing">مركز التسويق</a><a class="on" href="#join">برنامج الشركاء</a></nav>
-    <div class="acts"><a class="btn" href="${CFG.APP}#login">تسجيل الدخول</a><a class="btn gold" href="${applyHref}">قدم طلب الشراكة</a></div></header>
+    <div class="acts"><a class="btn" href="${CFG.APP}#login">تسجيل الدخول</a><a class="btn gold" href="#apply">قدم طلب الشراكة</a></div></header>
   <section class="hero"><div class="in">${status}
     <h1>كن شريكاً في نجاح فيكسورا</h1>
     <p>انضم إلى برنامج الشركاء وحقق دخلاً مستمراً من خلال ترشيح المتداولين والمهتمين إلى منظومة <span class="ltr">VEXORA</span> المتكاملة.</p>
@@ -135,7 +155,8 @@ async function landing(){
 }
 
 /* ---------------- 2) partner dashboard ---------------- */
-const P_ITEMS=[["partner","home","الرئيسية"],["partner/link","link","رابط الإحالة"],["partner/clients","users","العملاء المحالون"],["partner/subs","layers","الاشتراكات"],["partner/comms","coins","العمولات"],["partner/payouts","wallet","طلبات السحب"],["partner/tools","mega","أدوات التسويق"],["reports","chart","التقارير والتحليلات"],["partner/settings","gear","الإعدادات"]];
+const A=h=>CFG.APP+"#"+h;
+const P_ITEMS=[["partner","home","الرئيسية"],["partner/link","link","رابط الإحالة"],["partner/clients","users","العملاء المحالون"],["partner/payouts","wallet","العمولات والسحب"],["team","users","فريقي"],["ranks","crown","الرتب والحوافز"],["plan","layers","خطة الأرباح"],["lead","trophy","المتصدرين"],["partner/tools","mega","أدوات التسويق"],["reports","chartup","التقارير والتحليلات"],["ib","bank","طلب IB"],["help","headset","دعم الشركاء"],["agreement","doc","العقد"]];
 function needLogin(t){return`<div class="card" style="max-width:560px;margin:60px auto;text-align:center"><h3 style="justify-content:center">${esc(t)}</h3><p class="sub">سجّل دخولك بحسابك بالمنصة حتى تنفتح اللوحة.</p><p><a class="btn gold" href="${CFG.APP}#login">تسجيل الدخول</a></p></div>`}
 async function partnerPage(sub){
   document.body.className="";
@@ -194,7 +215,7 @@ async function partnerPage(sub){
 /* ---------------- 3) owner management ---------------- */
 let ADM=null;
 const O_ITEMS=()=>{const p=(ADM&&ADM.partners)||[];const pend=p.filter(x=>x.status==="PENDING"||x.status==="UNDER_REVIEW").length;const pay=((ADM&&ADM.payouts)||[]).filter(x=>x.status==="requested").length;
-  return[["owner/home","home","لوحة التحكم"],["owner","users","إدارة الشركاء"],["owner/requests","clip","طلبات الانضمام",pend||""],["owner/list","users","قائمة الشركاء"],["owner/rules","coins","إعدادات العمولات"],["owner/clients","user","العملاء المحالون"],["owner/verify","card","التحقق من المدفوعات"],["owner/payouts","upload","مراجعة طلبات السحب",pay||""],["owner/log","list","سجل العمليات"],["reports","bars","التقارير والإحصائيات"],["owner/roles","shield","الصلاحيات والأدوار"],["owner/settings","gear","إعدادات البرنامج"]]};
+  return[["owner/home","home","لوحة التحكم"],["owner","users","إدارة الشركاء"],["owner/requests","clip","طلبات الانضمام",pend||""],["owner/list","users","قائمة الشركاء"],["owner/rules","coins","إعدادات العمولات"],["owner/clients","user","العملاء المحالون"],["owner/verify","card","التحقق من المدفوعات"],["owner/payouts","upload","مراجعة طلبات السحب",pay||""],["owner/log","list","سجل العمليات"],["reports","bars","التقارير والإحصائيات"],["owner/roles","shield","الصلاحيات والأدوار"],[A("admin/partners"),"gear","إعدادات البرنامج"]]};
 async function ownerPage(sub){
   document.body.className="owner";
   if(!PREVIEW&&!session){$("#app").innerHTML=needLogin("إدارة الشركاء");return}
@@ -294,11 +315,187 @@ async function reportsPage(sub){
   document.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{location.hash="reports/"+b.dataset.t});
 }
 
+/* ---------------- 5) portal sections (same shell & style as the partner dashboard) ---------------- */
+function shell(active,title,sub,body,opts={}){
+  const nm=(profile&&profile.full_name)||(PREVIEW?"شريك تجريبي":"شريك");
+  return`<div class="shell">${sideNav(P_ITEMS,active,`<div class="gift">${ic("gift")}<b>مكافآت الشركاء</b><span>عروض وحوافز خاصة للشركاء المميزين</span></div>`)}
+  <main class="main"><div class="top"><div class="who"><span class="av">${ic("user")}</span>${esc(nm)} ${ic("crown","gold-ic")}</div><span class="bell">${ic("bell")}</span><span class="lang">${ic("globe")} العربية ${ic("chev")}</span></div>
+  <section class="phero sm"><div class="ptitle">${opts.tag?`<span class="tag">${opts.tag}</span>`:""}<h1>${title}</h1><p>${sub}</p></div></section>${body}</main></div>`;
+}
+const card=(icn,t,inner,extra="")=>`<article class="card ${extra}"><h3>${ic(icn)} ${t}</h3>${inner}</article>`;
+const cream=(icn,t,v,s)=>`<div class="kpi"><div class="h">${ic(icn)}${t}</div><strong>${v}</strong><small>${s||""}</small></div>`;
+async function guard(fn,label){if(!PREVIEW&&!session){$("#app").innerHTML=needLogin(label);return null}
+  try{return await fn()}catch(e){const m=String(e.message||e);$("#app").innerHTML=`<div class="card" style="max-width:560px;margin:60px auto;text-align:center"><h3 style="justify-content:center">${esc(label)}</h3><p class="sub">${m.includes("NOT_PARTNER")?"هذا القسم ينفتح بعد موافقة الإدارة على طلب الشراكة.":"تعذر تحميل البيانات."}</p><p><a class="btn gold" href="#apply">طلب الانضمام</a></p></div>`;return null}}
+const errMsg=e=>{const m=String(e&&e.message||e);return m.includes(":")?m.split(":").slice(1).join(":").trim():m};
+
+/* apply + application status */
+async function applyPage(){
+  document.body.className="";
+  if(!PREVIEW&&!session){$("#app").innerHTML=needLogin("طلب الانضمام");return}
+  let po;try{po=await API.portal()}catch(e){po={contracts:[],me:null}}
+  const me=po.me,C=po.contracts||[];
+  if(me&&me.status!=="REJECTED"){
+    const steps=[["PENDING","استلمنا طلبك"],["UNDER_REVIEW","قيد المراجعة"],["APPROVED","تمت الموافقة"]];const idx=Math.max(0,steps.findIndex(x=>x[0]===me.status));
+    $("#app").innerHTML=shell("apply","حالة طلب الشراكة","نتابع طلبك خطوة بخطوة، ويوصلك إشعار عند كل تحديث.",`
+      <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${steps.map(([k,t],i)=>cream(i<=idx?"check":"clock",t,i<=idx?"✓":"—",i===idx?"المرحلة الحالية":"")).join("")}</div>
+      <div class="dgrid dg1">${card("doc","تفاصيل الطلب",`<table class="tbl"><tr><td>الحالة</td><td>${pill(me.status)}</td></tr><tr><td>نوع الشراكة</td><td>${me.ptype==="distributor"?"موزع معتمد":"شريك مبيعات"}</td></tr><tr><td>تاريخ الطلب</td><td>${dAr(me.created_at)}</td></tr><tr><td>توقيع العقد</td><td>${me.signed_at?dAr(me.signed_at)+" · نسخة "+esc(me.contract_version):"—"}</td></tr></table>`)}
+      ${card("arrowup","الخطوة الجاية",me.status==="APPROVED"?`<p class="sub">شراكتك فعّالة.</p><a class="btn gold wide-btn" href="#partner">افتح لوحة الشريك</a>`:`<p class="sub">الإدارة تراجع طلبك. ما تحتاج تسوي شي هسه.</p><a class="btn wide-btn" href="#help">${ic("headset")} تواصل ويه دعم الشركاء</a>`)}</div>`,{tag:ic("crown","gold-ic")+" برنامج شركاء VEXORA"});
+    return}
+  let pt="sales";
+  const draw=()=>{const k=C.find(c=>c.ptype===pt)||{};
+    $("#app").innerHTML=shell("apply","طلب الانضمام","أربع خطوات: نوع الشراكة، بياناتك، العقد، والتوقيع.",`
+    ${me&&me.status==="REJECTED"?`<div class="card" style="margin-top:18px"><p class="sub" style="margin:0">طلبك السابق ما انقبل: ${esc(me.admin_note||"")} · تگدر تعدّل وتقدّم مرة ثانية.</p></div>`:""}
+    <div class="dgrid" style="grid-template-columns:repeat(3,1fr)">
+      ${[["sales","briefcase","شريك مبيعات","رابط إحالة شخصي وعمولة على كل بيع مؤكد"],["distributor","store","موزع معتمد","مواد جاهزة ودعم أولوية لعملائك"],["ib","bank","IB لدى INFINOX","طلب منفصل يراجعه الوسيط نفسه"]].map(([k2,i2,t2,d2])=>`<button type="button" class="card pick${pt===k2?" on":""}" data-pt="${k2}"><h3>${ic(i2)} ${t2}</h3><p class="sub">${d2}</p></button>`).join("")}</div>
+    <form class="dgrid dg1" id="apf" novalidate>
+      ${card("user","بياناتك",`<div class="form">
+        <label>الاسم الكامل *<input name="full_name" required minlength="3" value="${esc(profile&&profile.full_name||"")}"></label>
+        <label>الهاتف<input name="phone" class="ltr" inputmode="tel"></label>
+        <label>الدولة<input name="country"></label>
+        <label>قنوات الترويج<input name="channels" placeholder="تيليجرام، إنستغرام، يوتيوب…"></label>
+        <label class="w">جمهورك<input name="audience" placeholder="مثلاً: متداولين مبتدئين بالعراق"></label>
+        <label class="w">خبرتك<textarea name="experience" rows="3"></textarea></label></div>`)}
+      ${card("doc",esc(k.title||"العقد")+(k.version?` <small class="sub">· نسخة ${esc(k.version)}</small>`:""),`<div class="contract">${esc(k.body||"العقد غير متوفر حالياً.").replace(/\n/g,"<br>")}</div>
+        <label class="ck"><input type="checkbox" name="accept"> قرأت العقد وأوافق عليه</label>
+        <label class="ck"><input type="checkbox" name="disclose"> أتعهد أوضح للعملاء إني شريك، وما أوعد بأرباح مضمونة</label>
+        <div class="form"><label class="w">اكتب اسمك الكامل كتوقيع *<input name="sign_name" required minlength="3"></label></div>
+        <p class="err" id="aperr" role="alert"></p>
+        <button class="btn gold wide-btn" type="submit"${k.id?"":" disabled"}>${ic("pen")} وقّع وقدّم الطلب</button>`)}
+    </form>`,{tag:ic("crown","gold-ic")+" برنامج شركاء VEXORA"});
+    document.querySelectorAll("[data-pt]").forEach(b=>b.onclick=()=>{if(b.dataset.pt==="ib"){location.hash="ib";return}pt=b.dataset.pt;draw()});
+    $("#apf").onsubmit=async ev=>{ev.preventDefault();const f=new FormData(ev.target),d=Object.fromEntries(f.entries()),er=$("#aperr");er.textContent="";
+      if((d.full_name||"").trim().length<3){er.textContent="اكتب الاسم الكامل";return}
+      if(!f.get("accept")||!f.get("disclose")){er.textContent="لازم توافق على العقد والإفصاح";return}
+      if((d.sign_name||"").trim().length<3){er.textContent="اكتب اسمك كتوقيع";return}
+      try{await API.apply(Object.assign(d,{ptype:pt,contract_id:k.id,accept:true,disclose:true,ua:navigator.userAgent}));toast("انرسل طلبك للإدارة");applyPage()}catch(e){er.textContent=errMsg(e)}};
+  };draw();
+}
+
+/* team */
+async function teamPage(){
+  document.body.className="";
+  const t=await guard(()=>API.team(),"فريقي");if(!t)return;
+  const L=t.legs||{},tree=t.tree||[];
+  const node=(n)=>`<div class="tnode${n?"":" empty"}"><span class="av2">${ic("user")}</span><b>${n?esc(n.name):"مكان فارغ"}</b><small>${n?esc(n.level||"")+" · "+(STATUS[n.status]||[n.status])[0]:"ينضاف تلقائياً"}</small></div>`;
+  const kids=(pid,leg)=>tree.find(x=>x.parent===pid&&x.leg===leg);
+  const lv1L=tree.find(x=>x.depth===1&&x.leg==="L"),lv1R=tree.find(x=>x.depth===1&&x.leg==="R");
+  $("#app").innerHTML=shell("team","فريقي","كل شريك يسجل من رابط فريقك ينضاف تحتك باليمين أو اليسار.",`
+    <div class="kpis">${cream("users","حجم فريقي",intf(t.size),"شريك")}${cream("chartup","مبيعات الفريق هالشهر",intf(t.team_sales_month),"مبيعة مؤكدة")}${cream("coins","عمولة الفريق",money2(t.team_month),"هالشهر")}${cream("tree","الطرف الأضعف",num(L.L_sales)<=num(L.R_sales)?"اليسار":"اليمين","ركّز عليه لتحافظ على التوازن")}</div>
+    <div class="dgrid dg1">${card("tree","شجرة الفريق",`<div class="tree"><div class="trow">${node({name:"أنت",level:"",status:"APPROVED"})}</div>
+        <div class="trow two">${node(lv1R)}${node(lv1L)}</div>
+        <div class="trow four">${node(lv1R&&kids(lv1R.id,"R"))}${node(lv1R&&kids(lv1R.id,"L"))}${node(lv1L&&kids(lv1L.id,"R"))}${node(lv1L&&kids(lv1L.id,"L"))}</div></div>
+        <div class="legs"><span>اليمين: <b>${intf(L.R)}</b> شريك · <b>${intf(L.R_sales)}</b> مبيعة</span><span>اليسار: <b>${intf(L.L)}</b> شريك · <b>${intf(L.L_sales)}</b> مبيعة</span></div>`)}
+      ${card("useradd","سجلوا من رابط فريقك",(t.direct||[]).length?`<div class="tblw"><table class="tbl"><thead><tr><th>الشريك</th><th>الطرف</th><th>التاريخ</th><th>الحالة</th></tr></thead><tbody>${t.direct.map(d=>`<tr><td>${ic("user")} ${esc(d.name)}</td><td>${d.leg==="L"?"اليسار":d.leg==="R"?"اليمين":"—"}</td><td>${dAr(d.at)}</td><td>${pill(d.status)}</td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">ماكو شركاء سجلوا من رابطك بعد</div>`)}</div>`);
+}
+
+/* ranks & rewards */
+async function ranksPage(){
+  document.body.className="";
+  const d=await guard(()=>API.dash6(),"الرتب والحوافز");if(!d)return;
+  const Ls=d.levels||[],lv=d.level||{},nx=d.next,n=num(d.confirmed);
+  const pc=nx?Math.min(100,Math.round((n-num(lv.min_sales))/Math.max(1,num(nx.min_sales)-num(lv.min_sales))*100)):100;
+  $("#app").innerHTML=shell("ranks","الرتب والحوافز","ارتقِ بالرتب وافتح هدايا وحوافز حقيقية.",`
+    <article class="card rank" style="margin-top:18px"><div class="rk-b">${ic("medal")}</div><div class="rk-m"><h3>رتبتك: ${esc(lv.name||"—")} <small class="sub">${intf(n)} مبيعة مؤكدة</small></h3>
+      <div class="bar"><i style="width:${Math.max(4,pc)}%"></i></div><div class="steps">${Ls.map(l=>`<span class="${l.code===lv.code?"on":""}">${esc(l.name)}${nx&&l.code===nx.code?` · باقي ${Math.max(0,num(nx.min_sales)-n)}`:""}</span>`).join("")}</div></div>
+      <div class="rk-p"><b>${num(d.rate)}%</b><span>نسبة أرباحك الحالية${d.team_on&&num(d.team1_pct)?`<br>+${num(d.team1_pct)}% من مبيعات فريقك المباشر`:""}</span></div></article>
+    <div class="dgrid" style="grid-template-columns:repeat(${Math.min(4,Math.max(1,Ls.length))},1fr)">${Ls.map(l=>`<article class="card lvl${l.code===lv.code?" on":""}">${ic(l.code===lv.code?"crown":"medal")}<b>${esc(l.name)}</b><strong>${num(l.rate)}%</strong><small>${num(l.min_sales)?`بعد ${intf(l.min_sales)} مبيعة مؤكدة`:"من أول بيع مؤكد"}</small></article>`).join("")}</div>
+    <div class="dgrid" style="grid-template-columns:repeat(3,1fr)">${(d.incentives||[]).map(i=>{const p=Math.min(100,Math.round(num(i.value)/Math.max(1,num(i.target))*100));
+      return`<article class="card gift">${ic("gift")}<h3 style="justify-content:center">${esc(i.title)}</h3><p class="sub">${esc(i.descr||"")}</p><div class="bar"><i style="width:${Math.max(4,p)}%"></i></div><small class="sub">${intf(i.value)} / ${intf(i.target)}</small>
+        ${i.claim?`<p>${pill(i.claim.status==="approved"?"APPROVED":i.claim.status==="rejected"?"REJECTED":"PENDING")}</p>`:i.done?`<button class="btn gold sm" data-claim="${i.id}" type="button">${ic("gift")} استلم الهدية</button>`:`<button class="btn sm" disabled type="button">بعدك</button>`}</article>`}).join("")||`<div class="empty">ماكو حوافز فعّالة حالياً</div>`}</div>`);
+  document.querySelectorAll("[data-claim]").forEach(b=>b.onclick=async()=>{b.disabled=true;try{await API.claim(+b.dataset.claim);toast("انرسل طلب الهدية للإدارة");ranksPage()}catch(e){toast(errMsg(e));b.disabled=false}});
+}
+
+/* compensation plan (read from the live levels) */
+async function planPage(){
+  document.body.className="";
+  let po;try{po=await API.portal()}catch(e){po={levels:[]}}
+  const Ls=po.levels||[];
+  $("#app").innerHTML=shell("plan","خطة الأرباح","كيف تنحسب عمولتك، ومتى تتحول لرصيد قابل للسحب.",`
+    <div class="dgrid" style="grid-template-columns:repeat(${Math.min(4,Math.max(1,Ls.length))},1fr);margin-top:18px">${Ls.map(l=>`<article class="card lvl">${ic("medal")}<b>${esc(l.name)}</b><strong>${num(l.rate)}%</strong><small>${num(l.min_sales)?`بعد ${intf(l.min_sales)} مبيعة مؤكدة`:"من أول بيع مؤكد"}</small>${num(l.team1_pct)?`<small>+${num(l.team1_pct)}% فريق مباشر</small>`:""}</article>`).join("")||`<div class="empty">الإدارة ما نشرت الرتب بعد</div>`}</div>
+    <div class="dgrid dg1">${card("layers","مراحل العمولة",`<div class="how"><ol>
+      <li><span class="num">1</span><span><b>بيع عبر رابطك</b><span>العميل يشترك من رابطك وتنسجل العملية باسمك.</span></span></li>
+      <li><span class="num">2</span><span><b>تأكيد الدفع</b><span>الإدارة تأكد الدفعة، وتصير العمولة «قيد المراجعة».</span></span></li>
+      <li><span class="num">3</span><span><b>اعتماد العمولة</b><span>بعد فترة المراجعة المكتوبة بالعقد تصير «معتمدة».</span></span></li>
+      <li><span class="num">4</span><span><b>طلب السحب</b><span>تطلب السحب من لوحتك، والإدارة تحوّل وتسجل المرجع.</span></span></li></ol></div>`)}
+      ${card("shield","قواعد مهمة",`<div class="why"><ul><li><i class="chk"></i>العمولة على المبيعات المؤكدة فقط.</li><li><i class="chk"></i>الاسترجاع يلغي العمولة المرتبطة به.</li><li><i class="chk"></i>الحد الأدنى للسحب: ${esc(po.min_payout||"—")}$.</li><li><i class="chk"></i>ممنوع وعد العملاء بأرباح مضمونة.</li></ul></div>`)}</div>`);
+}
+
+/* leaderboard */
+async function leadPage(sub){
+  document.body.className="";
+  const [scope,period]=(sub||"all-week").split("-");
+  const rows=await guard(()=>API.lb(scope,period),"المتصدرين");if(!rows)return;
+  const seg=(k,v,t)=>`<button type="button" class="${(k==="s"?scope:period)===v?"on":""}" data-${k}="${v}">${t}</button>`;
+  $("#app").innerHTML=shell("lead","المتصدرين","ترتيب الشركاء حسب المبيعات المؤكدة.",`
+    <div class="seg">${seg("p","week","هالأسبوع")}${seg("p","month","هالشهر")}${seg("p","all","الكل")}<span style="width:24px"></span>${seg("s","all","كل الشركاء")}${seg("s","team","فريقي")}</div>
+    ${card("trophy","أعلى مبيعات مؤكدة",`<div class="tblw"><table class="tbl"><thead><tr><th>الترتيب</th><th>الشريك</th><th>الدولة</th><th>مبيعات مؤكدة</th><th>الرتبة</th></tr></thead><tbody>${rows.length?rows.map((r,i)=>`<tr${r.me?' class="me"':""}><td>${i<3?`<span class="rk${i+1}">${i+1}</span>`:"#"+(i+1)}</td><td>${esc(r.name)}</td><td>${esc(r.country||"—")}</td><td>${intf(r.n)}</td><td><span class="pill wait">${esc(r.level||"—")}</span></td></tr>`).join(""):`<tr><td colspan="5" class="empty">ماكو مبيعات بهالفترة</td></tr>`}</tbody></table></div>
+      <p class="sub">الأسماء مخفية جزئياً للخصوصية، وما تنعرض أي مبالغ.</p>`,"")}`);
+  document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>location.hash="lead/"+scope+"-"+b.dataset.p);
+  document.querySelectorAll("[data-s]").forEach(b=>b.onclick=()=>location.hash="lead/"+b.dataset.s+"-"+period);
+}
+
+/* support */
+async function helpPage(){
+  document.body.className="";
+  const d=await guard(()=>API.dash6(),"دعم الشركاء");if(!d)return;
+  const T=d.tickets||[];
+  $("#app").innerHTML=shell("help","دعم الشركاء","اسألنا عن أي شي يخص شراكتك، والرد يوصلك هنا وبالإشعارات.",`
+    <div class="dgrid dg1">${card("chat","رسائلي",T.length?T.map(t=>`<div class="msg"><div class="mh"><b>${esc(t.subject)}</b>${pill(t.status==="open"?"PENDING":"APPROVED").replace("قيد المراجعة","مفتوحة").replace("نشط","تم الرد")}<small>${dAr(t.created_at)}</small></div><p>${esc(t.body)}</p>${t.reply?`<div class="reply">${ic("headset")} ${esc(t.reply)}</div>`:""}</div>`).join(""):`<div class="empty">ما عندك رسائل سابقة</div>`)}
+    <form id="tkf">${card("plus","رسالة جديدة",`<div class="form"><label class="w">الموضوع<input name="subj" required minlength="3"></label><label class="w">رسالتك<textarea name="bdy" rows="6" required minlength="5"></textarea></label></div><p class="err" id="tkerr" role="alert"></p><button class="btn gold wide-btn" type="submit">${ic("arrow")} إرسال</button>`)}</form></div>`);
+  $("#tkf").onsubmit=async e=>{e.preventDefault();const f=new FormData(e.target),er=$("#tkerr");er.textContent="";
+    if(String(f.get("subj")).trim().length<3||String(f.get("bdy")).trim().length<5){er.textContent="اكتب الموضوع والرسالة";return}
+    try{await API.ticket(f.get("subj"),f.get("bdy"));toast("انرسلت رسالتك");helpPage()}catch(x){er.textContent=errMsg(x)}};
+}
+
+/* agreement */
+async function agreementPage(){
+  document.body.className="";
+  const d=await guard(()=>API.dash6(),"العقد");if(!d)return;const k=d.contract||{};
+  $("#app").innerHTML=shell("agreement","عقد الشراكة","النسخة اللي وقّعت عليها، محفوظة ببصمة رقمية.",`
+    <div class="dgrid dg1">${card("doc",esc(k.title||"العقد"),`<div class="contract tall">${esc(k.body||"—").replace(/\n/g,"<br>")}</div>`)}
+    ${card("pen","التوقيع",`<table class="tbl"><tr><td>النسخة</td><td>${esc(k.version||"—")}</td></tr><tr><td>الموقّع</td><td>${esc(k.sign_name||"—")}</td></tr><tr><td>تاريخ التوقيع</td><td>${dAr(k.signed_at)}</td></tr><tr><td>البصمة</td><td class="ltr" style="font-size:11px;white-space:normal;word-break:break-all">${esc(k.hash||"—")}</td></tr></table>
+      <button class="btn wide-btn" type="button" onclick="print()">${ic("download")} طباعة / حفظ PDF</button>`)}</div>`);
+}
+
+/* IB request */
+async function ibPage(){
+  document.body.className="";
+  const d=await guard(()=>API.myIb(),"طلب IB");if(!d)return;
+  const a=d.app,k=d.contract||{},locked=a&&!["DRAFT","BROKER_REJECTED"].includes(a.status);
+  const ST={DRAFT:"مسودة",SUBMITTED:"انرسل للوسيط",BROKER_REVIEW:"عند الوسيط",BROKER_APPROVED:"مقبول من الوسيط",BROKER_REJECTED:"مرفوض من الوسيط"};
+  let docs=(a&&a.docs)||[];
+  $("#app").innerHTML=shell("ib","طلب IB","Introducing Broker لدى INFINOX · الموافقة النهائية من الوسيط نفسه.",`
+    <div class="kpis" style="grid-template-columns:repeat(3,1fr)">${cream("doc","حالة الطلب",esc(a?ST[a.status]||a.status:"ما مقدّم"),a&&a.updated_at?dAr(a.updated_at):"")}${cream("bank","رقم IB",esc(a&&a.ib_number||"—"),"يطلع بعد موافقة الوسيط")}${cream("coins","أرباح IB",intf((d.earnings||[]).length),"كشوفات مستوردة")}</div>
+    <form class="dgrid dg1" id="ibf" novalidate>
+      ${card("user","بياناتك",`<div class="form">
+        <label>الاسم الكامل *<input name="full_name" value="${esc(a&&a.full_name||profile&&profile.full_name||"")}" ${locked?"disabled":""}></label>
+        <label>الإيميل *<input name="email" class="ltr" value="${esc(a&&a.email||session&&session.user.email||"")}" ${locked?"disabled":""}></label>
+        <label>الهاتف<input name="phone" class="ltr" value="${esc(a&&a.phone||"")}" ${locked?"disabled":""}></label>
+        <label>الدولة *<input name="country" value="${esc(a&&a.country||"")}" ${locked?"disabled":""}></label>
+        <label>عدد العملاء المتوقع<input name="expected_clients" value="${esc(a&&a.expected_clients||"")}" ${locked?"disabled":""}></label>
+        <label>قنواتك<input name="channels" value="${esc(a&&a.channels||"")}" ${locked?"disabled":""}></label>
+        <label class="w">خبرتك<textarea name="experience" rows="3" ${locked?"disabled":""}>${esc(a&&a.experience||"")}</textarea></label>
+        <label class="w">مستند الهوية *<input type="file" id="ibdoc" accept="image/*,application/pdf" ${locked?"disabled":""}></label></div><p class="sub" id="ibdocs">${docs.length?"مرفوع: "+docs.length+" ملف":"ما مرفوع ملف بعد"}</p>`)}
+      ${card("doc",esc(k.title||"عقد IB"),`<div class="contract">${esc(k.body||"—").replace(/\n/g,"<br>")}</div>
+        ${locked?`<p class="sub">الطلب مقفول لأنه قيد المراجعة.</p>`:`<label class="ck"><input type="checkbox" name="accept"> قرأت العقد وأوافق عليه</label><div class="form"><label class="w">اسمك كتوقيع *<input name="sign_name"></label></div>
+        <p class="err" id="iberr" role="alert"></p><div class="acts2" style="gap:10px"><button class="btn" type="button" id="ibdraft">${ic("doc")} حفظ مسودة</button><button class="btn gold" type="submit" style="flex:1">${ic("pen")} وقّع وأرسل</button></div>`}`)}
+    </form>`);
+  if(locked)return;
+  $("#ibdoc").onchange=async e=>{const f=e.target.files[0];if(!f)return;if(f.size>8*1024*1024){toast("الحد الأقصى 8MB");return}
+    try{const p=await API.upload(f);docs=docs.concat(p);$("#ibdocs").textContent="مرفوع: "+docs.length+" ملف"}catch(x){toast("تعذر رفع الملف")}};
+  const save=async submit=>{const f=new FormData($("#ibf")),d2=Object.fromEntries(f.entries()),er=$("#iberr");er.textContent="";
+    Object.assign(d2,{docs,accept:!!f.get("accept"),ua:navigator.userAgent});
+    try{await API.ibSave(d2,submit);toast(submit?"انرسل طلبك":"انحفظت المسودة");ibPage()}catch(x){er.textContent=errMsg(x)}};
+  $("#ibdraft").onclick=()=>save(false);$("#ibf").onsubmit=e=>{e.preventDefault();save(true)};
+}
+const SECTIONS={apply:applyPage,team:teamPage,ranks:ranksPage,plan:planPage,lead:leadPage,help:helpPage,agreement:agreementPage,ib:ibPage};
+
 /* ---------------- router ---------------- */
 async function route(){
   const h=(location.hash||"#join").slice(1),[root,sub]=h.split("/");
   window.scrollTo(0,0);
   if(root==="partner")return partnerPage(sub);
+  if(SECTIONS[root])return SECTIONS[root](sub);
   if(root==="owner")return ownerPage(sub==="home"?"":sub);
   if(root==="reports")return reportsPage(sub);
   return landing();

@@ -109,5 +109,10 @@ function run(){q=0;const r=document.getElementById(ROOT_ID);if(!r||r.hidden)retu
 const mo=new MutationObserver(()=>{if(!q)q=requestAnimationFrame(run)});
 function start(){if(!document.getElementById("vxgDefs")){const d=document.createElement("div");d.id="vxgDefs";d.innerHTML=DEFS;document.body.appendChild(d)}
   mo.observe(document.body,{childList:true,subtree:true,characterData:true});run();addEventListener("hashchange",()=>setTimeout(run,60))}
+/* the redesigned dashboard / landing / owner pages live in partners.html */
+const NEW={"#partner/dashboard":"partners.html#partner","#partners":"partners.html#join","#partners/links":"partners.html#partner/link","#partners/money":"partners.html#partner/payouts","#partners/apply":"partners.html#apply","#partners/team":"partners.html#team","#partners/ranks":"partners.html#ranks","#partners/plan":"partners.html#plan","#partners/lead":"partners.html#lead","#partners/help":"partners.html#help","#partners/agreement":"partners.html#agreement","#partners/ib":"partners.html#ib","#partners/marketing":"app.html#marketing"};
+function reroute(){const t=NEW[location.hash];if(t)location.replace(t)}
+reroute();addEventListener("hashchange",reroute);
+document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href]');if(!a)return;const h=a.getAttribute("href");if(NEW[h]){e.preventDefault();location.assign(NEW[h])}},true);
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();

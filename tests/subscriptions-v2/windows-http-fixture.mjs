@@ -122,9 +122,6 @@ sql(`do $$ begin
       where p.oid='public.vx_sub_v2_request(uuid,uuid)'::regprocedure) then
     raise exception 'Fixture diagnostic: request RPC is not SECURITY DEFINER owned by vx_sub_v2_executor';
   end if;
-  if not has_function_privilege('vx_sub_v2_executor','auth.uid()','EXECUTE') then
-    raise exception 'Fixture diagnostic: executor lacks EXECUTE on auth.uid';
-  end if;
   if not has_table_privilege('vx_sub_v2_executor','vx_sub_v2.enrollment','SELECT') or
      not has_table_privilege('vx_sub_v2_executor','vx_sub_v2.orders','INSERT') then
     raise exception 'Fixture diagnostic: executor table grants are incomplete';
@@ -146,8 +143,8 @@ sql(`do $$ begin
   end if;
 end $$;`);
 sql(`do $$ begin
-  if not has_schema_privilege('vx_sub_v2_executor','auth','USAGE') then
-    raise exception 'Fixture diagnostic: vx_sub_v2_executor lacks effective USAGE on schema auth';
+  if not has_function_privilege('vx_sub_v2_executor','vx_sub_v2.uid()','EXECUTE') then
+    raise exception 'Fixture diagnostic: vx_sub_v2_executor lacks EXECUTE on vx_sub_v2.uid()';
   end if;
 end $$;`);
 const rows = await call('/rest/v1/rpc/vx_sub_v2_request', anon, {

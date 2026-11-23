@@ -100,9 +100,21 @@ create policy own_order on vx_sub_v2.orders for select to authenticated
 create policy own_subscription on vx_sub_v2.subscriptions for select to authenticated
   using (user_id = (select auth.uid()));
 
+-- JWT subject reader owned by the migration role. Mirrors auth.uid() so the
+-- executor role never needs USAGE on Supabase's auth schema (owned by
+-- supabase_auth_admin; a GRANT from the migration role is silently ignored).
+create function vx_sub_v2.uid() returns uuid
+language sql stable security invoker set search_path = '' as $$
+  select nullif(coalesce(
+    nullif(current_setting('request.jwt.claim.sub', true), ''),
+    (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub')
+  ), '')::uuid;
+$$;
+revoke all on function vx_sub_v2.uid() from public, anon, authenticated, service_role;
+
 create function vx_sub_v2.require_owner() returns uuid
 language plpgsql security invoker set search_path = '' as $$
-declare v_uid uuid := auth.uid();
+declare v_uid uuid := vx_sub_v2.uid();
 begin
   if v_uid is null or not exists (
     select 1 from vx_sub_v2.owner_identity where user_id = v_uid
@@ -116,7 +128,7 @@ create function public.vx_sub_v2_request(p_request_id uuid, p_plan uuid)
 returns table(order_id uuid, kind text, amount_cents integer, state text)
 language plpgsql security definer set search_path = '' as $$
 declare
-  v_uid uuid := auth.uid();
+  v_uid uuid := vx_sub_v2.uid();
   o vx_sub_v2.orders%rowtype;
   s vx_sub_v2.subscriptions%rowtype;
 begin
@@ -244,7 +256,7 @@ language sql stable security definer set search_path = '' as $$
          s.expires_at, case when s.revoked_at is null and s.starts_at <= statement_timestamp() and s.expires_at > statement_timestamp()
               then p.features else array[]::text[] end
   from vx_sub_v2.subscriptions s join vx_sub_v2.plans p on p.id=s.plan_id
-  where s.user_id=auth.uid();
+  where s.user_id=vx_sub_v2.uid();
 $$;
 
 create function public.vx_sub_v2_my_orders()
@@ -252,7 +264,7 @@ returns table(order_id uuid, kind text, amount_cents integer, currency text,
               state text, created_at timestamptz, decided_at timestamptz)
 language sql stable security definer set search_path = '' as $$
   select o.id,o.kind,o.amount_cents,o.currency,o.state,o.created_at,o.decided_at
-  from vx_sub_v2.orders o where o.user_id=auth.uid() order by o.created_at desc;
+  from vx_sub_v2.orders o where o.user_id=vx_sub_v2.uid() order by o.created_at desc;
 $$;
 
 revoke all on function public.vx_sub_v2_request(uuid,uuid),
@@ -267,8 +279,8 @@ grant execute on function public.vx_sub_v2_request(uuid,uuid),
   public.vx_sub_v2_my_orders() to authenticated;
 
 -- The execution role is isolated from legacy objects and cannot log in.
-grant usage on schema vx_sub_v2, auth to vx_sub_v2_executor;
-grant execute on function auth.uid(), vx_sub_v2.require_owner() to vx_sub_v2_executor;
+grant usage on schema vx_sub_v2 to vx_sub_v2_executor;
+grant execute on function vx_sub_v2.uid(), vx_sub_v2.require_owner() to vx_sub_v2_executor;
 grant select on vx_sub_v2.owner_identity, vx_sub_v2.plans,
   vx_sub_v2.enrollment, vx_sub_v2.receipts to vx_sub_v2_executor;
 -- Row locks on enrollment need UPDATE privilege. RLS permits locking but denies writes.
@@ -303,3 +315,16 @@ alter function public.vx_sub_v2_my_status() owner to vx_sub_v2_executor;
 alter function public.vx_sub_v2_my_orders() owner to vx_sub_v2_executor;
 revoke create on schema public from vx_sub_v2_executor;
 commit;
+
+-- Fail the migration loudly instead of relying on silent GRANT warnings.
+do $$ begin
+  if not has_schema_privilege('vx_sub_v2_executor','vx_sub_v2','USAGE') then
+    raise exception 'V2 migration check: executor lacks USAGE on vx_sub_v2';
+  end if;
+  if not has_function_privilege('vx_sub_v2_executor','vx_sub_v2.uid()','EXECUTE') then
+    raise exception 'V2 migration check: executor lacks EXECUTE on vx_sub_v2.uid()';
+  end if;
+  if has_function_privilege('anon','vx_sub_v2.uid()','EXECUTE') then
+    raise exception 'V2 migration check: vx_sub_v2.uid() must not be executable by anon';
+  end if;
+end $$;

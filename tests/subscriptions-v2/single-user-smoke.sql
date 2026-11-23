@@ -46,7 +46,7 @@ begin
     then raise exception 'Owner review failed'; end if;
   perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000002',true);
   select features into strict v_features from public.vx_sub_v2_my_status();
-  if v_features<>array['academy','vip','indicators'] then raise exception 'Entitlements failed'; end if;
+  if v_features<>array['academy','vip','indicators','marketing','ai','extras']::text[] then raise exception 'Entitlements failed'; end if;
   perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000003',true);
   if exists(select from public.vx_sub_v2_my_orders()) then raise exception 'Cross-account order leak'; end if;
   perform set_config('request.jwt.claim.sub','00000000-0000-4000-8000-000000000001',true);

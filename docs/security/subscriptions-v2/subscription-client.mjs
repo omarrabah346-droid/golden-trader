@@ -1,4 +1,4 @@
-const paidFeatures = new Set(['academy', 'vip', 'indicators', 'marketing', 'ai']);
+import { isPaidFeature } from './subscription-features.mjs';
 
 export async function loadSubscriptionFeatures(client) {
   const { data, error } = await client.rpc('vx_sub_v2_my_status');
@@ -6,7 +6,7 @@ export async function loadSubscriptionFeatures(client) {
   const status = data?.[0];
   const features = new Set(status?.state === 'active' ? status.features : []);
   // UI access only. Each protected backend must check the same session's entitlement.
-  return feature => paidFeatures.has(feature) && features.has(feature);
+  return feature => isPaidFeature(feature) && features.has(feature);
 }
 
 export async function createSubscriptionOrder(client, requestId, planId) {

@@ -13,11 +13,13 @@ create table vx_sub_v2.owner_identity (
 create table vx_sub_v2.plans (
   id uuid primary key,
   audience text not null check (audience in ('student', 'partner')),
-  features text[] not null check (cardinality(features) > 0 and
-    features <@ array['academy','vip','indicators','marketing','ai']::text[] and
-    array_position(features, null) is null)
+  features text[] not null check (features = array['academy','vip','indicators','marketing','ai','extras']::text[])
 );
--- Plan IDs are immutable versions. Populate the feature matrix only after approval.
+
+-- Stable plan IDs for enrollment. Both audiences receive the full V2 package.
+insert into vx_sub_v2.plans(id,audience,features) values
+  ('00000000-0000-4000-8000-000000000010','student',array['academy','vip','indicators','marketing','ai','extras']::text[]),
+  ('00000000-0000-4000-8000-000000000011','partner',array['academy','vip','indicators','marketing','ai','extras']::text[]);
 
 create table vx_sub_v2.enrollment (
   user_id uuid not null,

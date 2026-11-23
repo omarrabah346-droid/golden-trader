@@ -39,7 +39,7 @@ test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent s
   const marker = await sql("select current_database(),current_user, current_setting('cluster_name'), count(*) from pg_namespace where nspname='vx_sub_v2';");
   assert.equal(marker, 'vx_sub_test|vx_test_admin|vexora-subscriptions-fixture|0');
   for (const file of ['bootstrap.sql', '../../docs/security/subscriptions-v2/001-core.review.sql',
-    '../../docs/security/subscriptions-v2/002-review-and-provider-work.review.sql', 'fixtures.sql']) {
+    '../../docs/security/subscriptions-v2/002-review-and-provider-work.review.sql', '../../docs/security/subscriptions-v2/003-feature-access.review.sql', 'fixtures.sql']) {
     await sql(await readFile(new URL(file, import.meta.url), 'utf8'));
   }
   const order = await request(2, 20);
@@ -55,7 +55,9 @@ test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent s
   await assert.rejects(approve(order, 'first', 10000), /does not match/);
   const [first, duplicate] = await Promise.all([approve(order, 'first', 30000), approve(order, 'first', 30000)]);
   assert.equal(first, duplicate);
-  assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'active|{academy,vip,indicators}');
+  assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'active|{academy,vip,indicators,marketing,ai,extras}');
+  assert.equal(await as(2, "select vx_sub_v2_can_access('extras');"), 't');
+  assert.equal(await as(1, "select vx_sub_v2_can_access('extras');"), 'f');
   assert.equal(await as(1, `select receipt_ready from vx_sub_v2_owner_review() where order_id='${order}';`), 't');
   assert.equal(await as(1, 'select count(*) from vx_sub_v2_provider_work() where desired_access;'), '2');
 
@@ -66,9 +68,11 @@ test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent s
   await sql(`update vx_sub_v2.subscriptions set starts_at=now()-interval '2 months',
     expires_at=now()-interval '1 month' where user_id='${id(2)}';`);
   assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'expired|{}');
+  assert.equal(await as(2, "select vx_sub_v2_can_access('extras');"), 'f');
   const late = await request(2, 22);
   await bind(2, late);
   await approve(late, 'late', 10000);
+  assert.equal(await as(2, "select vx_sub_v2_can_access('extras');"), 't');
   assert.equal(await sql(`select coverage_start=approved_at from vx_sub_v2.settlements where order_id='${late}';`), 't');
 
   const partners = await Promise.all([request(3, 30), request(4, 40)]);
@@ -89,12 +93,13 @@ test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent s
   const loser = assert.rejects(approve(partners[1], 'shared', 30000), /duplicate key/);
   await awaitBackend("wait_event_type='Lock' and wait_event='transactionid'");
   await Promise.all([winner, loser]);
-  assert.equal(await as(3, 'select state,features from vx_sub_v2_my_status();'), 'active|{marketing,ai}');
+  assert.equal(await as(3, 'select state,features from vx_sub_v2_my_status();'), 'active|{academy,vip,indicators,marketing,ai,extras}');
   assert.equal(await as(4, 'select count(*) from vx_sub_v2_my_status();'), '0');
   assert.equal(await sql("select count(*) from vx_sub_v2.settlements where payment_key='bank:fixture:shared';"), '1');
 
   await as(1, `select vx_sub_v2_revoke('${id(2)}','fixture');`);
   assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'revoked|{}');
+  assert.equal(await as(2, "select vx_sub_v2_can_access('extras');"), 'f');
   const recordResult = (success, observed, error) => as(1,
     `select vx_sub_v2_provider_result(user_id,revision,due_at,provider,${success},${observed},${error})
       from vx_sub_v2_provider_work() where user_id='${id(2)}' and provider='telegram' and not desired_access;`);

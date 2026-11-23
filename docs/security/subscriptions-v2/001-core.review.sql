@@ -259,6 +259,8 @@ revoke all on function public.vx_sub_v2_request(uuid,uuid),
   public.vx_sub_v2_approve(uuid,text,integer,text), public.vx_sub_v2_reject(uuid,text),
   public.vx_sub_v2_revoke(uuid,text), public.vx_sub_v2_my_status(),
   public.vx_sub_v2_my_orders() from public, anon, authenticated, service_role;
+-- PostgREST resolves public RPCs under the JWT role; EXECUTE alone is not enough.
+grant usage on schema public to authenticated;
 grant execute on function public.vx_sub_v2_request(uuid,uuid),
   public.vx_sub_v2_approve(uuid,text,integer,text), public.vx_sub_v2_reject(uuid,text),
   public.vx_sub_v2_revoke(uuid,text), public.vx_sub_v2_my_status(),

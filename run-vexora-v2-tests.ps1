@@ -8,11 +8,17 @@ function Run([string]$Exe, [string[]]$Arguments) {
     & $Exe @Arguments
     if ($LASTEXITCODE -ne 0) { throw "$Exe failed (exit $LASTEXITCODE)." }
 }
+function Invoke-Supabase([string[]]$Arguments) {
+    # Use the Windows npm shim. Offline mode prevents npx from fetching packages.
+    $env:npm_config_offline = 'true'
+    $null = & npx.cmd supabase @Arguments 2>&1
+    if ($LASTEXITCODE -ne 0) { throw "npx.cmd supabase $($Arguments[0]) failed (exit $LASTEXITCODE)." }
+}
 function Check-Api([int]$Port) {
     Run 'curl.exe' @('--noproxy','*','--fail','--silent','--show-error','--output','NUL',
         '--max-time','5',"http://127.0.0.1:$Port/auth/v1/health")
 }
-foreach ($tool in @('node','docker','supabase','curl.exe')) {
+foreach ($tool in @('node','docker','npx.cmd','curl.exe')) {
     if (!(Get-Command $tool -ErrorAction SilentlyContinue)) { throw "Missing command: $tool" }
 }
 foreach ($name in @('pg_isready.exe','initdb.exe','pg_ctl.exe','createdb.exe','psql.exe')) {
@@ -67,7 +73,7 @@ try {
         }
     }
     try {
-        Run 'supabase' @('init')
+        Invoke-Supabase @('init')
         $cfg = Join-Path $work 'supabase/config.toml'
         $config = Get-Content -LiteralPath $cfg -Raw
         if ($config -notmatch '(?m)^project_id\s*=') { throw 'Generated configuration has no project ID.' }
@@ -90,15 +96,28 @@ try {
         $sequence = @('001-core.review.sql','002-review-and-provider-work.review.sql',
             '003-feature-access.review.sql','007-private-receipts.review.sql','008-receipt-intake.review.sql')
         for ($i=0; $i -lt $sequence.Count; $i++) {
-            Copy-Item -LiteralPath (Join-Path $sqlDir $sequence[$i]) -Destination (Join-Path $migrations ('202601010000{0:00}_fixture.sql' -f $i))
+            $sourceSql = Join-Path $sqlDir $sequence[$i]
+            $destinationSql = Join-Path $migrations ('202601010000{0:00}_fixture.sql' -f $i)
+            $sqlText = Get-Content -LiteralPath $sourceSql -Raw
+            if ($i -eq 0) {
+                # Supabase's migration role can create this NOINHERIT role but may
+                # not be a member of it. PostgreSQL requires SET ROLE membership
+                # before ALTER FUNCTION ... OWNER TO vx_sub_v2_executor.
+                $createRole = 'create role vx_sub_v2_executor nologin noinherit;'
+                if ([regex]::Matches($sqlText, [regex]::Escape($createRole), 'IgnoreCase').Count -ne 1) {
+                    throw 'Expected exactly one V2 executor role creation in the isolated fixture migration.'
+                }
+                $membershipFixture = (Get-Content -LiteralPath (Join-Path $repo 'tests/subscriptions-v2/supabase-executor-membership.fixture.sql') -Raw).Trim()
+                $sqlText = $sqlText.Replace($createRole, $createRole + "`r`n" + $membershipFixture)
+            }
+            [IO.File]::WriteAllText($destinationSql, $sqlText)
         }
         $functions = Join-Path $work 'supabase/functions'
         New-Item -ItemType Directory -Path $functions | Out-Null
         Copy-Item -LiteralPath (Join-Path $repo 'supabase/functions/vexora-v2-receipts') -Destination $functions -Recurse
         $stackAttempted = $true
-        $startOutput = & supabase start -x studio,imgproxy,realtime,logflare,vector,supavisor
-        if ($LASTEXITCODE) { throw 'Isolated Supabase start failed. Check local Docker logs.' }
-        $statusText = & supabase status -o json
+        Invoke-Supabase @('start','-x','studio,imgproxy,realtime,logflare,vector,supavisor')
+        $statusText = & npx.cmd supabase status -o json 2>$null
         if ($LASTEXITCODE) { throw 'Isolated Supabase status failed.' }
         $status = ($statusText -join [Environment]::NewLine) | ConvertFrom-Json
         $api = [Uri]$status.API_URL
@@ -117,7 +136,7 @@ try {
     } finally {
         Remove-Item Env:VX_SUB_LOCAL_SERVICE_KEY,Env:VX_SUB_TEST_ANON_KEY -ErrorAction SilentlyContinue
         if ($stackAttempted) {
-            $stopOutput = & supabase stop --project-id $tag --no-backup
+            $null = & npx.cmd supabase stop --project-id $tag --no-backup 2>&1
             if ($LASTEXITCODE) { $failures.Add("Cleanup failed for isolated project $tag.") }
         }
     }

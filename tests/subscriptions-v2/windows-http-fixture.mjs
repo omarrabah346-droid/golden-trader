@@ -152,6 +152,17 @@ const rows = await call('/rest/v1/rpc/vx_sub_v2_request', anon, {
 }, member.token);
 assert.match(rows[0].order_id, /^[a-f0-9-]{36}$/);
 
+// Warm-up: the first edge-function request cold-starts Deno and resolves npm imports,
+// which can exceed the timed test's budget on a busy machine. OPTIONS touches no data.
+const warmStart = Date.now();
+const warm = await fetch(new URL('functions/v1/vexora-v2-receipts', root), {
+  method: 'OPTIONS', redirect: 'error', signal: AbortSignal.timeout(180_000),
+  headers: { apikey: anon }
+});
+await warm.arrayBuffer();
+console.log('Edge function warm-up: HTTP ' + warm.status + ' in ' + (Date.now() - warmStart) + 'ms');
+assert.ok(warm.status < 500, 'Edge function did not boot (HTTP ' + warm.status + ')');
+
 const env = { ...process.env };
 delete env.VX_SUB_LOCAL_SERVICE_KEY;
 Object.assign(env, {
@@ -162,5 +173,5 @@ Object.assign(env, {
   VX_SUB_TEST_ORDER: rows[0].order_id
 });
 const test = fileURLToPath(new URL('./supabase-http.test.mjs', import.meta.url));
-const result = spawnSync(process.execPath, ['--test', test], { env, stdio: 'inherit', timeout: 30_000 });
+const result = spawnSync(process.execPath, ['--test', test], { env, stdio: 'inherit', timeout: 120_000 });
 process.exit(result.status ?? 1);

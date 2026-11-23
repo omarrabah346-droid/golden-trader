@@ -3,7 +3,7 @@ import { test } from 'node:test';
 
 test('local Supabase HTTP: receipt upload, private object access, owner signed read', {
   skip: process.env.VX_SUB_RUN_LOCAL_HTTP !== '1',
-  timeout: 20_000
+  timeout: 60_000
 }, async () => {
   const root = new URL(process.env.VX_SUB_LOCAL_URL ?? 'http://127.0.0.1:54321');
   assert.match(root.hostname, /^(127\.0\.0\.1|localhost|\[::1\])$/);

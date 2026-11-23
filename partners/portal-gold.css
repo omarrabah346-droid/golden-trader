@@ -1,0 +1,90 @@
+/* VEXORA Partners · approved black & champagne-gold theme for the in-app partner portal (app.html .pp).
+   Visual only: no markup or logic changes. Loaded after every earlier partner style. */
+#v5PartView .pp{--bg:#0b0a08!important;--b1:#d8b46a!important;--b2:#f0d79b!important;--b3:#a88645!important;--pg:#3fbf7f!important;--pp:#d8b46a!important;--py:#f0d79b!important;
+  --pl:rgba(216,180,106,.3)!important;--mut:#a59d90!important;--glass:linear-gradient(180deg,rgba(25,22,18,.94),rgba(14,12,10,.94))!important;
+  color:#f3ece0!important;background:#0b0a08!important;font-family:"IBM Plex Sans Arabic","Tajawal",system-ui,sans-serif}
+#v5PartView .pp .pp-bg,#v5PartView .pp .pp-bg:before{background:radial-gradient(900px 500px at 75% -10%,rgba(216,180,106,.08),transparent 60%),#0b0a08!important;animation:none!important}
+#v5PartView .pp .pp-bg:after{content:"";position:absolute;top:0;left:0;width:58%;height:430px;background:url(img/partner-hero.jpg) left top/cover no-repeat;opacity:.55;
+  -webkit-mask-image:linear-gradient(90deg,#000 40%,transparent),linear-gradient(0deg,transparent,#000 50%);mask-image:linear-gradient(90deg,#000 40%,transparent);pointer-events:none}
+/* sidebar */
+#v5PartView .pp .pp-side{background:linear-gradient(180deg,#0f0d0a,#0a0907)!important;border:0!important;border-inline-start:1px solid rgba(216,180,106,.14)!important;border-radius:0!important;box-shadow:none!important;backdrop-filter:none!important}
+#v5PartView .pp .pp-brand .lg{background:linear-gradient(180deg,#f0d394,#c89c55)!important;color:#1b140a!important;box-shadow:none!important;border:0!important}
+#v5PartView .pp .pp-brand .lg:after{display:none!important}
+#v5PartView .pp .pp-brand b{font-family:"Cinzel",serif;color:#d8b46a!important;letter-spacing:.04em}
+#v5PartView .pp .pp-brand small,#v5PartView .pp .pp-sec{color:#8f877a!important}
+#v5PartView .pp .pp-it{color:#ddd4c6!important;background:transparent!important;border:0!important;box-shadow:none!important;border-radius:12px!important}
+#v5PartView .pp .pp-it i,#v5PartView .pp .pp-it i svg{background:transparent!important;border:0!important;box-shadow:none!important;color:#cfc6b6!important;fill:none!important;stroke:currentColor!important}
+#v5PartView .pp .pp-it:hover{background:rgba(216,180,106,.07)!important}
+#v5PartView .pp .pp-it.on{background:linear-gradient(90deg,#c29a57,#e3c584 60%,#d6b26c)!important;color:#1b140a!important;font-weight:700}
+#v5PartView .pp .pp-it.on i,#v5PartView .pp .pp-it.on i svg{color:#1b140a!important}
+#v5PartView .pp .pp-it em{background:rgba(216,180,106,.16)!important;color:#f0d79b!important;border:1px solid #a88645}
+#v5PartView .pp .pp-back{color:#a59d90!important;border-color:rgba(216,180,106,.22)!important;background:transparent!important}
+/* top bar */
+#v5PartView .pp .pp-top{background:transparent!important;border:0!important;border-bottom:1px solid rgba(216,180,106,.12)!important;border-radius:0!important;box-shadow:none!important}
+#v5PartView .pp .pp-top h1{color:#f3ece0!important;font-weight:700}
+#v5PartView .pp .pp-top h1 em{color:#d8b46a!important;-webkit-text-fill-color:#d8b46a!important;background:none!important;font-style:normal}
+#v5PartView .pp .pp-top p{color:#a59d90!important}
+#v5PartView .pp .pp-goback{background:transparent!important;color:#f3ece0!important;border:1px solid rgba(216,180,106,.42)!important;box-shadow:none!important}
+#v5PartView .pp .pp-av{background:#2a251e!important;color:#f0d79b!important;border:1px solid rgba(216,180,106,.42)!important;box-shadow:none!important}
+/* hero stage */
+#v5PartView .pp .v3-stage,#v5PartView .pp .p7-hero{background:linear-gradient(270deg,rgba(14,12,9,.92),rgba(14,12,9,.55) 55%,rgba(14,12,9,.15)),url(img/landing-hero.jpg) left center/cover no-repeat!important;
+  border:1px solid rgba(216,180,106,.3)!important;box-shadow:none!important}
+#v5PartView .pp .v3-stage:before,#v5PartView .pp .p7-sky{display:none!important}
+#v5PartView .pp .v3-stage .v3-eyebrow,#v5PartView .pp .p7-k{color:#d8b46a!important}
+#v5PartView .pp .v3-stage :is(.v3-icon,.v3-art,[class*=icon]){background:linear-gradient(180deg,rgba(40,34,26,.9),rgba(14,12,10,.9))!important;border:1px solid rgba(216,180,106,.42)!important;box-shadow:0 10px 30px rgba(0,0,0,.4)!important;color:#d8b46a!important;animation:none!important}
+#v5PartView .pp .v3-stage :is(h1,h2){color:#f6eee0!important;-webkit-text-fill-color:#f6eee0!important;background:none!important;text-shadow:none!important}
+/* cards */
+#v5PartView .pp :is(.q-c,.q-k,.px-c,.panel,.p7-mini,.p7-prog,.k-form,.vx-ib-card){background:linear-gradient(180deg,rgba(25,22,18,.94),rgba(14,12,10,.94))!important;
+  border:1px solid rgba(216,180,106,.22)!important;box-shadow:none!important;backdrop-filter:none!important;border-radius:18px!important}
+#v5PartView .pp :is(.q-c,.q-k,.px-c,.panel) :is(h2,h3){color:#f3ece0!important;-webkit-text-fill-color:#f3ece0!important;background:none!important}
+#v5PartView .pp .q-k{background:linear-gradient(180deg,#f1e7d6,#e4d6bf)!important;border-color:#f6edda!important;color:#1b150d!important;box-shadow:0 10px 30px rgba(0,0,0,.35)!important}
+#v5PartView .pp .q-k *{color:#2d2416!important;-webkit-text-fill-color:#2d2416!important}
+#v5PartView .pp .q-k b,#v5PartView .pp .q-k strong{font-family:Georgia,"Times New Roman",serif;color:#1b150d!important;-webkit-text-fill-color:#1b150d!important}
+#v5PartView .pp .q-k svg path[fill]{fill:rgba(168,134,69,.18)!important}.pp .q-k svg path[stroke],.pp .q-k svg polyline{stroke:#a88645!important}
+#v5PartView .pp .q-k a{color:#7a5a22!important;-webkit-text-fill-color:#7a5a22!important}
+#v5PartView .pp .q-badge{background:radial-gradient(circle at 35% 30%,#f4dca3,#b98d48)!important;box-shadow:none!important;border:0!important}
+#v5PartView .pp .q-bar{background:rgba(216,180,106,.12)!important}.pp .q-bar i{background:linear-gradient(90deg,#a88645,#f0d79b)!important;box-shadow:none!important}
+#v5PartView .pp .q-pct b{color:#f0d79b!important;-webkit-text-fill-color:#f0d79b!important;background:none!important;text-shadow:none!important}
+/* buttons, tabs, inputs, tables */
+#v5PartView .pp :is(.q-btn,.px-btn,.btn.primary,.p7-tabs button.on,.k-tabs button.on){background:linear-gradient(180deg,#f0d394,#c89c55)!important;color:#1b140a!important;border:1px solid #e7c784!important;box-shadow:0 6px 24px rgba(216,180,106,.15)!important}
+#v5PartView .pp :is(.q-btn2,#v5PartView .px-btn2,#v5PartView .btn:not(.primary),.p7-tabs button,.k-tabs button){background:rgba(10,9,7,.55)!important;color:#f3ece0!important;border:1px solid rgba(216,180,106,.42)!important;box-shadow:none!important}
+#v5PartView .pp :is(input,textarea,select,.f){background:rgba(10,9,7,.6)!important;border:1px solid rgba(216,180,106,.3)!important;color:#f3ece0!important;box-shadow:none!important}
+#v5PartView .pp :is(input,textarea,select):focus{border-color:#d8b46a!important;outline:0}
+#v5PartView .pp :is(.q-tbl,.n-tbl,.p7-tbl,.tbl) th{background:rgba(216,180,106,.05)!important;color:#cfc6b6!important;border-color:rgba(216,180,106,.14)!important}
+#v5PartView .pp :is(.q-tbl,.n-tbl,.p7-tbl,.tbl) td{border-color:rgba(216,180,106,.08)!important}
+#v5PartView .pp :is(.q-tbl,.n-tbl,.p7-tbl,.tbl){background:transparent!important}
+#v5PartView .pp .q-mut,#v5PartView .pp .q-note{color:#a59d90!important}
+#v5PartView .pp .q-note{background:rgba(216,180,106,.06)!important;border-color:rgba(216,180,106,.25)!important}
+#v5PartView .pp .px-demo{border-color:#a88645!important;color:#f0d79b!important}
+#v5PartView .pp :is(.q-lvl,.q-lvl4>*,.px-lv>*,.p7-rk,.p7-rc){background:linear-gradient(180deg,rgba(25,22,18,.94),rgba(14,12,10,.94))!important;border-color:rgba(216,180,106,.3)!important;box-shadow:none!important}
+#v5PartView .pp :is(.q-lvl,.px-lv,.p7-rk) :is(b,strong){color:#f0d79b!important;-webkit-text-fill-color:#f0d79b!important;text-shadow:none!important}
+#v5PartView .pp a:not(.pp-it):not(.q-btn):not(.q-btn2):not(.pp-goback):not(.pp-back){color:#e7c784}
+#v5PartView .pp .pp-mnav{background:rgba(10,9,7,.96)!important;border-top:1px solid rgba(216,180,106,.2)!important}
+#v5PartView .pp .pp-mnav a.on{color:#d8b46a!important}
+#v5PartView .pp [style*="#a855f7"],#v5PartView .pp [style*="#8b5cf6"],#v5PartView .pp [style*="#c084fc"]{color:#d8b46a!important}
+
+#v5PartView .pp .pp-main{background:transparent!important;border:0!important;box-shadow:none!important}
+#v5PartView .pp #v5PartBody :is(.q-c,.px-c,.panel,.p7-mini,.p7-prog,.k-form,.vx-ib-card,.k-tabs){background:linear-gradient(180deg,rgba(25,22,18,.94),rgba(14,12,10,.94))!important;border:1px solid rgba(216,180,106,.22)!important;box-shadow:none!important}
+#v5PartView .pp #v5PartBody .q-k{background:linear-gradient(180deg,#f1e7d6,#e4d6bf)!important;border:1px solid #f6edda!important;box-shadow:0 10px 30px rgba(0,0,0,.35)!important}
+#v5PartView .pp #v5PartBody .q-k :is(span,small){color:#4a3d29!important;-webkit-text-fill-color:#4a3d29!important}
+#v5PartView .pp #v5PartBody .q-k b{color:#1b150d!important;-webkit-text-fill-color:#1b150d!important;font-family:Georgia,"Times New Roman",serif}
+#v5PartView .pp #v5PartBody .q-k svg stop{stop-color:#a88645!important}
+#v5PartView .pp #v5PartBody .q-k svg :is(path,polyline)[stroke]{stroke:#a88645!important}
+#v5PartView .pp #v5PartBody :is(.q-btn,.btn.primary){background:linear-gradient(180deg,#f0d394,#c89c55)!important;color:#1b140a!important;border-color:#e7c784!important}
+#v5PartView .pp #v5PartBody :is(input,textarea,select,.f){background:rgba(10,9,7,.6)!important;border-color:rgba(216,180,106,.3)!important;color:#f3ece0!important}
+#v5PartView .pp .pp-bg:after{left:auto;right:0;width:100%;opacity:.35}
+/* remaining purple/blue accents → gold */
+#v5PartView .pp #v5PartBody :is(.p-doc,.q-form,.p7-inp){background:rgba(10,9,7,.6)!important;border-color:rgba(216,180,106,.3)!important;color:#e9e0d1!important}
+#v5PartView .pp .px-logo{background:linear-gradient(180deg,#f0d394,#c89c55)!important;color:#1b140a!important;box-shadow:none!important;border:0!important}
+#v5PartView .pp #v5PartBody :is(.q-row,.q-row *,.q-s b,th){color:#e9e0d1!important;border-color:rgba(216,180,106,.14)!important}
+#v5PartView .pp #v5PartBody .q-row{background:rgba(10,9,7,.4)!important}
+#v5PartView .pp #v5PartBody :is(.a,span.a,div.a){background:radial-gradient(circle at 35% 30%,#f4dca3,#b98d48)!important;color:#1b140a!important;border-color:#a88645!important;box-shadow:none!important}
+#v5PartView .pp #v5PartBody tr[style]{background:rgba(216,180,106,.06)!important}
+#v5PartView .pp #v5PartBody [style*="#9856e0"]{border-color:rgba(216,180,106,.3)!important}
+#v5PartView .pp a.on,#v5PartView .pp .pp-mnav a.on{color:#d8b46a!important;border-color:#d8b46a!important}
+#v5PartView .pp .pp-it.on{color:#1b140a!important}
+#v5PartView .pp #v5PartBody :is(.q-tree,.p7-tree) *{border-color:rgba(216,180,106,.35)!important}
+#v5PartView .pp :is(.q-c,.panel,.px-c,.v3-stage,.q-k):is(:before,:after){background:linear-gradient(90deg,transparent,rgba(216,180,106,.55),transparent)!important;box-shadow:none!important}
+#v5PartView .pp #v5PartBody :is(h1,h2,h3) em{color:#d8b46a!important;-webkit-text-fill-color:#d8b46a!important;background:none!important}
+#v5PartView .pp #v5PartBody button:disabled{background:rgba(10,9,7,.55)!important;color:#8f877a!important;border:1px solid rgba(216,180,106,.25)!important}
+#v5PartView .pp #v5PartBody .q-bar{background:rgba(216,180,106,.12)!important}

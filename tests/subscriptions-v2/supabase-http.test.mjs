@@ -30,6 +30,12 @@ test('local Supabase HTTP: receipt upload, private object access, owner signed r
   const view = await send('view', owner);
   assert.equal(view.status, 200);
   const signed = new URL((await view.json()).url);
+  // Inside the local Docker stack SUPABASE_URL is the internal gateway (http://kong:8000),
+  // so signed URLs carry that host. Map only that exact internal origin to the isolated API;
+  // any other origin still fails. In production SUPABASE_URL is the public project URL.
+  if (signed.origin === 'http://kong:8000') {
+    signed.protocol = root.protocol; signed.host = root.host;
+  }
   assert.equal(signed.origin, root.origin);
   const direct = new URL(signed);
   assert.match(direct.pathname, /\/object\/sign\/vexora-v2-receipts\//);

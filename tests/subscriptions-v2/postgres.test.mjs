@@ -181,3 +181,19 @@ test('isolated receipt permissions and legacy cutover', { skip: process.env.VX_S
   assert.equal(await as(2, "select vx_sub_v2_has_legacy_grant('academy');"), 't');
   assert.equal(await as(3, "select not vx_sub_v2_has_legacy_grant('academy');"), 't');
 });
+
+
+test('isolated RPC enforcement and direct lesson RLS', { skip: process.env.VX_SUB_RUN_POSTGRES !== '1' }, async () => {
+  for (const file of ['enforcement-fixture.sql', '../../docs/security/subscriptions-v2/012-entitlement-enforcement.cutover.sql']) {
+    await sql(await readFile(new URL(file, import.meta.url), 'utf8'));
+  }
+  // User 2 has a legacy monthly grant and revoked V2. User 5 has neither.
+  assert.equal(await as(2, "select count(*) from public.lesson_bodies;"), '3');
+  assert.equal(await as(5, "select count(*) from public.lesson_bodies;"), '1');
+  await assert.rejects(as(5, "select public.lesson_body_tr('ar','paid-a');"), /Lesson entitlement required/);
+  await assert.rejects(as(2, "select public.ai_ask('fixture','{}','ar');"), /Active entitlement required/);
+  await assert.rejects(as(5, "select public.vx_marketing_items('fixture');"), /Active entitlement required/);
+  await assert.rejects(as(5, "select vx_sub_v2.ai_ask('fixture','{}','ar');"), /permission denied/);
+  assert.equal(await as(3, "select public.ai_ask('fixture','{}','ar');"), '42');
+  assert.equal(await as(3, "select public.vx_marketing_items('fixture');"), '"fixture"');
+});

@@ -34,12 +34,13 @@ const bind = (n, order) => as(1, `select vx_sub_v2_bind_receipt('${id(n)}','${or
 const approve = (order, key, cents, actor = 1) => as(actor,
   `select * from vx_sub_v2_approve('${order}','bank:fixture:${key}',${cents},'USD');`);
 
-test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent settlement', async () => {
+test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent settlement', { skip: process.env.VX_SUB_RUN_POSTGRES !== '1' }, async () => {
   assert.match(port || '', /^56[0-9]{3}$/, 'Use a freshly initialized local test cluster on port 56xxx');
   const marker = await sql("select current_database(),current_user, current_setting('cluster_name'), count(*) from pg_namespace where nspname='vx_sub_v2';");
   assert.equal(marker, 'vx_sub_test|vx_test_admin|vexora-subscriptions-fixture|0');
   for (const file of ['bootstrap.sql', '../../docs/security/subscriptions-v2/001-core.review.sql',
-    '../../docs/security/subscriptions-v2/002-review-and-provider-work.review.sql', '../../docs/security/subscriptions-v2/003-feature-access.review.sql', 'fixtures.sql']) {
+    '../../docs/security/subscriptions-v2/002-review-and-provider-work.review.sql', '../../docs/security/subscriptions-v2/003-feature-access.review.sql', '../../docs/security/subscriptions-v2/004-legacy-clearance.review.sql',
+    '../../docs/security/subscriptions-v2/005-shared-settlement.review.sql', 'fixtures.sql']) {
     await sql(await readFile(new URL(file, import.meta.url), 'utf8'));
   }
   const order = await request(2, 20);
@@ -53,6 +54,16 @@ test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent s
   await assert.rejects(bind(3, order), /Pending order unavailable/);
   await bind(2, order);
   await assert.rejects(approve(order, 'first', 10000), /does not match/);
+  await assert.rejects(approve(order, 'first', 30000), /Owner activation clearance required/);
+  const clear = (actor, target, expiry) => as(actor,
+    `select vx_sub_v2_clear_activation('${id(target)}',${expiry},'fixture');`);
+  await assert.rejects(clear(2, 2, 'null'), /Owner approval required/);
+  await assert.rejects(clear(1, 2, "now()+interval '1 day'"), /Legacy term must finish/);
+  await clear(1, 2, "now()-interval '1 day'");
+  await clear(1, 3, 'null');
+  await clear(1, 4, 'null');
+  assert.equal(await as(3, 'begin; reset role; grant usage on schema vx_sub_v2 to authenticated; grant select on vx_sub_v2.orders to authenticated; set role authenticated; select count(*) from vx_sub_v2.orders; rollback;'), '0');
+  await assert.rejects(as(2, "select vx_sub_v2.claim_legacy_payment('bank:fixture:unauthorized','fixture');"), /permission denied/);
   const [first, duplicate] = await Promise.all([approve(order, 'first', 30000), approve(order, 'first', 30000)]);
   assert.equal(first, duplicate);
   assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'active|{academy,vip,indicators,marketing,ai,extras}');
@@ -96,6 +107,15 @@ test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent s
   assert.equal(await as(3, 'select state,features from vx_sub_v2_my_status();'), 'active|{academy,vip,indicators,marketing,ai,extras}');
   assert.equal(await as(4, 'select count(*) from vx_sub_v2_my_status();'), '0');
   assert.equal(await sql("select count(*) from vx_sub_v2.settlements where payment_key='bank:fixture:shared';"), '1');
+
+  await assert.rejects(sql("select vx_sub_v2.claim_legacy_payment('bank:fixture:shared','fixture');"), /duplicate key/);
+  const legacyWinner = sql("begin; select vx_sub_v2.claim_legacy_payment('bank:fixture:legacy_race','fixture'); select pg_sleep(5); commit;");
+  await awaitBackend("wait_event='PgSleep'");
+  const v2Loser = assert.rejects(approve(partners[1], 'legacy_race', 30000), /duplicate key/);
+  await awaitBackend("wait_event_type='Lock' and wait_event='transactionid'");
+  await Promise.all([legacyWinner, v2Loser]);
+  assert.equal(await sql("select source from vx_sub_v2.payment_claims where payment_key='bank:fixture:legacy_race';"), 'legacy');
+  assert.equal(await as(4, 'select count(*) from vx_sub_v2_my_status();'), '0');
 
   await as(1, `select vx_sub_v2_revoke('${id(2)}','fixture');`);
   assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'revoked|{}');

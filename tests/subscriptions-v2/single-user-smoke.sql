@@ -33,6 +33,7 @@ select public.vx_sub_v2_bind_receipt(
 reset role;
 set role authenticated;
 set request.jwt.claim.sub='00000000-0000-4000-8000-000000000001';
+select public.vx_sub_v2_clear_activation('00000000-0000-4000-8000-000000000002',null,'fixture');
 select * from public.vx_sub_v2_approve(current_setting('vx.test.order')::uuid,'bank:fixture:reference',30000,'USD');
 
 do $$

@@ -17,6 +17,8 @@ migration_files = [
     review / "001-core.review.sql",
     review / "002-review-and-provider-work.review.sql",
     review / "003-feature-access.review.sql",
+    review / "004-legacy-clearance.review.sql",
+    review / "005-shared-settlement.review.sql",
     test / "fixtures.sql",
 ]
 blocks = [re.sub(r"(?m)^[ \t]*\n", "", path.read_text(encoding="utf-8"))

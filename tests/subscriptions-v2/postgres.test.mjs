@@ -1,0 +1,105 @@
+import assert from 'node:assert/strict';
+import { spawn } from 'node:child_process';
+import { readFile } from 'node:fs/promises';
+import { test } from 'node:test';
+
+const id = n => '00000000-0000-4000-8000-' + String(n).padStart(12, '0');
+const port = process.env.VX_SUB_TEST_PORT;
+const user = 'vx_test_admin';
+const database = 'vx_sub_test';
+
+function sql(input) {
+  return new Promise((resolve, reject) => {
+    const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^PG/i.test(key)));
+    const child = spawn(process.env.VX_SUB_TEST_PSQL || 'psql', [
+      '-X', '-h', process.env.VX_SUB_TEST_SOCKET || '127.0.0.1', '-p', port, '-U', user, '-d', database,
+      '-A', '-t', '-q', '-v', 'ON_ERROR_STOP=1'
+    ], { env, windowsHide: true });
+    let output = '';
+    let errors = '';
+    child.stdout.on('data', value => { output += value; });
+    child.stderr.on('data', value => { errors += value; });
+    child.on('error', reject);
+    child.stdin.on('error', reject);
+    child.on('close', code => code === 0 ? resolve(output.trim()) : reject(new Error(errors)));
+    child.stdin.end(input);
+  });
+}
+
+const as = (n, statement, role = 'authenticated') =>
+  sql(`set role ${role}; set request.jwt.claim.sub='${id(n)}'; ${statement}`);
+const request = (n, token) => as(n, `select order_id from vx_sub_v2_request('${id(token)}','${id(n === 3 ? 11 : 10)}');`);
+const bind = (n, order) => as(1, `select vx_sub_v2_bind_receipt('${id(n)}','${order}',
+  '${id(n)}/${order}/${id(99)}.png');`, 'service_role');
+const approve = (order, key, cents, actor = 1) => as(actor,
+  `select * from vx_sub_v2_approve('${order}','bank:fixture:${key}',${cents},'USD');`);
+
+test('isolated PostgreSQL lifecycle, role checks, provider work and concurrent settlement', async () => {
+  assert.match(port || '', /^56[0-9]{3}$/, 'Use a freshly initialized local test cluster on port 56xxx');
+  const marker = await sql("select current_database(),current_user, current_setting('cluster_name'), count(*) from pg_namespace where nspname='vx_sub_v2';");
+  assert.equal(marker, 'vx_sub_test|vx_test_admin|vexora-subscriptions-fixture|0');
+  for (const file of ['bootstrap.sql', '../../docs/security/subscriptions-v2/001-core.review.sql',
+    '../../docs/security/subscriptions-v2/002-review-and-provider-work.review.sql', 'fixtures.sql']) {
+    await sql(await readFile(new URL(file, import.meta.url), 'utf8'));
+  }
+  const order = await request(2, 20);
+  assert.equal(await request(2, 20), order);
+  assert.equal(await as(3, 'select count(*) from vx_sub_v2_my_orders();'), '0');
+  await assert.rejects(as(2, 'select * from vx_sub_v2_owner_review();'), /Owner approval required/);
+  await assert.rejects(as(2, 'select * from vx_sub_v2.orders;'), /permission denied/);
+  await assert.rejects(as(2, 'select * from vx_sub_v2_my_orders();', 'anon'), /permission denied/);
+  await assert.rejects(approve(order, 'first', 30000, 2), /Owner approval required/);
+  await assert.rejects(approve(order, 'first', 30000), /receipt binding/);
+  await assert.rejects(bind(3, order), /Pending order unavailable/);
+  await bind(2, order);
+  await assert.rejects(approve(order, 'first', 10000), /does not match/);
+  const [first, duplicate] = await Promise.all([approve(order, 'first', 30000), approve(order, 'first', 30000)]);
+  assert.equal(first, duplicate);
+  assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'active|{academy,vip,indicators}');
+  assert.equal(await as(1, `select receipt_ready from vx_sub_v2_owner_review() where order_id='${order}';`), 't');
+  assert.equal(await as(1, 'select count(*) from vx_sub_v2_provider_work() where desired_access;'), '2');
+
+  const early = await request(2, 21);
+  await bind(2, early);
+  const renewed = await approve(early, 'early', 10000);
+  assert.equal(renewed.split('|')[0], first.split('|')[1]);
+  await sql(`update vx_sub_v2.subscriptions set starts_at=now()-interval '2 months',
+    expires_at=now()-interval '1 month' where user_id='${id(2)}';`);
+  assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'expired|{}');
+  const late = await request(2, 22);
+  await bind(2, late);
+  await approve(late, 'late', 10000);
+  assert.equal(await sql(`select coverage_start=approved_at from vx_sub_v2.settlements where order_id='${late}';`), 't');
+
+  const partners = await Promise.all([request(3, 30), request(4, 40)]);
+  await Promise.all(partners.map((item, index) => bind(index + 3, item)));
+  // Hold the first settlement uncommitted, then observe the second backend
+  // waiting on its transaction before requiring the unique constraint error.
+  const winner = as(1, `begin; select * from vx_sub_v2_approve('${partners[0]}',
+    'bank:fixture:shared',30000,'USD'); select pg_sleep(5); commit;`);
+  async function awaitBackend(predicate) {
+    for (let attempt = 0; attempt < 20; attempt++) {
+      if (await sql(`select exists(select from pg_stat_activity where pid<>pg_backend_pid()
+        and datname=current_database() and ${predicate});`) === 't') return;
+      await new Promise(resolve => setTimeout(resolve, 75));
+    }
+    assert.fail('Expected a concurrent backend wait');
+  }
+  await awaitBackend("wait_event='PgSleep'");
+  const loser = assert.rejects(approve(partners[1], 'shared', 30000), /duplicate key/);
+  await awaitBackend("wait_event_type='Lock' and wait_event='transactionid'");
+  await Promise.all([winner, loser]);
+  assert.equal(await as(3, 'select state,features from vx_sub_v2_my_status();'), 'active|{marketing,ai}');
+  assert.equal(await as(4, 'select count(*) from vx_sub_v2_my_status();'), '0');
+  assert.equal(await sql("select count(*) from vx_sub_v2.settlements where payment_key='bank:fixture:shared';"), '1');
+
+  await as(1, `select vx_sub_v2_revoke('${id(2)}','fixture');`);
+  assert.equal(await as(2, 'select state,features from vx_sub_v2_my_status();'), 'revoked|{}');
+  const recordResult = (success, observed, error) => as(1,
+    `select vx_sub_v2_provider_result(user_id,revision,due_at,provider,${success},${observed},${error})
+      from vx_sub_v2_provider_work() where user_id='${id(2)}' and provider='telegram' and not desired_access;`);
+  assert.equal(await recordResult(false, 'null', "'fixture_failure'"), 'failed');
+  assert.equal(await recordResult(true, false, 'null'), 'succeeded');
+  assert.equal(await sql('select count(*) from vx_sub_v2.provider_attempts;'), '2');
+  assert.equal(await sql('select access_active from public.legacy_payment_fixture where id=1;'), 't');
+});

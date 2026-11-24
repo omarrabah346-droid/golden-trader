@@ -119,7 +119,7 @@ body > header.top .brand b{font-size:22px}
 .vxs-trust h2{text-align:center;color:#f3ece0;font-size:28px;margin:0 0 22px}
 .vxs-trust h2 em{font-style:normal;color:#d8b46a}
 .vxs-why{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:48px}
-.vxs-why a{display:grid;gap:8px;padding:20px 18px;border-radius:14px;border:1px solid rgba(216,180,106,.22);background:linear-gradient(180deg,#1a1712,#110f0c);text-decoration:none;text-align:right}
+.vxs-why a{display:grid;gap:8px;padding:20px 18px;border-radius:14px;border:1px solid rgba(216,180,106,.22);background:linear-gradient(180deg,#1a1712,#110f0c);text-decoration:none;text-align:start}
 .vxs-why a:hover{border-color:rgba(216,180,106,.55)}
 .vxs-why .vxs-nav{width:30px;height:30px;stroke:url(#vxsGold);fill:none;stroke-width:1.5}
 .vxs-why b{color:#f3ece0;font-size:16.5px}
@@ -138,3 +138,6 @@ body > header.top .brand b{font-size:22px}
 @media (max-width:560px){.vxs-cta .vxs-play{flex-basis:100%;order:3}.vxs-cta a{white-space:nowrap}.vxs-foot{padding-bottom:96px}}
 /* 24-11: زر اللغة كان ينقص برّا الشاشة بالموبايل للزائر */
 @media (max-width:430px){body>header.top .wrap{gap:8px;flex-wrap:nowrap}body>header.top .brand>div{display:none}body>header.top #who{display:flex;gap:6px}body>header.top #who .btn{white-space:nowrap}}
+
+/* 24-11: اللغات من اليسار لليمين */
+html[dir=ltr] .vxs-cta svg,html[dir=ltr] .vxs-btn svg,html[dir=ltr] .vxs-btn2 svg{transform:scaleX(-1)}

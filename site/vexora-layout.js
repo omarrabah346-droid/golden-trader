@@ -53,10 +53,14 @@ function home(){
     overrides:{"paneProperties.background":"#14120f","paneProperties.backgroundType":"solid","mainSeriesProperties.candleStyle.upColor":"#e7c784","mainSeriesProperties.candleStyle.downColor":"#6b5a3a","mainSeriesProperties.candleStyle.borderUpColor":"#e7c784","mainSeriesProperties.candleStyle.borderDownColor":"#8a7650","mainSeriesProperties.candleStyle.wickUpColor":"#e7c784","mainSeriesProperties.candleStyle.wickDownColor":"#8a7650"}})}catch(e){}})
   .catch(()=>{const t=document.getElementById("vxsTV");if(t)t.innerHTML=`<div class="vxs-empty">ما گدرنا نحمّل الشارت. تأكد من الإنترنت.</div>`});
 }
+const HERO={en:'<h1><em>Professional</em> analysis,<br>complete education<br>and advanced trading tools</h1>',
+  fr:'<h1>Analyse <em>professionnelle</em>,<br>formation complète<br>et outils de trading avancés</h1>',
+  de:'<h1><em>Professionelle</em> Analyse,<br>umfassende Ausbildung<br>und fortschrittliche Trading-Tools</h1>'};
+const WHY={en:'<h2>Why <em>Vexora</em>?</h2>',fr:'<h2>Pourquoi <em>Vexora</em> ?</h2>',de:'<h2>Warum <em>Vexora</em>?</h2>'};
 function landing(){
   const g=document.getElementById("gate");if(!g||g.querySelector(".vxs-land"))return;
   const d=document.createElement("section");d.className="vxs-land";
-  d.innerHTML=`<div class="vxs-hero"><div class="vxs-hero-tx"><small>منصة فيكسورا للتداول والتحليل</small><h1>تحليل <em>احترافي</em><span class="vxs-sep"> · </span><br class="vxs-mbr">تعليم متكامل<br>وأدوات تداول متقدمة</h1>
+  d.innerHTML=`<div class="vxs-hero"><div class="vxs-hero-tx"><small>منصة فيكسورا للتداول والتحليل</small>${HERO[window.LANG]||`<h1>تحليل <em>احترافي</em><span class="vxs-sep"> · </span><br class="vxs-mbr">تعليم متكامل<br>وأدوات تداول متقدمة</h1>`}
     <p>بيئة متكاملة تجمع بين التحليل الدقيق، التوصيات، ناسخ الصفقات، والأكاديمية لتطوير مهاراتك في التداول.</p>
     <div class="vxs-cta"><a class="vxs-btn" href="#signup">انضم الآن ${I("arrowL")}</a><a class="vxs-btn2" href="index.html#join">${I("arrowR")} كيف تنضم</a><button type="button" class="vxs-btn2 vxs-play" data-vxi="join">▶ شاهد فيديو الانضمام</button></div></div></div>
     <div class="vxs-svc">${TOOLS.map(([hr,i,t,s])=>`<a href="${hr}">${I(i)}<b>${t}</b><span>${s}</span></a>`).join("")}</div>
@@ -72,14 +76,14 @@ function trust(g){
     ["target","أسباب واضحة لكل صفقة","منطقة الدخول ووقف الخسارة والأهداف مع سبب الدخول.","app.html#trades"]];
   const S=[["افتح حسابك مع INFINOX","الوصول للمنصة متاح لعملاء الوسيط الشريك."],["أكمل ملفك الشخصي","سجّل بالموقع وأدخل رقم حسابك."],["التفعيل من الإدارة","تتم مراجعة الطلب وتفعيل حسابك."]];
   const t=document.createElement("section");t.className="vxs-trust";t.setAttribute("aria-label","لماذا فيكسورا");
-  t.innerHTML=`<h2>لماذا <em>فيكسورا</em>؟</h2>
+  t.innerHTML=`${WHY[window.LANG]||"<h2>لماذا <em>فيكسورا</em>؟</h2>"}
     <div class="vxs-why">${W.map(([i,h,p,u])=>`<a href="${u}">${I(i)}<b>${h}</b><span>${p}</span></a>`).join("")}</div>
     <h2>ثلاث خطوات للانضمام</h2>
     <ol class="vxs-steps">${S.map(([h,p],n)=>`<li><i>${n+1}</i><b>${h}</b><span>${p}</span></li>`).join("")}</ol>`;
   const f=document.createElement("footer");f.className="vxs-foot";
   f.innerHTML=`<div class="vxs-fl"><a href="index.html">الأكاديمية</a><a href="learn-trading.html">تعلّم التداول</a><a href="free-tools.html">حاسبة نقطة التعادل</a><a href="partners.html">برنامج الشركاء</a><a href="privacy.html">سياسة الخصوصية</a><a href="terms.html">شروط الاستخدام</a><a href="https://t.me/omo_rabah" target="_blank" rel="noopener">الدعم عبر تيليجرام</a></div>
     <p>التداول بالعملات والذهب والعملات الرقمية ينطوي على مخاطر عالية وقد يؤدي إلى خسارة رأس المال. المحتوى تعليمي ولا يُعدّ نصيحة استثمارية، والنتائج السابقة لا تضمن النتائج المستقبلية.</p>
-    <p>© ${new Date().getFullYear()} فيكسورا للتجارة العامة ذ.م.م · أبوظبي، الإمارات العربية المتحدة</p>`;
+    <p>© ${new Date().getFullYear()} <span>فيكسورا للتجارة العامة ذ.م.م · أبوظبي، الإمارات العربية المتحدة</span></p>`;
   g.append(t,f);
 }
 function run(){try{nav();globe();mark();landing();if(sec()===""||sec()==="home")home()}catch(e){}}

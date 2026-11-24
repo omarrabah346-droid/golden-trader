@@ -136,3 +136,5 @@ body > header.top .brand b{font-size:22px}
 @media (max-width:900px){.vxs-why{grid-template-columns:repeat(2,1fr)}.vxs-steps{grid-template-columns:1fr}}
 @media (max-width:480px){.vxs-why{grid-template-columns:1fr}.vxs-trust h2{font-size:23px}}
 @media (max-width:560px){.vxs-cta .vxs-play{flex-basis:100%;order:3}.vxs-cta a{white-space:nowrap}.vxs-foot{padding-bottom:96px}}
+/* 24-11: زر اللغة كان ينقص برّا الشاشة بالموبايل للزائر */
+@media (max-width:430px){body>header.top .wrap{gap:8px;flex-wrap:nowrap}body>header.top .brand>div{display:none}body>header.top #who{display:flex;gap:6px}body>header.top #who .btn{white-space:nowrap}}

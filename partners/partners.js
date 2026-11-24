@@ -9,7 +9,8 @@ const num=v=>Number(v||0);
 const money=v=>"$ "+num(v).toLocaleString("en-US",{minimumFractionDigits:num(v)%1?2:0,maximumFractionDigits:2});
 const money2=v=>"$ "+num(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2});
 const intf=v=>num(v).toLocaleString("en-US");
-const dAr=d=>{try{return new Date(d).toLocaleDateString("ar-IQ-u-nu-latn",{day:"numeric",month:"long",year:"numeric"})}catch(e){return ""}};
+const dAr=d=>{try{return new Date(d).toLocaleDateString(window.VXP_LOCALE||"ar-IQ-u-nu-latn",{day:"numeric",month:"long",year:"numeric"})}catch(e){return ""}};
+const langSel=()=>`<label class="lang">${ic("globe")}<select aria-label="Language" onchange="VXP_setLang(this.value)">${[["ar","العربية"],["en","English"],["fr","Français"],["de","Deutsch"]].map(([k,t])=>`<option value="${k}"${(window.VXP_LANG||"ar")===k?" selected":""}>${t}</option>`).join("")}</select></label>`;
 const toast=m=>{const t=document.createElement("div");t.className="toast";t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),3200)};
 const STATUS={APPROVED:["نشط","ok"],PENDING:["قيد المراجعة","wait"],UNDER_REVIEW:["قيد المراجعة","wait"],REJECTED:["مرفوض","bad"],SUSPENDED:["موقوف مؤقتاً","bad"],
   requested:["قيد المراجعة","wait"],approved:["معتمد","wait"],paid:["تمت الموافقة","ok"],rejected:["مرفوض","bad"],
@@ -79,7 +80,9 @@ DEMO.portal={me:null,min_payout:"50",levels:DEMO.dash6.levels,contracts:[{id:1,p
 
 /* ---------------- shared pieces ---------------- */
 function sideNav(items,active,extra=""){
+  if(items===P_ITEMS&&isOwner())items=items.concat([["owner","shield","إدارة الشركاء (المالك)"]]);
   return`<aside class="side"><a class="wm" href="partners.html#join" style="background:none;height:auto;padding:0">VEXORA</a>
+  <a href="${CFG.APP}" class="back">${ic("arrow")}<span>رجوع لمنصة فيكسورا</span></a>
   ${items.map(([h,n,t,b])=>`<a href="${h.includes(".html")?h:"#"+h}" class="${h===active?"on":""}">${ic(n)}<span>${t}</span>${b?`<span class="badge">${b}</span>`:""}</a>`).join("")}${extra}</aside>`;
 }
 function areaChart(series,opts={}){
@@ -102,7 +105,7 @@ function areaChart(series,opts={}){
   return`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(opts.label||"رسم بياني")}">${g}${body}${labs}</svg>`;
 }
 const lastDays=(rows,days,key="at",val=r=>1)=>{const m=new Map();for(let i=days-1;i>=0;i--)m.set(day(i),0);rows.forEach(r=>{const d=String(r[key]||"").slice(0,10);if(m.has(d))m.set(d,m.get(d)+val(r))});
-  return[...m].map(([d,v])=>({d,v,l:new Date(d).toLocaleDateString("ar-IQ-u-nu-latn",{day:"numeric",month:"long"})}))};
+  return[...m].map(([d,v])=>({d,v,l:new Date(d).toLocaleDateString(window.VXP_LOCALE||"ar-IQ-u-nu-latn",{day:"numeric",month:"long"})}))};
 
 /* ---------------- 1) landing ---------------- */
 async function landing(){
@@ -114,7 +117,7 @@ async function landing(){
   $("#app").innerHTML=`
   <header class="lnav"><a class="wm" href="index.html">VEXORA</a>
     <nav><a href="index.html">الرئيسية</a><a href="academy.html">الأكاديمية</a><a href="${CFG.APP}#indicators">المؤشرات</a><a href="${CFG.APP}#ai">الذكاء الاصطناعي</a><a href="${CFG.APP}#marketing">مركز التسويق</a><a class="on" href="#join">برنامج الشركاء</a></nav>
-    <div class="acts"><a class="btn" href="${CFG.APP}#login">تسجيل الدخول</a><a class="btn gold" href="#apply">قدم طلب الشراكة</a></div></header>
+    <div class="acts">${langSel()}<a class="btn" href="${CFG.APP}#login">تسجيل الدخول</a><a class="btn gold" href="#apply">قدم طلب الشراكة</a></div></header>
   <section class="hero"><div class="in">${status}
     <h1>كن شريكاً في نجاح فيكسورا</h1>
     <p>انضم إلى برنامج الشركاء وحقق دخلاً مستمراً من خلال ترشيح المتداولين والمهتمين إلى منظومة <span class="ltr">VEXORA</span> المتكاملة.</p>
@@ -175,7 +178,7 @@ async function partnerPage(sub){
   const lastPay=(d.payouts||[])[0];
   const avail=num(s.approved);
   $("#app").innerHTML=`<div class="shell">${sideNav(P_ITEMS,sub?"partner/"+sub:"partner",`<div class="gift">${ic("gift")}<b>مكافآت الشركاء</b><span>عروض وحوافز خاصة للشركاء المميزين</span></div>`)}
-  <main class="main"><div class="top"><div class="who"><span class="av">${ic("user")}</span>${esc(d.name||"شريك")} ${ic("crown","gold-ic")}</div><span class="bell">${ic("bell")}</span><span class="lang">${ic("globe")} العربية ${ic("chev")}</span></div>
+  <main class="main"><div class="top">${langSel()}<a class="btn sm" href="${CFG.APP}">${ic("home")} منصة فيكسورا</a><div class="who"><span class="av">${ic("user")}</span>${esc(d.name||"شريك")} ${ic("crown","gold-ic")}</div></div>
   <section class="phero"><div class="ptitle"><span class="tag">${ic("crown","gold-ic")} ${esc((d.level&&d.level.name)||"شريك معتمد")}</span>
     <h1>مرحباً بك في برنامج شركاء <span class="wm">VEXORA</span></h1><p>لوحة شريكك لمتابعة الأداء، العملاء، العمولات، وسحب الأرباح.</p></div>
     <div class="kpis">
@@ -202,20 +205,85 @@ async function partnerPage(sub){
       <div class="tools"><a href="${CFG.APP}#marketing">${ic("doc")}نصوص جاهزة</a><a href="${CFG.APP}#marketing">${ic("image")}تصاميم سوشيال</a><a href="${CFG.APP}#marketing">${ic("play2")}فيديوهات ترويجية</a></div>
       <a class="btn wide-btn" href="${CFG.APP}#marketing">${ic("download")} تحميل حزمة المواد كاملة</a></article>
   </div></main></div>`;
-  $("#cp").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(ref).then(()=>toast("انتسخ الرابط"),()=>{})};
-  $("#pay").onclick=async()=>{
+  if(sub){
+    const main=document.querySelector(".main"),top=main.querySelector(".top").outerHTML,grab=id=>{const e=document.getElementById(id);return e?e.outerHTML:""};
+    const head=(t,p)=>`<section class="phero sm"><div class="ptitle"><span class="tag">${ic("crown","gold-ic")} ${esc((d.level&&d.level.name)||"شريك معتمد")}</span><h1>${t}</h1><p>${p}</p></div></section>`;
+    const K=(...x)=>`<div class="kpis">${x.join("")}</div>`;
+    const kp=(i,t,v,sm)=>`<div class="kpi"><div class="h">${ic(i)}${t}</div><strong>${v}</strong><small>${sm||""}</small></div>`;
+    const CST={PENDING:"بانتظار التحقق",VERIFIED:"قيد المراجعة",APPROVED:"معتمدة",PAID:"مدفوعة",REVERSED:"ملغاة"};
+    let body="";
+    if(sub==="link")body=head("رابط الإحالة","شارك رابطك، وكل اشتراك مؤكد من خلاله ينحسب إلك.")+K(kp("link","زيارات آخر 30 يوم",intf(d.visits30),vChange==null?"":`<b>${vChange>0?"+":""}${vChange}%</b>عن الشهر السابق`),kp("users","سجلوا من رابطك",intf(d.referred),`<b>+${intf(d.referred30)}</b>آخر 30 يوم`),kp("check","اشتراكات مؤكدة",intf(d.sales),"عبر رابطك"),kp("bars","كود الشريك",esc(d.code||"—"),"يظهر بآخر الرابط"))
+      +`<div class="dgrid dg1"><article class="card"><h3>${ic("chartup")} زيارات الرابط</h3><div class="chart">${areaChart([{pts:visits,c:"#e9cc8c",area:true,dots:true}],{label:"زيارات الرابط"})}</div></article>${grab("link")}</div>`;
+    else if(sub==="clients")body=head("العملاء المحالون","العملاء اللي سجلوا من رابطك، وحالة اشتراكاتهم.")+K(kp("users","إجمالي المحالين",intf(d.referred),""),kp("useradd","جدد آخر 30 يوم",intf(d.referred30),""),kp("check","اشتراكات مؤكدة",intf(d.sales),""),kp("chartup","نسبة التحويل",num(d.referred)?Math.round(num(d.sales)/num(d.referred)*100)+"%":"—","من التسجيل للاشتراك"))
+      +`<div style="margin-top:18px">${grab("clients")}</div>`;
+    else if(sub==="payouts")body=head("العمولات والسحب","سجل مالي موثّق، والسحب باعتماد الإدارة.")+K(kp("clock","قيد المراجعة",money2(s.pending),""),kp("check","معتمدة وجاهزة",money2(s.approved),""),kp("wallet","بطلب سحب",money2(s.in_payout),""),kp("coins","مدفوعة",money2(s.paid),""))
+      +`<div class="dgrid dg1"><article class="card"><h3>${ic("coins")} سجل العمولات</h3><div class="tblw"><table class="tbl"><thead><tr><th>التاريخ</th><th>المنتج</th><th>البيع</th><th>العمولة</th><th>الحالة</th></tr></thead><tbody>${ledger.length?ledger.map(c=>`<tr><td>${dAr(c.at)}</td><td>${esc(c.product||c.kind||"—")}</td><td class="ltr">${c.amount!=null?money2(c.amount):"—"}</td><td class="ltr">${money2(c.commission)}</td><td><span class="pill ${c.status==="PAID"||c.status==="APPROVED"?"ok":c.status==="REVERSED"?"bad":"wait"}">${CST[c.status]||esc(c.status)}</span></td></tr>`).join(""):`<tr><td colspan="5" class="empty">ماكو عمولات بعد</td></tr>`}</tbody></table></div></article>${grab("payouts")}</div>
+      <article class="card" style="margin-top:18px"><h3>${ic("wallet")} طلبات السحب السابقة</h3><div class="tblw"><table class="tbl"><thead><tr><th>#</th><th>المبلغ</th><th>الطريقة</th><th>التاريخ</th><th>الحالة</th><th>المرجع</th></tr></thead><tbody>${(d.payouts||[]).length?d.payouts.map(x=>`<tr><td>${x.id}</td><td class="ltr">${money2(x.amount)}</td><td>${esc(x.method||"—")}</td><td>${dAr(x.created_at)}</td><td>${pill(x.status)}</td><td class="ltr">${esc(x.paid_ref||"—")}</td></tr>`).join(""):`<tr><td colspan="6" class="empty">ماكو طلبات سحب</td></tr>`}</tbody></table></div></article>`;
+    else if(sub==="tools"){const S=d.assets||[];body=head("أدوات التسويق","مواد جاهزة من الإدارة، ومركز التسويق بالذكاء الاصطناعي.")+`<div class="dgrid dg1">${grab("tools")}<article class="card"><h3>${ic("image")} مواد من الإدارة</h3>${S.length?`<div class="tools" style="grid-template-columns:repeat(2,1fr)">${S.map(a=>`<a href="${esc(a.url)}" target="_blank" rel="noopener">${ic(a.kind==="video"?"play2":a.kind==="text"?"doc":"image")}${esc(a.title)}</a>`).join("")}</div>`:`<div class="empty">الإدارة ما نزّلت مواد بعد</div>`}</article></div>`}
+    if(body)main.innerHTML=top+body;
+  }
+  if($("#cp"))$("#cp").onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(ref).then(()=>toast("انتسخ الرابط"),()=>{})};
+  if($("#pay"))$("#pay").onclick=async()=>{
     if(avail<=0)return toast("ماكو رصيد معتمد للسحب حالياً");
     const meth=prompt("طريقة الاستلام (مثلاً: تحويل بنكي، USDT):");if(!meth)return;
     const det=prompt("تفاصيل الاستلام:");if(!det)return;
     try{await API.payoutReq(meth,det);toast("انرسل طلب السحب للإدارة");partnerPage(sub)}catch(e){toast(String(e.message||e).split(":").pop())}
   };
-  if(sub){const el=document.getElementById(sub);if(el)el.scrollIntoView({behavior:"smooth",block:"start"})}
 }
 
 /* ---------------- 3) owner management ---------------- */
 let ADM=null;
 const O_ITEMS=()=>{const p=(ADM&&ADM.partners)||[];const pend=p.filter(x=>x.status==="PENDING"||x.status==="UNDER_REVIEW").length;const pay=((ADM&&ADM.payouts)||[]).filter(x=>x.status==="requested").length;
-  return[["owner/home","home","لوحة التحكم"],["owner","users","إدارة الشركاء"],["owner/requests","clip","طلبات الانضمام",pend||""],["owner/list","users","قائمة الشركاء"],["owner/rules","coins","إعدادات العمولات"],["owner/clients","user","العملاء المحالون"],["owner/verify","card","التحقق من المدفوعات"],["owner/payouts","upload","مراجعة طلبات السحب",pay||""],["owner/log","list","سجل العمليات"],["reports","bars","التقارير والإحصائيات"],["owner/roles","shield","الصلاحيات والأدوار"],[A("admin/partners"),"gear","إعدادات البرنامج"]]};
+  const cm=((ADM&&ADM.comms)||[]).filter(c=>c.status==="PENDING"||c.status==="VERIFIED").length,ib=((ADM&&ADM.ib)||[]).filter(x=>["SUBMITTED","VEXORA_REVIEW"].includes(x.status)).length,tk=((ADM&&ADM.tickets)||[]).filter(t=>t.status==="open").length;
+  return[["owner","home","نظرة عامة"],["owner/requests","clip","طلبات الانضمام",pend||""],["owner/list","users","الشركاء"],["owner/comms","coins","العمولات",cm||""],["owner/payouts","upload","السحوبات",pay||""],["owner/levels","crown","الرتب والنسب"],["owner/rewards","gift","الحوافز والهدايا"],["owner/contracts","doc","العقود"],["owner/ib","bank","طلبات IB",ib||""],["owner/support","headset","رسائل الشركاء",tk||""],["owner/assets","image","المواد التسويقية"],["owner/report","bars","التقرير الشهري"],["owner/log","list","سجل العمليات"],["owner/settings","gear","إعدادات البرنامج"],["partner","arrow","واجهة الشريك"]]};
+const OT={"":"إدارة الشركاء",requests:"طلبات الانضمام",list:"الشركاء",comms:"العمولات",payouts:"السحوبات",levels:"الرتب والنسب",rewards:"الحوافز والهدايا",contracts:"العقود",ib:"طلبات IB",support:"رسائل الشركاء",assets:"المواد التسويقية",report:"التقرير الشهري",log:"سجل العمليات",settings:"إعدادات البرنامج"};
+const CMS={PENDING:"بانتظار التحقق",VERIFIED:"متحقق منها",APPROVED:"معتمدة",PAID:"مدفوعة",REVERSED:"ملغاة"};
+const OV={
+  async comms(){const C=ADM.comms||[];return`<article class="card"><h3>${ic("coins")} العمولات</h3><p class="sub">تحقق من البيع ← اعتمد العمولة. الإلغاء للاسترجاع أو الخطأ.</p><div class="tblw"><table class="tbl"><thead><tr><th>#</th><th>الشريك</th><th>المشتري</th><th>المنتج</th><th>البيع</th><th>العمولة</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody>
+    ${C.length?C.map(c=>`<tr><td>${c.id}</td><td>${esc(c.partner||c.partner_name||"—")}</td><td>${esc(c.buyer||"—")}</td><td>${esc(c.product||c.kind||"—")}</td><td class="ltr">${c.sale_amount!=null?money2(c.sale_amount):"—"}</td><td class="ltr">${money2(c.amount)}</td><td><span class="pill ${c.status==="PAID"||c.status==="APPROVED"?"ok":c.status==="REVERSED"?"bad":"wait"}">${CMS[c.status]||esc(c.status)}</span></td>
+      <td><div class="acts2">${c.status==="PENDING"?`<button class="btn sm" data-cm="${c.id}" data-a="verify">تحقق</button>`:""}${c.status==="VERIFIED"?`<button class="btn gold sm" data-cm="${c.id}" data-a="approve">اعتماد</button>`:""}${["PENDING","VERIFIED","APPROVED"].includes(c.status)?`<button class="ib n" data-cm="${c.id}" data-a="reverse" aria-label="إلغاء">${ic("x")}</button>`:""}</div></td></tr>`).join(""):`<tr><td colspan="8" class="empty">ماكو عمولات</td></tr>`}</tbody></table></div></article>`},
+  async levels(){const L=ADM.levels||[];return`<form class="card" id="lvf"><h3>${ic("crown")} الرتب والنسب</h3><p class="sub">التغيير يطبق على العمولات الجديدة بس، وينسجل بالسجل.</p><div class="tblw"><table class="tbl"><thead><tr><th>الرتبة</th><th>الاسم</th><th>بعد كم مبيعة</th><th>النسبة %</th><th>المزايا</th><th>فعّالة</th></tr></thead><tbody>
+    ${L.map((l,i)=>`<tr data-i="${i}"><td class="ltr">${esc(l.code)}</td><td><input class="cell" name="name" value="${esc(l.name)}"></td><td><input class="cell n" name="min_sales" type="number" min="0" value="${num(l.min_sales)}"></td><td><input class="cell n" name="rate" type="number" min="0" max="100" step="0.5" value="${num(l.rate)}"></td><td><input class="cell" name="perks" value="${esc(l.perks||"")}"></td><td><input type="checkbox" name="active" ${l.active!==false?"checked":""}></td></tr>`).join("")}</tbody></table></div>
+    <p class="err" id="lverr"></p><button class="btn gold" type="submit">${ic("check")} حفظ الرتب</button></form>`},
+  async rewards(){let v={incentives:[],claims:[]};try{v=PREVIEW?{incentives:DEMO.dash6.incentives,claims:[]}:await rpc("admin_partners_v6")}catch(e){}ADM._v6=v;const I=v.incentives||[],K=v.claims||[];
+    return`<div class="dgrid dg1" style="margin-top:0"><article class="card"><h3>${ic("gift")} طلبات الهدايا</h3><div class="tblw"><table class="tbl"><thead><tr><th>الشريك</th><th>الهدية</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody>${K.length?K.map(c=>`<tr><td>${esc(c.partner)}</td><td>${esc(c.title)}</td><td>${esc(c.status)}</td><td><div class="acts2">${c.status==="requested"?`<button class="btn gold sm" data-cl="${c.id}" data-a="approve">اعتماد</button><button class="ib n" data-cl="${c.id}" data-a="reject" aria-label="رفض">${ic("x")}</button>`:""}${c.status==="approved"?`<button class="btn sm" data-cl="${c.id}" data-a="deliver">تم التسليم</button>`:""}</div></td></tr>`).join(""):`<tr><td colspan="4" class="empty">ماكو طلبات</td></tr>`}</tbody></table></div></article>
+    <form class="card" id="incf"><h3>${ic("plus")} حافز جديد / تعديل</h3><div class="form"><label>الحافز<select class="sel" name="id"><option value="">جديد</option>${I.map(i=>`<option value="${i.id}">${esc(i.title)}</option>`).join("")}</select></label><label>العنوان<input name="title" required></label>
+      <label>المقياس<select class="sel" name="metric"><option value="personal_sales">مبيعات شخصية</option><option value="team_sales">مبيعات الفريق</option><option value="rank">الوصول لرتبة</option><option value="balance">توازن الطرفين</option></select></label><label>الهدف<input name="target" type="number" min="1"></label>
+      <label>الفترة<select class="sel" name="period"><option value="all">كل الوقت</option><option value="month">شهري</option></select></label><label>رمز الرتبة (للرتبة)<input name="rank_code" class="ltr"></label>
+      <label class="w">الوصف<input name="descr"></label><label>الجائزة<input name="reward"></label><label>قيمة الجائزة $<input name="reward_amount" type="number" min="0"></label><label class="ck"><input type="checkbox" name="active" checked> فعّال</label></div><p class="err" id="incerr"></p><button class="btn gold wide-btn" type="submit">${ic("check")} حفظ الحافز</button></form></div>`},
+  async contracts(){const K=ADM.contracts||[];return`<div class="dgrid dg1" style="margin-top:0"><article class="card"><h3>${ic("doc")} العقود الحالية</h3><div class="tblw"><table class="tbl"><thead><tr><th>النوع</th><th>العنوان</th><th>النسخة</th><th>فعّال</th></tr></thead><tbody>${K.map(k=>`<tr><td>${{sales:"شريك مبيعات",distributor:"موزع",ib:"IB"}[k.ptype]||esc(k.ptype)}</td><td>${esc(k.title)}</td><td class="ltr">${esc(k.version)}</td><td>${k.active?pill("APPROVED"):"—"}</td></tr>`).join("")||`<tr><td colspan="4" class="empty">ماكو عقود</td></tr>`}</tbody></table></div><p class="sub">نسخة جديدة ما تغيّر العقود الموقّعة سابقاً.</p></article>
+    <form class="card" id="ctf"><h3>${ic("pen")} نسخة عقد جديدة</h3><div class="form"><label>النوع<select class="sel" name="pt"><option value="sales">شريك مبيعات</option><option value="distributor">موزع</option><option value="ib">IB</option></select></label><label>رقم النسخة<input name="ver" class="ltr" placeholder="1.1" required></label><label class="w">العنوان<input name="ttl" required></label><label class="w">نص العقد<textarea name="bdy" rows="10" required></textarea></label></div><p class="err" id="cterr"></p><button class="btn gold wide-btn" type="submit">${ic("check")} نشر النسخة</button></form></div>`},
+  async ib(){const B=ADM.ib||[];const ST={SUBMITTED:"مقدّم",VEXORA_REVIEW:"مراجعة فيكسورا",BROKER_PENDING:"عند الوسيط",BROKER_APPROVED:"مقبول",BROKER_REJECTED:"مرفوض",DRAFT:"مسودة"};
+    return`<article class="card"><h3>${ic("bank")} طلبات IB</h3><div class="tblw"><table class="tbl"><thead><tr><th>الاسم</th><th>الإيميل</th><th>الدولة</th><th>المستندات</th><th>الحالة</th><th>رقم IB</th><th>الإجراء</th></tr></thead><tbody>${B.length?B.map(a=>`<tr><td>${esc(a.full_name)}</td><td class="ltr">${esc(a.email||a.acct_email)}</td><td>${esc(a.country||"—")}</td><td>${(a.docs||[]).map((d,i)=>`<button class="btn sm" data-doc="${esc(d)}">ملف ${i+1}</button>`).join(" ")||"—"}</td><td>${esc(ST[a.status]||a.status)}</td><td class="ltr">${esc(a.ib_number||"—")}</td>
+      <td><div class="acts2"><select class="sel" data-ibst="${a.id}"><option value="">تغيير الحالة…</option>${["VEXORA_REVIEW","BROKER_PENDING","BROKER_APPROVED","BROKER_REJECTED","DRAFT"].map(k=>`<option value="${k}">${ST[k]}</option>`).join("")}</select></div></td></tr>`).join(""):`<tr><td colspan="7" class="empty">ماكو طلبات IB</td></tr>`}</tbody></table></div></article>`},
+  async support(){const T=ADM.tickets||[];return`<article class="card"><h3>${ic("headset")} رسائل الشركاء</h3>${T.length?T.map(t=>`<div class="msg"><div class="mh"><b>${esc(t.subject)}</b><span>${esc(t.name||"")}</span><span class="pill ${t.status==="open"?"wait":"ok"}">${t.status==="open"?"مفتوحة":t.status==="answered"?"تم الرد":"مغلقة"}</span><small>${dAr(t.created_at)}</small></div><p>${esc(t.body)}</p>${t.reply?`<div class="reply">${ic("headset")} ${esc(t.reply)}</div>`:""}
+    ${t.status!=="closed"?`<form class="rep" data-tk="${t.id}"><input name="rep" placeholder="اكتب الرد…" required><label class="ck" style="margin:0"><input type="checkbox" name="cl"> إغلاق</label><button class="btn gold sm" type="submit">رد</button></form>`:""}</div>`).join(""):`<div class="empty">ماكو رسائل</div>`}</article>`},
+  async assets(){const S=ADM.assets||[];return`<div class="dgrid dg1" style="margin-top:0"><article class="card"><h3>${ic("image")} المواد التسويقية</h3><div class="tblw"><table class="tbl"><thead><tr><th>العنوان</th><th>النوع</th><th>الرابط</th><th>فعّال</th><th></th></tr></thead><tbody>${S.length?S.map(a=>`<tr><td>${esc(a.title)}</td><td>${esc(a.kind)}</td><td class="ltr"><a href="${esc(a.url)}" target="_blank" rel="noopener">فتح</a></td><td>${a.active?pill("APPROVED"):"—"}</td><td><button class="btn sm" data-as="${a.id}" data-on="${a.active?0:1}">${a.active?"إخفاء":"إظهار"}</button></td></tr>`).join(""):`<tr><td colspan="5" class="empty">ماكو مواد</td></tr>`}</tbody></table></div></article>
+    <form class="card" id="asf"><h3>${ic("plus")} مادة جديدة</h3><div class="form"><label class="w">العنوان<input name="title" required></label><label>النوع<select class="sel" name="kind"><option value="image">صورة</option><option value="video">فيديو</option><option value="text">نص</option><option value="link">رابط</option></select></label><label>الرابط<input name="url" class="ltr" required placeholder="https://"></label></div><p class="err" id="aserr"></p><button class="btn gold wide-btn" type="submit">${ic("check")} إضافة</button></form></div>`},
+  async report(){const m=ADM._mon||new Date().toISOString().slice(0,7);let R=[];try{R=PREVIEW?[]:await rpc("admin_partner_report",{mon:m})}catch(e){}
+    return`<article class="card"><div class="thead"><h3>${ic("bars")} التقرير الشهري</h3><input type="month" class="sel" id="mon" value="${m}"><button class="btn sm" id="rcsv">${ic("download")} CSV</button></div><div class="tblw"><table class="tbl" id="rt"><thead><tr><th>الشريك</th><th>الكود</th><th>الرتبة</th><th>المبيعات</th><th>الإيراد</th><th>العمولة</th></tr></thead><tbody>${R.length?R.map(r=>`<tr><td>${esc(r.partner)}</td><td class="ltr">${esc(r.code)}</td><td>${esc(r.level||"—")}</td><td>${intf(r.sales)}</td><td class="ltr">${money2(r.revenue)}</td><td class="ltr">${money2(r.commission)}</td></tr>`).join(""):`<tr><td colspan="6" class="empty">ماكو بيانات لهالشهر</td></tr>`}</tbody></table></div></article>`},
+  async settings(){const c=ADM.cfg||{};return`<form class="card" id="cff"><h3>${ic("gear")} إعدادات البرنامج</h3><div class="form"><label class="ck w"><input type="checkbox" name="partner_enabled" ${c.partner_enabled==="1"?"checked":""}> استقبال طلبات شراكة جديدة</label><label>الحد الأدنى للسحب ($)<input name="partner_min_payout" type="number" min="0" value="${esc(c.partner_min_payout||"")}"></label></div><p class="err" id="cferr"></p><button class="btn gold" type="submit">${ic("check")} حفظ</button></form>
+    <article class="card" style="margin-top:18px"><h3>${ic("gear")} أدوات متقدمة</h3><p class="sub">دعم الوسيط، استيراد تسوية IB، الخطة الشبكية، ونسبة أو رتبة خاصة لشريك معيّن.</p><a class="btn" href="${CFG.APP}?legacy=1#admin/partners">${ic("arrow")} فتح الأدوات المتقدمة</a></article>`}
+};
+async function ownerAct(fn,okMsg,again){try{if(!PREVIEW)await fn();toast(okMsg);ownerPage(again)}catch(e){toast(errMsg(e))}}
+function bindOwner(view){
+  document.querySelectorAll("[data-cm]").forEach(b=>b.onclick=()=>{const a=b.dataset.a;const nt=a==="reverse"?prompt("سبب الإلغاء:"):"";if(a==="reverse"&&!nt)return;if(!confirm("تأكيد؟"))return;ownerAct(()=>rpc("admin_comm_act",{cid:+b.dataset.cm,act:a,nt:nt||""}),"تم","comms")});
+  const lv=$("#lvf");if(lv)lv.onsubmit=e=>{e.preventDefault();const rows=(ADM.levels||[]).map((l,i)=>{const tr=lv.querySelector(`tr[data-i="${i}"]`);const g=n=>tr.querySelector(`[name="${n}"]`);return Object.assign({},l,{name:g("name").value,min_sales:+g("min_sales").value,rate:+g("rate").value,perks:g("perks").value,active:g("active").checked})});
+    if(!confirm("حفظ الرتب والنسب؟"))return;ownerAct(()=>rpc("admin_partner_levels_save",{rows}),"انحفظت الرتب","levels")};
+  document.querySelectorAll("[data-cl]").forEach(b=>b.onclick=()=>{const nt=b.dataset.a==="reject"?prompt("السبب:"):"";if(b.dataset.a==="reject"&&!nt)return;ownerAct(()=>rpc("admin_incentive_claim",{cid:+b.dataset.cl,act:b.dataset.a,nt:nt||""}),"تم","rewards")});
+  const inc=$("#incf");if(inc){const I=(ADM._v6&&ADM._v6.incentives)||[];inc.id.onchange=()=>{const x=I.find(i=>String(i.id)===inc.id.value)||{};["title","metric","target","period","rank_code","descr","reward","reward_amount"].forEach(k=>{if(inc[k])inc[k].value=x[k]??(k==="metric"?"personal_sales":k==="period"?"all":"")});inc.active.checked=x.active!==false};
+    inc.onsubmit=e=>{e.preventDefault();const f=Object.fromEntries(new FormData(inc).entries());f.active=inc.active.checked;if(!f.id)delete f.id;ownerAct(()=>rpc("admin_incentive_save",{r:f}),"انحفظ الحافز","rewards")}}
+  const ct=$("#ctf");if(ct)ct.onsubmit=e=>{e.preventDefault();const f=Object.fromEntries(new FormData(ct).entries());if(!confirm("نشر نسخة عقد جديدة؟ الشركاء الجدد يوقّعون عليها."))return;ownerAct(()=>rpc("admin_partner_contract_save",f),"انحفظ العقد","contracts")};
+  document.querySelectorAll("[data-ibst]").forEach(s=>s.onchange=()=>{const st=s.value;if(!st)return;let ibn="",nt="";if(st==="BROKER_APPROVED"){ibn=prompt("رقم IB من الوسيط:");if(!ibn){s.value="";return}}if(st==="BROKER_REJECTED"){nt=prompt("السبب:")||""}
+    ownerAct(()=>rpc("admin_ib_update",{aid:+s.dataset.ibst,st,nt,ibn,proof:""}),"تم تحديث الطلب","ib")});
+  document.querySelectorAll("[data-doc]").forEach(b=>b.onclick=async()=>{try{const r=await sb.storage.from("partner-docs").createSignedUrl(b.dataset.doc,300);if(r.error)throw r.error;window.open(r.data.signedUrl,"_blank","noopener")}catch(e){toast("تعذر فتح الملف")}});
+  document.querySelectorAll("form.rep").forEach(f=>f.onsubmit=e=>{e.preventDefault();ownerAct(()=>rpc("admin_partner_ticket_reply",{tid:+f.dataset.tk,rep:f.rep.value,cl:f.cl.checked}),"انرسل الرد","support")});
+  const as=$("#asf");if(as)as.onsubmit=e=>{e.preventDefault();const f=Object.fromEntries(new FormData(as).entries());f.active=true;ownerAct(()=>rpc("admin_partner_asset",{a:f}),"انضافت المادة","assets")};
+  document.querySelectorAll("[data-as]").forEach(b=>b.onclick=()=>{const a=(ADM.assets||[]).find(x=>String(x.id)===b.dataset.as);ownerAct(()=>rpc("admin_partner_asset",{a:Object.assign({},a,{active:b.dataset.on==="1"})}),"تم","assets")});
+  const mon=$("#mon");if(mon)mon.onchange=()=>{ADM._mon=mon.value;ownerPage("report")};
+  const rc=$("#rcsv");if(rc)rc.onclick=()=>{const t=[...document.querySelectorAll("#rt tr")].map(tr=>[...tr.children].map(td=>`"${td.textContent.replace(/"/g,'""')}"`).join(",")).join("\n");const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["﻿"+t],{type:"text/csv"}));a.download="partners-"+(ADM._mon||"report")+".csv";a.click()};
+  const cf=$("#cff");if(cf)cf.onsubmit=async e=>{e.preventDefault();ownerAct(async()=>{await rpc("admin_partner_cfg",{k:"partner_enabled",v:cf.partner_enabled.checked?"1":"0"});await rpc("admin_partner_cfg",{k:"partner_min_payout",v:cf.partner_min_payout.value})},"انحفظت الإعدادات","settings")};
+}
 async function ownerPage(sub){
   document.body.className="owner";
   if(!PREVIEW&&!session){$("#app").innerHTML=needLogin("إدارة الشركاء");return}
@@ -237,6 +305,8 @@ async function ownerPage(sub){
   }else if(view==="log"){
     const A=ADM.audit||[];
     table=`<article class="card"><h3>${ic("list")} سجل العمليات</h3><div class="tblw"><table class="tbl"><thead><tr><th>الوقت</th><th>العملية</th><th>التفاصيل</th></tr></thead><tbody>${A.length?A.map(a=>`<tr><td>${dAr(a.at)}</td><td class="ltr">${esc(a.action)}</td><td>${esc(typeof a.detail==="object"?JSON.stringify(a.detail):a.detail||a.title||"")}</td></tr>`).join(""):`<tr><td colspan="3" class="empty">ماكو عمليات مسجلة</td></tr>`}</tbody></table></div></article>`;
+  }else if(OV[view]){
+    table=await OV[view]();
   }else{
     const rows=view==="list"?P:reqs.concat(P.filter(x=>!reqs.includes(x))).slice(0,view==="requests"?999:8);
     table=`<article class="card"><div class="thead"><h3>${ic("useradd")} ${view==="list"?"قائمة الشركاء":"طلبات انضمام الشركاء"}</h3>
@@ -245,13 +315,12 @@ async function ownerPage(sub){
       <a class="btn gold sm" href="#owner/requests">مراجعة الكل ${ic("arrow")}</a></div>
       <div class="tblw"><table class="tbl" id="pt"><thead><tr><th>#</th><th>الاسم</th><th>الدولة</th><th>مصدر المعرفة</th><th>تاريخ الطلب</th><th>المحالون</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody>
       ${rows.length?rows.map((x,i)=>`<tr data-s="${esc(x.status)}" data-q="${esc([x.full_name,x.email,x.country].join(" ").toLowerCase())}"><td>${i+1}</td><td><span class="av2">${ic("user")}</span>${esc(x.full_name)}</td><td>${esc(x.country||"—")}</td><td>${esc(x.channels||"—")}</td><td>${dAr(x.created_at)}</td><td>${intf(x.referred)}</td><td>${pill(x.status)}</td>
-        <td><div class="acts2">${x.status==="PENDING"||x.status==="UNDER_REVIEW"||x.status==="SUSPENDED"?`<button class="ib y" data-dec="${esc(x.user_id)}" data-st="APPROVED" aria-label="قبول">${ic("check")}</button>`:""}${x.status==="PENDING"||x.status==="UNDER_REVIEW"?`<button class="ib n" data-dec="${esc(x.user_id)}" data-st="REJECTED" aria-label="رفض">${ic("x")}</button>`:""}${x.status==="APPROVED"?`<button class="ib n" data-dec="${esc(x.user_id)}" data-st="SUSPENDED" aria-label="إيقاف">${ic("x")}</button>`:""}<a class="ib" href="${CFG.APP}#admin/partners" aria-label="التفاصيل الكاملة">${ic("dots")}</a></div></td></tr>`).join(""):`<tr><td colspan="8" class="empty">ماكو طلبات حالياً</td></tr>`}</tbody></table></div></article>`;
+        <td><div class="acts2">${x.status==="PENDING"||x.status==="UNDER_REVIEW"||x.status==="SUSPENDED"?`<button class="ib y" data-dec="${esc(x.user_id)}" data-st="APPROVED" aria-label="قبول">${ic("check")}</button>`:""}${x.status==="PENDING"||x.status==="UNDER_REVIEW"?`<button class="ib n" data-dec="${esc(x.user_id)}" data-st="REJECTED" aria-label="رفض">${ic("x")}</button>`:""}${x.status==="APPROVED"?`<button class="ib n" data-dec="${esc(x.user_id)}" data-st="SUSPENDED" aria-label="إيقاف">${ic("x")}</button>`:""}</div></td></tr>`).join(""):`<tr><td colspan="8" class="empty">ماكو طلبات حالياً</td></tr>`}</tbody></table></div></article>`;
   }
   $("#app").innerHTML=`<div class="shell">${sideNav(O_ITEMS(),sub?"owner/"+sub:"owner")}
   <main class="main"><div class="ocol">
-    <div class="otop"><div><h1>إدارة الشركاء</h1><p>التحكم الكامل في برنامج الشركاء والعمولات</p></div><span class="bell">${ic("bell")}</span><div class="who"><span><small>المالك</small><b>${esc((profile&&profile.full_name)||"Omar Rabah")}</b></span><span class="av2">${ic("user")}</span></div></div>
-    <div class="period"><select class="sel" aria-label="الفترة"><option>هذا الشهر</option><option>آخر 30 يوم</option><option>كل الفترة</option></select></div>
-    <div class="okpis">
+    <div class="otop"><div><h1>${esc(OT[view]||"إدارة الشركاء")}</h1><p>التحكم الكامل في برنامج الشركاء والعمولات</p></div>${langSel()}<a class="btn sm" href="${CFG.APP}">${ic("home")} منصة فيكسورا</a><div class="who"><span><small>المالك</small><b>${esc((profile&&profile.full_name)||"Omar Rabah")}</b></span><span class="av2">${ic("user")}</span></div></div>
+    ${view?"":`<div class="okpis">
       <div class="okpi">${ic("link")}<div><span>إجمالي الشركاء</span><strong>${intf(P.length)}</strong></div></div>
       <div class="okpi">${ic("users")}<div><span>الشركاء النشطون</span><strong>${intf(active.length)}</strong>${newActive30?`<small class="up">▲ +${newActive30}</small>`:""}</div></div>
       <div class="okpi">${ic("wallet")}<div><span>عمولات معلقة</span><strong>${money(pendC)}</strong><small style="color:var(--mut)">(في الانتظار)</small></div></div>
@@ -260,13 +329,14 @@ async function ownerPage(sub){
       <article class="card"><h3>${ic("clock")} إجراءات بانتظار المراجعة</h3><div class="queue">
         <a href="#owner/requests">${ic("users")} طلبات انضمام شركاء جديدة<span class="n">${reqs.length}</span></a>
         <a href="#owner/payouts">${ic("wallet")} طلبات سحب عمولة<span class="n">${payReq.length}</span></a>
-        <a href="${CFG.APP}#admin/partners">${ic("doc")} طلبات IB بانتظار المراجعة<span class="n">${ibReq.length}</span></a></div>
+        <a href="#owner/ib">${ic("doc")} طلبات IB بانتظار المراجعة<span class="n">${ibReq.length}</span></a></div>
         <p class="sub" style="margin-top:12px">الاعتماد والصرف بيد المالك فقط، وكل إجراء ينسجل بسجل العمليات.</p></article>
       <article class="card"><div class="chd"><h3>أداء برنامج الشركاء</h3><span class="sub" style="margin:0">مجموع 7 أيام</span><span class="legend"><span><i style="background:#d8b46a"></i>العمولات</span><span><i style="background:#8f877a"></i>الشركاء الجدد</span></span></div>
         <div class="chart">${areaChart([{pts:cd,c:"#d8b46a",area:true,dots:true},{pts:nd,c:"#8f877a",w:1.5}],{label:"العمولات والشركاء الجدد"})}</div></article>
-    </div>
+    </div>`}
     <div style="margin-top:18px">${table}</div>
   </div><div class="win" aria-hidden="true"></div></main></div>`;
+  bindOwner(view);
   const q=$("#q"),fs=$("#fs");const filt=()=>document.querySelectorAll("#pt tbody tr[data-q]").forEach(tr=>{const okq=!q.value||tr.dataset.q.includes(q.value.toLowerCase());const oks=!fs.value||tr.dataset.s===fs.value||(fs.value==="PENDING"&&tr.dataset.s==="UNDER_REVIEW");tr.hidden=!(okq&&oks)});
   if(q){q.oninput=filt;fs.onchange=filt}
   document.querySelectorAll("[data-dec]").forEach(b=>b.onclick=async()=>{
@@ -319,7 +389,7 @@ async function reportsPage(sub){
 function shell(active,title,sub,body,opts={}){
   const nm=(profile&&profile.full_name)||(PREVIEW?"شريك تجريبي":"شريك");
   return`<div class="shell">${sideNav(P_ITEMS,active,`<div class="gift">${ic("gift")}<b>مكافآت الشركاء</b><span>عروض وحوافز خاصة للشركاء المميزين</span></div>`)}
-  <main class="main"><div class="top"><div class="who"><span class="av">${ic("user")}</span>${esc(nm)} ${ic("crown","gold-ic")}</div><span class="bell">${ic("bell")}</span><span class="lang">${ic("globe")} العربية ${ic("chev")}</span></div>
+  <main class="main"><div class="top">${langSel()}<a class="btn sm" href="${CFG.APP}">${ic("home")} منصة فيكسورا</a><div class="who"><span class="av">${ic("user")}</span>${esc(nm)} ${ic("crown","gold-ic")}</div></div>
   <section class="phero sm"><div class="ptitle">${opts.tag?`<span class="tag">${opts.tag}</span>`:""}<h1>${title}</h1><p>${sub}</p></div></section>${body}</main></div>`;
 }
 const card=(icn,t,inner,extra="")=>`<article class="card ${extra}"><h3>${ic(icn)} ${t}</h3>${inner}</article>`;

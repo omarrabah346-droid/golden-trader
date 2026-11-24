@@ -238,3 +238,18 @@ button{font:inherit;color:inherit;cursor:pointer}
 .rk1,.rk2,.rk3{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;font-weight:700;color:#1b140a;font-family:Georgia,serif}
 .rk1{background:radial-gradient(circle at 35% 30%,#fbe6b0,#b98d48)}.rk2{background:radial-gradient(circle at 35% 30%,#f1efe8,#9c9a92)}.rk3{background:radial-gradient(circle at 35% 30%,#f0c39a,#9a5f33)}
 @media (max-width:980px){.rank{grid-template-columns:1fr;text-align:center;justify-items:center}.form{grid-template-columns:1fr}.trow.four{grid-template-columns:1fr 1fr}}
+.side a.back{height:40px;margin:-24px 0 14px;border:1px solid var(--line2);font-size:14px;color:var(--gold2)}
+.side a.back .ic{color:var(--gold2)}
+.top .btn.sm{order:3}
+@media (max-width:980px){.side a.back{margin:0}}
+.lang{height:40px;padding:0 10px 0 12px;border:1px solid var(--line);border-radius:99px;display:inline-flex;align-items:center;gap:6px;background:rgba(14,12,10,.7)}
+.lang .ic{width:18px;height:18px;color:var(--gold)}
+.lang select{background:transparent;border:0;color:var(--ink);font:inherit;font-size:13.5px;outline:0;cursor:pointer}
+.lang option{background:#14120f;color:var(--ink)}
+.top .lang{order:2}
+.lnav .acts .lang{height:46px}
+[dir=ltr] .phero:before{left:auto;right:0;-webkit-mask-image:linear-gradient(270deg,#000 55%,transparent);mask-image:linear-gradient(270deg,#000 55%,transparent)}
+[dir=ltr] .phero:after{left:auto;right:0}
+[dir=ltr] .hero .in{margin-inline-start:auto;margin-inline-end:76px}
+[dir=ltr] .band{background-position:right center}
+@media (max-width:560px){.top .lang{display:inline-flex}}

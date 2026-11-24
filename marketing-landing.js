@@ -16,8 +16,15 @@
     event.preventDefault();
     const { win, loss, cost } = form.elements;
     const rate = (loss.valueAsNumber + cost.valueAsNumber) / (win.valueAsNumber + loss.valueAsNumber);
-    form.querySelector("output").textContent = rate > 1
-      ? "لا يمكن بلوغ التعادل بهذه التكاليف حتى مع ربح كل الصفقات."
-      : new Intl.NumberFormat("ar", { style: "percent", maximumFractionDigits: 2 }).format(rate);
+    const box = form.querySelector(".res"), out = form.querySelector("output"), why = box ? box.querySelector("span") : null;
+    if (box) box.hidden = false;
+    if (rate > 1) {
+      out.textContent = "غير ممكن";
+      if (why) why.textContent = "التكاليف أكبر من متوسط الربح، فلا يمكن بلوغ التعادل حتى لو ربحت كل الصفقات.";
+      return;
+    }
+    const pct = new Intl.NumberFormat("ar", { style: "percent", maximumFractionDigits: 1 }).format(rate);
+    out.textContent = pct;
+    if (why) why.textContent = "تحتاج أن تربح " + pct + " من صفقاتك على الأقل حتى تغطي خسائرك وتكاليفك. أي نسبة أعلى تعني ربحاً.";
   };
 })();

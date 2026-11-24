@@ -2,30 +2,55 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>حاسبة نقطة التعادل للصفقات · VEXORA</title>
-<meta name="description" content="احسب أقل نسبة نجاح تحتاجها لتغطية الخسائر والتكاليف بناءً على متوسط نتائجك.">
+<title>حاسبة نقطة التعادل للصفقات | فيكسورا VEXORA</title>
+<meta name="description" content="احسب أقل نسبة نجاح تحتاجها لتغطية الخسائر والتكاليف بناءً على متوسط نتائج صفقاتك. أداة مجانية من أكاديمية فيكسورا.">
 <link rel="canonical" href="https://albashafx.com/free-tools.html">
-<meta property="og:title" content="حاسبة نقطة التعادل للصفقات · VEXORA">
-<meta property="og:description" content="احسب أقل نسبة نجاح تحتاجها لتغطية الخسائر والتكاليف بناءً على متوسط نتائجك.">
+<meta property="og:site_name" content="فيكسورا VEXORA">
+<meta property="og:locale" content="ar_AR">
+<meta property="og:title" content="حاسبة نقطة التعادل للصفقات | فيكسورا VEXORA">
+<meta property="og:description" content="أداة مجانية تحسب نسبة النجاح التي تحتاجها حتى لا تخسر، بناءً على متوسط الربح والخسارة والتكلفة.">
 <meta property="og:url" content="https://albashafx.com/free-tools.html">
-<meta property="og:image" content="https://albashafx.com/vexora-logo-full.png">
+<meta property="og:image" content="https://albashafx.com/og-image.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#0b0b0d">
 <link rel="icon" href="favicon-32.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;500;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=Great+Vibes&display=swap">
 <link rel="stylesheet" href="marketing-landing.css">
+<style>
+.vx-pg .paywall{text-align:right}
+.vx-pg .paywall p{margin:0 0 16px;max-width:none}
+.vx-pg .paywall h2{margin:0 0 8px}
+.vx-pg .sec+.sec{margin-top:26px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08)}
+.vx-pg .row{display:flex;flex-wrap:wrap;gap:10px}
+.vx-pg .calc{display:grid;gap:14px;max-width:460px;margin:0 auto}
+.vx-pg .calc label{text-align:right}
+.vx-pg .calc small{color:var(--muted);font-size:12px}
+.vx-pg .res{margin-top:6px;padding:14px;border-radius:12px;border:1px solid rgba(212,175,55,.35);background:rgba(212,175,55,.06);text-align:center}
+.vx-pg .res b{display:block;font-size:30px;color:var(--accent,#d4af37)}
+.vx-pg .res span{color:#d0d0d6;font-size:14px}
+.vx-pg .note{color:var(--muted);font-size:13.5px;margin:14px 0}
+.vx-pg footer{margin:30px 0 20px;color:var(--muted);font-size:13px;text-align:center;line-height:1.9}
+.vx-pg footer a{color:inherit}
+</style>
 </head>
-<body><main><div class="wrap">
+<body class="vx-pg"><main><div class="wrap">
 <p><a class="btn" href="./"><img src="logo-mark.png" width="32" height="32" alt=""> فيكسورا</a></p>
 <div class="phead"><h1>حاسبة نقطة التعادل للصفقات</h1><p>احسب أقل نسبة نجاح تحتاجها لتغطية الخسائر والتكاليف بناءً على متوسط نتائجك.</p></div>
-<section class="blk"><form id="break-even" class="paywall">
-<label>متوسط الصفقة الرابحة <input class="f" name="win" type="number" min="0.01" step="0.01" required></label>
-<label>متوسط الصفقة الخاسرة <input class="f" name="loss" type="number" min="0.01" step="0.01" required></label>
-<label>متوسط تكلفة الصفقة <input class="f" name="cost" type="number" min="0" step="0.01" value="0" required></label>
+<section class="blk"><form id="break-even" class="paywall calc">
+<label>متوسط ربح الصفقة الرابحة <input class="f" name="win" type="number" min="0.01" step="0.01" placeholder="مثال: 100" inputmode="decimal" required><small>بالمبلغ أو بالنقاط، بنفس الوحدة في كل الحقول.</small></label>
+<label>متوسط خسارة الصفقة الخاسرة <input class="f" name="loss" type="number" min="0.01" step="0.01" placeholder="مثال: 50" inputmode="decimal" required><small>اكتبها رقماً موجباً.</small></label>
+<label>متوسط تكلفة الصفقة <input class="f" name="cost" type="number" min="0" step="0.01" value="0" placeholder="مثال: 5" inputmode="decimal" required><small>العمولة والسبريد معاً لكل صفقة.</small></label>
 <button class="btn gold" type="submit">احسب</button>
-<p><output aria-live="polite"></output></p>
+<div class="res" hidden><b><output aria-live="polite"></output></b><span></span></div>
 </form>
-<p>استخدم وحدة نقدية واحدة. النتيجة تقدير تعليمي يعتمد على مدخلاتك ويختلف عن الأداء الفعلي.</p>
-<a class="btn" href="./#tools">أدوات الأكاديمية</a> <a class="btn" href="learn-trading.html">تصفّح الدروس</a>
+<p class="note">النتيجة تقدير تعليمي يعتمد على مدخلاتك، وقد يختلف الأداء الفعلي.</p>
+<div class="row"><a class="btn" href="./#tools">أدوات الأكاديمية</a><a class="btn" href="learn-trading.html">تعلّم التداول</a></div>
 </section>
-<p><a href="privacy.html">الخصوصية</a> · <a href="terms.html">الشروط</a></p>
+<footer>
+<a href="privacy.html">سياسة الخصوصية</a> · <a href="terms.html">شروط الاستخدام</a> · <a href="app.html">منصة فيكسورا</a><br>
+المحتوى تعليمي ولا يُعدّ نصيحة استثمارية. التداول ينطوي على مخاطر عالية وقد تخسر رأس مالك.<br>
+© 2026 فيكسورا للتجارة العامة ذ.م.م · أبوظبي، الإمارات العربية المتحدة
+</footer>
 </div></main><script src="marketing-landing.js"></script></body></html>

@@ -91,11 +91,14 @@ html[dir=ltr] :is(.content th,.opt,.tbl th,.steps,th,td,.umenu button,.gate-bran
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0b0b0d"><link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png?v=2"><link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=2"><link rel="apple-touch-icon" href="apple-touch-icon.png?v=2"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="فيكسورا">
-<title>فيكسورا · توصيات وأكاديمية التداول</title>
-<meta name="description" content="تعلّم التحليل الفني والكلاسيكي والموجي والزمني والرقمي ويا كوتش عمر. أول درس بكل دورة مجاني.">
-<meta property="og:title" content="فيكسورا · توصيات الذهب والفوركس وأكاديمية التداول">
-<meta property="og:description" content="دورات التحليل الفني والكلاسيكي والموجي والزمني والرقمي، ودروس زوم مباشرة. أول درس مجاني.">
-<meta property="og:image" content="https://albashafx.com/coach.jpg">
+<title>فيكسورا VEXORA | أكاديمية التداول وتوصيات الذهب والفوركس</title>
+<meta name="description" content="تعلّم التداول مع أكاديمية فيكسورا: دورات في التحليل الفني والكلاسيكي والموجي والزمني والرقمي، ودروس زوم مباشرة مع الكوتشات. أول درس في كل دورة مجاني.">
+<meta property="og:title" content="فيكسورا VEXORA | أكاديمية التداول وتوصيات الذهب والفوركس">
+<meta property="og:description" content="دورات تداول باللغة العربية ودروس زوم مباشرة مع كوتشات فيكسورا. أول درس في كل دورة مجاني.">
+<meta property="og:image" content="https://albashafx.com/og-image.jpg">
+<meta property="og:site_name" content="فيكسورا VEXORA">
+<meta property="og:locale" content="ar_AR">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
 <meta property="og:url" content="https://albashafx.com/">
 <link rel="canonical" href="https://albashafx.com/">
 <meta property="og:type" content="website">
@@ -845,7 +848,7 @@ const canP=k=>isAdmin()||(S.perms||[]).includes(k);
 const isStaff=()=>isAdmin()||(S.perms||[]).length>0;
 
 async function loadAll(){
-  const [info,courses,lessons]=await Promise.all([API.info(),API.courses(),API.lessons()]);
+  const [info,courses,lessons]=await Promise.all([API.info(),API.courses().catch(e=>{console.error("[VEXORA] courses:",e);return[]}),API.lessons().catch(e=>{console.error("[VEXORA] lessons:",e);return[]})]);
   S.info=info;S.courses=courses;S.lessons=lessons;if(info.ib_link&&/^https?:\/\//i.test(info.ib_link))CONFIG.IB=info.ib_link;
   S.user=await API.user();S.profile=null;S.perms=[];S.progress={};S.purchases=[];S.rsvp=new Set();S.certs=[];
   assignAcademyAttribution(S.user);
@@ -2084,7 +2087,7 @@ const VXI={K:"vx_intro_v1",
       end.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>play(b.dataset.n))});
     play(tab==="broker"?"broker":"join")},
   // يطلع تلقائياً مرة وحدة للزائر الجديد بس (مو للأعضاء، ومو بصفحات الدروس أو الإدارة)
-  auto(){const h=location.hash.slice(1);if(S.user||VXI.seen()||/^(lesson|cert|admin|course)\//.test(h)||/bot|crawl|spider|lighthouse/i.test(navigator.userAgent))return;setTimeout(()=>{if(!S.user&&!document.getElementById("vxiOv"))VXI.open("join")},1400)},
+  auto(){return;const h=location.hash.slice(1);if(S.user||VXI.seen()||/^(lesson|cert|admin|course)\//.test(h)||/bot|crawl|spider|lighthouse/i.test(navigator.userAgent))return;setTimeout(()=>{if(!S.user&&!document.getElementById("vxiOv"))VXI.open("join")},1400)},
   btn(tab,txt,cls){return`<button type="button" class="btn ${cls||""}" data-vxi="${tab}">${txt}</button>`}
 };
 document.addEventListener("click",e=>{const b=e.target.closest("[data-vxi]");if(b){e.preventDefault();VXI.open(b.dataset.vxi)}});
@@ -2347,7 +2350,7 @@ setInterval(()=>{try{V4A.tick()}catch(e){}},1000);
 
 window.addEventListener("hashchange",()=>{render();window.scrollTo(0,0);setTimeout(fillCertPrev,30);setTimeout(v2IndState,60)});
 API.onAuth(async()=>{await loadAll();render();setTimeout(fillCertPrev,30);IND.mine=null;setTimeout(v2IndState,60)});
-(async()=>{try{await loadAll()}catch(e){$("view").innerHTML=`<div class="wrap"><div class="empty" style="margin-top:30px">ما گدرنا نحمّل الأكاديمية: ${esc(e.message)}<br>تأكد إن ملفات academy.sql و academy_lessons.sql انشغلت بـ Supabase.</div></div>`;return}render();setTimeout(fillCertPrev,30);setTimeout(v2IndState,80);VXI.auto();if(S.user&&API.pushSub)setTimeout(()=>PUSH.nudge(S.info.vapid_public,ipushSave,"خلي الدروس والتوصيات توصلك على الموبايل"),5000)})();
+(async()=>{try{await loadAll()}catch(e){console.error("[VEXORA] academy load failed:",e);$("view").innerHTML=`<div class="wrap"><div class="empty" style="margin-top:30px">تعذّر تحميل الأكاديمية حالياً، يرجى المحاولة بعد قليل.<br><button type="button" class="btn gold sm" style="margin-top:12px" onclick="location.reload()">إعادة المحاولة</button></div></div>`;return}render();setTimeout(fillCertPrev,30);setTimeout(v2IndState,80);VXI.auto();if(S.user&&API.pushSub)setTimeout(()=>PUSH.nudge(S.info.vapid_public,ipushSave,"خلي الدروس والتوصيات توصلك على الموبايل"),5000)})();
 })();
 </script>
 <script>

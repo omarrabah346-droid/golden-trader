@@ -75,8 +75,8 @@ body:not([data-sec="home"]) .vxs-home{display:none}
 @media (min-width:1100px){body #app{width:auto!important;max-width:1600px!important;margin:0 auto!important;padding-inline:18px!important}}
 #app > header.top .brand{display:flex!important;align-items:center;gap:10px;flex:none}
 #app > header.top .brand .tag{display:none!important}
-#app > header.top .brand h1{display:flex!important;align-items:center;gap:8px;margin:0!important;font-size:26px!important;white-space:nowrap}
-#app > header.top .brand h1 .brand-mk{width:34px;height:34px;margin:0!important}
+#app > header.top .brand .bn{display:flex!important;align-items:center;gap:8px;margin:0!important;font-size:26px!important;white-space:nowrap}
+#app > header.top .brand .bn .brand-mk{width:34px;height:34px;margin:0!important}
 #modePill{white-space:nowrap}
 .vxs-hero-tx{padding-bottom:84px!important}
 @media (min-width:1100px){html body:not(.pp-mode){padding-left:0!important;padding-right:0!important}}
@@ -108,3 +108,31 @@ body > header.top .wrap{max-width:1600px!important;width:100%!important;padding-
 body > header.top .brand span{display:none!important}
 body > header.top .brand b{font-size:22px}
 .vxs-old{display:none!important}
+
+/* === 24-11: mobile headline, video button, trust section, footer === */
+.vxs-mbr{display:none}
+@media (max-width:560px){.vxs-sep{display:none}.vxs-mbr{display:inline}}
+.vxs-cta .vxs-play{cursor:pointer;font:inherit}
+.vxs-trust,.vxs-foot{grid-column:1/-1;justify-self:center;width:min(1100px,92vw)}
+.vxs-trust{grid-row:3;margin-top:56px}
+.vxs-foot{grid-row:4;margin-top:48px;padding:26px 0 10px;border-top:1px solid rgba(216,180,106,.18);text-align:center}
+.vxs-trust h2{text-align:center;color:#f3ece0;font-size:28px;margin:0 0 22px}
+.vxs-trust h2 em{font-style:normal;color:#d8b46a}
+.vxs-why{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:48px}
+.vxs-why a{display:grid;gap:8px;padding:20px 18px;border-radius:14px;border:1px solid rgba(216,180,106,.22);background:linear-gradient(180deg,#1a1712,#110f0c);text-decoration:none;text-align:right}
+.vxs-why a:hover{border-color:rgba(216,180,106,.55)}
+.vxs-why .vxs-nav{width:30px;height:30px;stroke:url(#vxsGold);fill:none;stroke-width:1.5}
+.vxs-why b{color:#f3ece0;font-size:16.5px}
+.vxs-why span{color:#a59d90;font-size:13.5px;line-height:1.7}
+.vxs-steps{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.vxs-steps li{display:grid;gap:6px;padding:18px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:#12100d}
+.vxs-steps i{font-style:normal;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(180deg,#e7c784,#b8913f);color:#1a1408;font-weight:700}
+.vxs-steps b{color:#f3ece0}
+.vxs-steps span{color:#a59d90;font-size:13.5px}
+.vxs-fl{display:flex;flex-wrap:wrap;justify-content:center;gap:8px 20px;margin-bottom:14px}
+.vxs-fl a{color:#d8b46a;text-decoration:none;font-size:14px}
+.vxs-fl a:hover{text-decoration:underline}
+.vxs-foot p{color:#8f877a;font-size:12.5px;line-height:1.9;margin:6px auto;max-width:760px}
+@media (max-width:900px){.vxs-why{grid-template-columns:repeat(2,1fr)}.vxs-steps{grid-template-columns:1fr}}
+@media (max-width:480px){.vxs-why{grid-template-columns:1fr}.vxs-trust h2{font-size:23px}}
+@media (max-width:560px){.vxs-cta .vxs-play{flex-basis:100%;order:3}.vxs-cta a{white-space:nowrap}.vxs-foot{padding-bottom:96px}}

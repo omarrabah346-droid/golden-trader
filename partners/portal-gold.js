@@ -81,7 +81,7 @@ const svg=(n,cls)=>{
   return`<svg class="vxg-ic ${cls||""}" viewBox="0 0 24 24" aria-hidden="true">${P[n]||P.dot}</svg>`};
 const DEFS='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><radialGradient id="vxgM1" cx=".35" cy=".3"><stop offset="0" stop-color="#fbe6b0"/><stop offset="1" stop-color="#b98d48"/></radialGradient><radialGradient id="vxgM2" cx=".35" cy=".3"><stop offset="0" stop-color="#f1efe8"/><stop offset="1" stop-color="#9c9a92"/></radialGradient><radialGradient id="vxgM3" cx=".35" cy=".3"><stop offset="0" stop-color="#f0c39a"/><stop offset="1" stop-color="#9a5f33"/></radialGradient></defs></svg>';
 const RE=/(\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic}️?)*|[↩↪⬅➡⬇↗♛✦✔☑ℹ✖✉⚖⚙⚠⚡✍])️?/gu;
-const SKIP=new Set(["SCRIPT","STYLE","TEXTAREA","INPUT","SELECT","OPTION","CODE","PRE","svg","SVG"]);
+const SKIP=new Set(["SCRIPT","STYLE","TEXTAREA","INPUT","SELECT","OPTION","CODE","PRE","svg","SVG","TITLE"]);
 function swapEmoji(root){
   const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT,{acceptNode:n=>{const p=n.parentElement;if(!p||SKIP.has(p.tagName)||p.closest("svg,[contenteditable]"))return NodeFilter.FILTER_REJECT;RE.lastIndex=0;return RE.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT}});
   const list=[];while(w.nextNode())list.push(w.currentNode);
@@ -105,7 +105,17 @@ function recolor(root){
   });
 }
 let q=0;
-function run(){q=0;const r=document.getElementById(ROOT_ID);if(!r||r.hidden)return;mo.disconnect();try{swapEmoji(r);recolor(r)}finally{mo.observe(document.body,{childList:true,subtree:true,characterData:true})}}
+/* site-wide: only clear purple accents outside the partner portal; keep green/red/blue data colours */
+const isPurple=s=>(s.match(/rgba?\([^)]*\)/g)||[]).some(x=>{const[r,g,b,a]=x.match(/[\d.]+/g).map(Number);return(a===undefined||a>.04)&&b>g+40&&r>g+15});
+function recolorSite(root){root.querySelectorAll("#app *:not(svg *):not(canvas)").forEach(e=>{if(e.closest("#"+ROOT_ID+",.tv-lightweight-charts,canvas"))return;const cs=getComputedStyle(e);
+  if(isPurple(cs.backgroundImage))e.style.setProperty("background-image","linear-gradient(180deg,rgba(40,34,26,.9),rgba(16,14,11,.92))","important");
+  if(isPurple(cs.backgroundColor))e.style.setProperty("background-color","rgba(216,180,106,.1)","important");
+  if(isPurple(cs.borderTopColor+cs.borderLeftColor))e.style.setProperty("border-color","rgba(216,180,106,.35)","important");
+  if(isPurple(cs.color)){e.style.setProperty("color","#e7c784","important");e.style.setProperty("-webkit-text-fill-color","#e7c784","important")}
+  if(isPurple(cs.boxShadow)||/\d{2,}px \d+px/.test(cs.boxShadow)&&/rgba?\((?!0, 0, 0)/.test(cs.boxShadow))e.style.setProperty("box-shadow","none","important");
+  if(cs.textShadow!=="none")e.style.setProperty("text-shadow","none","important")})}
+let st=0;function scheduleSite(){clearTimeout(st);st=setTimeout(()=>{mo.disconnect();try{recolorSite(document);if(window.VXS_after)window.VXS_after()}finally{mo.observe(document.body,{childList:true,subtree:true,characterData:true})}},450)}
+function run(){q=0;mo.disconnect();try{swapEmoji(document.body);const r=document.getElementById(ROOT_ID);if(r&&!r.hidden)recolor(r);scheduleSite()}finally{mo.observe(document.body,{childList:true,subtree:true,characterData:true})}}
 const mo=new MutationObserver(()=>{if(!q)q=requestAnimationFrame(run)});
 function start(){if(!document.getElementById("vxgDefs")){const d=document.createElement("div");d.id="vxgDefs";d.innerHTML=DEFS;document.body.appendChild(d)}
   mo.observe(document.body,{childList:true,subtree:true,characterData:true});run();addEventListener("hashchange",()=>setTimeout(run,60))}
@@ -115,5 +125,6 @@ const LEGACY=/[?&]legacy=1\b/.test(location.search);
 function reroute(){if(LEGACY)return;const t=NEW[location.hash];if(t)location.replace(t)}
 reroute();addEventListener("hashchange",reroute);
 document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href]');if(!a)return;const h=a.getAttribute("href");if(!LEGACY&&NEW[h]){e.preventDefault();location.assign(NEW[h])}},true);
+window.VXG={P,svg};
 if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",start);else start();
 })();

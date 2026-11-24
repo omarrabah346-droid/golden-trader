@@ -1,0 +1,26 @@
+/* VEXORA site finish: calm, flat black & champagne gold (no glow, no 3D, no emoji). Visual only. */
+body{font-family:"IBM Plex Sans Arabic","Tajawal",system-ui,sans-serif}
+/* navigation: flat line icons, gold active pill */
+.gic{background:transparent!important;box-shadow:none!important;border:0!important;filter:none!important}
+.gic .vxs-nav{width:22px!important;height:22px!important;stroke:#cfc6b6;stroke-width:1.6}
+.gi.on,.gi.gm.on{background:linear-gradient(90deg,#c29a57,#e3c584 60%,#d6b26c)!important;color:#1b140a!important;box-shadow:none!important;border-color:transparent!important}
+.gi.on .vxs-nav{stroke:#1b140a}
+.gi:hover:not(.on){background:rgba(216,180,106,.07)!important}
+/* hero: flat stage with the drawn illustration */
+.hx-bg{background:linear-gradient(180deg,#14120f,#0d0c0a)!important;border-inline-start:1px solid rgba(216,180,106,.14)}
+.hx-ph{font-size:0!important;filter:none!important;animation:none!important;text-shadow:none!important}
+.vxs-hero{display:block;width:min(300px,80%);margin:auto}
+.vxs-hero svg{width:100%;height:auto}
+/* section headers get their illustration at the inline end */
+.vxs-has-art{position:relative;padding-inline-end:250px!important;min-height:140px}
+.vxs-art{position:absolute;inset-inline-end:14px;top:50%;transform:translateY(-50%);width:220px;pointer-events:none}
+.vxs-art svg{width:100%;height:auto;display:block}
+@media (max-width:900px){.vxs-has-art{padding-inline-end:0!important;min-height:0}.vxs-art{position:static;transform:none;width:170px;margin:12px auto 0}}
+/* calmer surfaces: no neon glow on buttons and cards */
+#app :is(.btn,.panel,.card,.hx,.hx-box,.hx-chips span,.v4-hero section){box-shadow:none!important;text-shadow:none!important}
+#app :is(h1,h2,h3)[style*="background-clip"],#app :is(h1,h2,h3)[class*="grad"]{background:none!important;-webkit-text-fill-color:currentColor!important}
+/* emoji → gold line icons (shared with the partner portal) */
+.vxg-ic{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.2em;fill:none;stroke:#d8b46a;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.vxg-medal{width:1.35em;height:1.35em;stroke:none}
+.vxg-t{display:contents}
+:is(.btn.primary,.gi.on,.vxs-tabs a.on) .vxg-ic:not(.vxg-medal){stroke:#5c4522}

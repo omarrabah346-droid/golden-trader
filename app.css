@@ -1286,3 +1286,12 @@ body.pp-mode{background:#090d22!important}
 @media(max-width:900px){.pp-mnav{background:rgba(17,14,45,.96);border-color:rgba(167,139,250,.4);box-shadow:0 0 30px rgba(139,92,246,.17)}.pp-mnav a.on{background:rgba(139,92,246,.26);color:#e9d5ff}.pp-mnav a b{filter:drop-shadow(0 3px 4px rgba(139,92,246,.5))}}
 @media(prefers-reduced-motion:reduce){.pp *, .pp *:before,.pp *:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
+
+/* ===== VIP: التوصيات المفتوحة والمؤشرات للمشتركين ===== */
+body.novip:not(.locked) #terminalView{filter:blur(7px) saturate(.6);opacity:.5;pointer-events:none;user-select:none}
+body.novip #chanCard{display:none!important}
+#vipCard .lk-cta{flex-wrap:wrap}
+
+/* بطاقات القفل (المراجعة و VIP) تبقى بنص الشاشة ويا التصميم الجديد (بدون شريط جانبي) */
+body .lockc{position:fixed!important;left:50%!important}
+@media(max-width:900px){body .lockc{bottom:96px}}

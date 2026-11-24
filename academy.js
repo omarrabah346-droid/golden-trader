@@ -209,6 +209,47 @@ function aiPlanHTML(){
     <div style="text-align:center"><div class="price" style="font-size:28px">${money(S.info.price_ai||10)}<small class="muted" style="font-size:14px"> / شهر</small></div>
       ${has?'<span class="chip up">✓ اشتراكك فعّال</span>':pend?'<span class="chip gold">⏳ طلبك بانتظار التفعيل</span>':'<button class="btn gold" type="button" data-buy="ai">اشترك بالمساعد</button>'}
       <div style="margin-top:8px"><a class="muted" style="font-size:12.5px" href="app.html#chart">جرّبه مجاناً (سؤال باليوم) ←</a></div></div></div>`}
+const hasVip=()=>isAdmin()||S.purchases.some(p=>["vip","deposit","monthly"].includes(p.kind)&&paid(p)&&new Date(p.expires_at)>new Date());
+function vipOfferHTML(){
+  const pend=pendingFor("deposit")||pendingFor("vip"),min=S.info.vip_min_deposit||100;
+  const until=S.purchases.filter(p=>["vip","deposit","monthly"].includes(p.kind)&&paid(p)&&new Date(p.expires_at)>new Date()).map(p=>new Date(p.expires_at)).sort((a,b)=>b-a)[0];
+  return `<div class="offers" style="margin-bottom:18px"><div class="offer best" style="grid-column:1/-1">
+    <span class="chip gold" style="align-self:flex-start">⭐ VIP</span>
+    <h3>قناة التوصيات والتوصيات المفتوحة ومؤشرات TradingView</h3>
+    <ul><li>توصيات الذهب والفوركس وقت الدخول، بالدخول والوقف والأهداف وسبب الدخول</li><li>قناة التوصيات على تيليجرام</li><li>مؤشرات TradingView مجاناً طول مدة اشتراكك</li></ul>
+    <p class="muted" style="margin:4px 0 12px">تفعّله بطريقتين: <b>أودع ${money(min)} أو أكثر بحسابك عند INFINOX</b> وارفع صورة الإيداع (مجاناً، شهر كامل)، أو <b>اشترك ${money(S.info.price_vip||100)} بالشهر</b>.</p>
+    ${hasVip()&&!isAdmin()?`<span class="chip up">✓ VIP فعّال${until?` لحد ${until.toLocaleDateString(window.LANG||"ar")}`:""}</span>`:pend?'<span class="chip gold">⏳ طلبك بانتظار المراجعة</span>':`<div class="acts2"><button class="btn gold" type="button" data-buy="deposit">🏦 أودعت، فعّل VIP</button><button class="btn" type="button" data-buy="vip">💳 اشترك ${money(S.info.price_vip||100)} / شهر</button></div>`}
+  </div></div>`;
+}
+function openDeposit(){
+  const min=Number(S.info.vip_min_deposit||100),acc0=(S.profile&&S.profile.broker_account)||"";
+  $("dlgBody").innerHTML=`<h2>تفعيل VIP بالإيداع</h2>
+    <p class="muted">إذا أودعت <b>${money(min)} أو أكثر</b> بحسابك عند INFINOX، ارفع صورة الإيداع ويتفعّل VIP <b>شهر كامل</b> بعد ما نتأكد منه. الفلوس تبقى بحسابك إنت.</p>
+    <form class="fm" id="depForm">
+      <label>رقم حسابك عند INFINOX<input id="dAcc" class="ltr" inputmode="numeric" maxlength="20" required value="${esc(acc0)}" placeholder="مثلاً 88014637"></label>
+      <label>مبلغ الإيداع ($)<input id="dAmt" class="ltr" type="number" min="${min}" step="1" required placeholder="${min}"></label>
+      <label>📷 صورة الإيداع من INFINOX<span class="rcp" id="dBox"><span class="muted">اضغط واختار صورة الإيداع (من سجل المعاملات بحسابك)</span></span><input id="dRcp" type="file" accept="image/*" hidden></label>
+      <button class="btn gold" type="submit">أرسل للمراجعة</button>
+      <p class="msg" id="dMsg"></p>
+    </form>
+    <button class="btn ghost" type="button" data-close>إلغاء</button>`;
+  $("dlg").showModal();
+  let rcp=null,rcpOrig=null;
+  $("dBox").onclick=()=>$("dRcp").click();
+  $("dRcp").onchange=async e=>{const f=e.target.files[0];if(!f)return;rcpOrig=f;try{rcp=await shrinkImg(f,1400);$("dBox").innerHTML=`<img src="${URL.createObjectURL(rcp)}" alt="">`}catch(err){rcp=f.size<12e6?f:null;$("dBox").innerHTML=rcp?'<span>✓ تم اختيار الصورة</span>':`<span class="muted">${esc(err.message)}</span>`}};
+  $("depForm").onsubmit=async e=>{e.preventDefault();const btn=e.submitter||$("depForm").querySelector("button");
+    const say=(m,ok)=>{$("dMsg").className="msg "+(ok?"ok":"err");$("dMsg").textContent=m};
+    const acc=($("dAcc").value||"").replace(/\D/g,""),amt=Number($("dAmt").value||0);
+    if(acc.length<5)return say("اكتب رقم حسابك عند INFINOX صح");
+    if(!(amt>=min))return say(`أقل إيداع للتفعيل ${money(min)}`);
+    if(!rcp)return say("ارفع صورة الإيداع");
+    btn.disabled=true;say("جاري الإرسال…",true);
+    const f={kind:"deposit",pay_ref:"",note:`حساب INFINOX: ${acc} · الإيداع: ${amt}$`};
+    if(rcpOrig&&crypto.subtle){try{const b=await crypto.subtle.digest("SHA-256",await rcpOrig.arrayBuffer());f.receipt_hash=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}catch(_){}}
+    try{f.receipt_url=await API.uploadReceipt(rcp)}catch(err){btn.disabled=false;return say("ما گدرنا نرفع الصورة: "+err.message)}
+    try{await API.buy(f);S.purchases=await API.purchases();$("dlg").close();toast("✅ وصل طلبك. أول ما نتأكد من الإيداع يتفعّل VIP ويوصلك إشعار");location.hash="orders"}
+    catch(err){say(err.message);btn.disabled=false}};
+}
 function offersHTML(){
   const m=pendingFor("monthly"),z=pendingFor("zoom");
   return `<div class="offers">
@@ -275,7 +316,7 @@ function coursesPage(){
 function plansPage(){
   setNav("plans");
   $("view").innerHTML=pageHead("الاشتراكات والجلسات الخاصة","تعلّم ويا الكوتش مباشرة: اشتراك شهري لكل شي، أو ساعة خاصة على زوم، أو دورة وحدة بدفعة وحدة.")
-    +`<section class="blk" style="padding-top:6px"><div class="wrap">${offersHTML()}${aiPlanHTML()}
+    +`<section class="blk" style="padding-top:6px"><div class="wrap">${vipOfferHTML()}${offersHTML()}${aiPlanHTML()}
       <div class="sh" style="margin-top:30px"><div><h2>أو اشتري دورة وحدة</h2><p>دفعة وحدة ووصول دائم.</p></div></div>
       <div class="tbl"><table><thead><tr><th>الدورة</th><th>الدروس</th><th>السعر</th><th></th></tr></thead><tbody>${S.courses.map(c=>`<tr><td><b>${esc(c.icon)} ${esc(c.title)}</b><div class="muted" style="font-size:12.5px">${esc(c.level)}</div></td><td>${lessonsOf(c.id).length}</td><td class="price" style="font-size:17px">${money(c.price)}</td><td>${ownsCourse(c.id)?'<span class="chip up">✓ مفتوحة</span>':`<a class="btn sm" href="#course/${esc(c.id)}">التفاصيل</a>`}</td></tr>`).join("")}</tbody></table></div>
       <div class="panel" style="margin-top:18px"><b style="color:var(--accent)">💵 طريقة الدفع</b><div class="payinfo" style="margin-top:8px">${esc(S.info.pay_info||"")}</div></div>
@@ -861,16 +902,18 @@ function bindQuiz(l,qz){
 function openBuy(kind,cid){
   if(!S.user){location.href=CONFIG.SITE+"#signup";return}
   if(!isMember()){location.hash="join";return}
+  if(kind==="deposit")return openDeposit();
   const c=kind==="course"&&cid&&course(cid),ind=kind==="indicator"?vxInds().find(x=>x.name===cid):null;
   if(kind==="indicator"&&!ind)return toast("المؤشر مو موجود");
-  const label=kind==="indicator"?`مؤشر ${ind.name} (${IPER[ind.period||"month"]||""})`:kind==="course"?`دورة ${c.title}`:kind==="zoom"?"جلسة زوم خاصة (ساعة)":kind==="ai"?"اشتراك مساعد الذكاء الصناعي (شهر)":"الاشتراك الشهري الكامل";
-  const price=kind==="indicator"?v2IndPrice(ind):kind==="course"?c.price:kind==="zoom"?S.info.price_zoom:kind==="ai"?(S.info.price_ai||10):S.info.price_monthly;
+  const vipFree=kind==="indicator"&&hasVip()&&!isAdmin();
+  const label=kind==="indicator"?`مؤشر ${ind.name} (${IPER[ind.period||"month"]||""})`:kind==="course"?`دورة ${c.title}`:kind==="zoom"?"جلسة زوم خاصة (ساعة)":kind==="ai"?"اشتراك مساعد الذكاء الصناعي (شهر)":kind==="vip"?"اشتراك VIP: القناة والتوصيات والمؤشرات (شهر)":"الاشتراك الشهري الكامل";
+  const price=kind==="indicator"?(vipFree?0:v2IndPrice(ind)):kind==="course"?c.price:kind==="zoom"?S.info.price_zoom:kind==="ai"?(S.info.price_ai||10):kind==="vip"?(S.info.price_vip||100):S.info.price_monthly;
   const tg=`https://t.me/${tgUser()}?text=${encodeURIComponent(`مرحبا كوتش، أريد أدفع: ${label} (${money(price)}). إيميلي: ${S.user.email||""}`)}`;
   const W=(S.info.pay_wallet||"").trim(),NET=(S.info.pay_network||"TRC20").toUpperCase();
   const amt=Number(price||0);
   $("dlgBody").innerHTML=`<h2>${kind==="zoom"?"احجز جلستك الخاصة":"إتمام الطلب"}</h2>
     <div class="sum"><b>${esc(label)}</b><span class="price">${money(price)}</span></div>
-    ${W?`<div class="wal">
+    ${vipFree?'<div class="payinfo">⭐ مجاني لأنك عضو VIP، ويبقى فعّال طول مدة اشتراكك.</div>':W?`<div class="wal">
       <div class="wal-h"><b>💳 ادفع <span class="num">${amt} USDT</span></b><span class="chip gold">شبكة ${esc(NET)}</span></div>
       <div class="wal-b"><img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=6&data=${encodeURIComponent(W)}" alt="QR" width="130" height="130" loading="lazy">
         <div style="display:grid;gap:8px;min-width:0"><span class="muted" style="font-size:12.5px">عنوان المحفظة</span><code class="wal-a" id="walA">${esc(W)}</code><button class="btn sm" type="button" id="walC">📋 نسخ العنوان</button></div></div>
@@ -899,12 +942,13 @@ function openBuy(kind,cid){
     const say=(m,ok)=>{$("bMsg").className="msg "+(ok?"ok":"err");$("bMsg").textContent=m};
     if(kind==="zoom"&&!f.preferred_time)return say("اكتب الوقت المناسب إلك");
     if(kind==="indicator"&&!/^[A-Za-z0-9_.-]{2,40}$/.test(f.tv_user))return say("اكتب يوزر TradingView صحيح (حروف إنكليزية وأرقام)");
-    if(kind!=="zoom"&&!rcp&&!f.pay_ref)return say("ارفع صورة التحويل أو اكتب TxID");
+    if(vipFree)f.pay_ref="VIP";
+    if(kind!=="zoom"&&!vipFree&&!rcp&&!f.pay_ref)return say("ارفع صورة التحويل أو اكتب TxID");
     btn.disabled=true;say("جاري الإرسال…",true);
     if(rcpOrig&&crypto.subtle){try{const b=await crypto.subtle.digest("SHA-256",await rcpOrig.arrayBuffer());f.receipt_hash=[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("")}catch(_){}}
     try{if(rcp){try{f.receipt_url=await API.uploadReceipt(rcp)}catch(err){if(!f.pay_ref){btn.disabled=false;return say("ما گدرنا نرفع الصورة: "+err.message)}}}
       await API.buy(f);S.purchases=await API.purchases();$("dlg").close();
-      toast(tx&&W&&NET==="TRC20"?"✅ وصل طلبك. نتأكد من التحويل ويتفعّل تلقائياً خلال دقايق":"✅ وصل طلبك. أول ما يتأكد الدفع يتفعّل ويوصلك إشعار");if(location.hash==="#buy-ai")location.hash="orders";else render()}
+      toast(tx&&W&&NET==="TRC20"?"✅ وصل طلبك. نتأكد من التحويل ويتفعّل تلقائياً خلال دقايق":"✅ وصل طلبك. أول ما يتأكد الدفع يتفعّل ويوصلك إشعار");if(location.hash==="#buy-ai"||location.hash==="#buy-vip")location.hash="orders";else render()}
     catch(err){say(err.message);btn.disabled=false}};
 }
 async function shrinkImg(file,max){const url=URL.createObjectURL(file),img=new Image();try{await new Promise((ok,bad)=>{img.onload=ok;img.onerror=()=>bad(new Error("الملف مو صورة"));img.src=url});
@@ -912,7 +956,7 @@ async function shrinkImg(file,max){const url=URL.createObjectURL(file),img=new I
   c.getContext("2d").drawImage(img,0,0,c.width,c.height);return await new Promise(r=>c.toBlob(r,"image/jpeg",.85))}finally{URL.revokeObjectURL(url)}}
 
 /* ================= orders ================= */
-const KIND={course:"دورة",zoom:"جلسة زوم خاصة",monthly:"اشتراك شهري",ai:"🤖 اشتراك المساعد",indicator:"📈 مؤشر"};
+const KIND={course:"دورة",zoom:"جلسة زوم خاصة",monthly:"اشتراك شهري",ai:"🤖 اشتراك المساعد",indicator:"📈 مؤشر",vip:"⭐ اشتراك VIP",deposit:"🏦 تفعيل VIP بالإيداع"};
 const ST={pending:["بانتظار التفعيل","gold"],paid:["مفعّل","up"],done:["منتهي","up"],rejected:["مرفوض","down"]};
 function ordersPage(){
   setNav("orders");
@@ -973,19 +1017,19 @@ async function adminAccess(force){
   const q=(ADM.q||"").trim().toLowerCase(),MST={new:["غير مكتمل",""],pending:["قيد المراجعة","gold"],approved:["مفعّل","up"],rejected:["مرفوض","down"]};
   const list=ADM.mem.filter(m=>m.role!=="admin"&&(!q||[m.full_name,m.email,m.telegram,m.broker_account].some(x=>(x||"").toLowerCase().includes(q))));
   const copts=S.courses.map(c=>`<option value="c:${esc(c.id)}">${esc(c.icon)} ${esc(c.title)}</option>`).join("");
-  const acc=a=>a.kind==="ai"?`🤖 اشتراك المساعد · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:a.kind==="monthly"?`⭐ كل الدورات · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:`${esc(course(a.course_id)?.icon||"📘")} ${esc(course(a.course_id)?.title||a.course_id)}`;
-  $("aBody").innerHTML=`<div class="panel" style="margin-bottom:14px"><p class="muted" style="margin:0 0 10px">افتح لأي طالب كل الدورات أو دورة محددة، حتى لو ما مشترك وما دافع. الدروس تنفتح له فوراً ويوصله إيميل وتنبيه.</p>
+  const acc=a=>a.kind==="vip"||a.kind==="deposit"?`${a.kind==="deposit"?"🏦 VIP بالإيداع":"⭐ VIP"} · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:a.kind==="ai"?`🤖 اشتراك المساعد · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:a.kind==="monthly"?`⭐ كل الدورات · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:`${esc(course(a.course_id)?.icon||"📘")} ${esc(course(a.course_id)?.title||a.course_id)}`;
+  $("aBody").innerHTML=`<div class="panel" style="margin-bottom:14px"><p class="muted" style="margin:0 0 10px">افتح لأي طالب VIP (قناة التوصيات والتوصيات المفتوحة والمؤشرات)، أو كل الدورات، أو دورة محددة، حتى لو ما مشترك وما دافع. الصلاحية تنفتح فوراً، ولما تخلص مدة VIP يطلع من القناة وحده.</p>
     <input id="accQ" placeholder="ابحث بالاسم أو الإيميل أو التيليجرام أو رقم الحساب" value="${esc(ADM.q||"")}" style="width:100%"></div>
     ${list.length?`<div class="tbl"><table><thead><tr><th>الطالب</th><th>الحالة</th><th>الصلاحيات الحالية</th><th>منح صلاحية</th></tr></thead><tbody>${list.map(m=>`<tr>
       <td><div class="mcell">${m.avatar_url?`<img class="av" src="${esc(m.avatar_url)}" alt="">`:`<span class="av">${esc((m.full_name||"؟")[0])}</span>`}<div><b>${esc(m.full_name||"—")}</b><span>${esc(m.email||"")}</span>${m.telegram?`<span class="num">${esc(m.telegram)}</span>`:""}</div></div></td>
       <td><span class="chip ${(MST[m.status]||MST.new)[1]}">${(MST[m.status]||MST.new)[0]}</span>${m.broker_account?`<div class="muted num" style="font-size:12px">${esc(m.broker_account)}</div>`:""}${m.invites?`<div class="chip gold" style="margin-top:4px">🎟 دعا ${m.invites}</div>`:""}${m.referred_by?`<div class="muted" style="font-size:12px">دعاه <span class="num">${esc(m.referred_by)}</span></div>`:""}</td>
       <td style="font-size:13px">${(m.access||[]).length?(m.access||[]).map(a=>`<div style="display:flex;gap:6px;align-items:center;margin:3px 0"><span>${acc(a)}</span><button class="btn sm" type="button" data-revoke="${a.id}" title="سحب الصلاحية">✕</button></div>`).join(""):'<span class="muted">—</span>'}</td>
-      <td><div class="acts2"><select id="gw-${m.id}"><option value="all">⭐ كل الدورات + الزوم</option><option value="ai">🤖 اشتراك المساعد</option>${copts}</select>
-        <select id="gd-${m.id}" title="المدة"><option value="30">شهر</option><option value="90">3 أشهر</option><option value="180">6 أشهر</option><option value="365">سنة</option><option value="0">دائم</option></select>
+      <td><div class="acts2"><select id="gw-${m.id}"><option value="vip">⭐ VIP: القناة والتوصيات والمؤشرات</option><option value="all">🎓 كل الدورات + الزوم</option><option value="ai">🤖 اشتراك المساعد</option>${copts}</select>
+        <select id="gd-${m.id}" title="المدة"><option value="30">شهر</option><option value="7">أسبوع</option><option value="14">أسبوعين</option><option value="90">3 أشهر</option><option value="180">6 أشهر</option><option value="365">سنة</option><option value="0">دائم</option></select>
         <button class="btn gold sm" type="button" data-grant="${m.id}">🔑 منح</button></div></td></tr>`).join("")}</tbody></table></div>`
       :`<div class="empty">ما في طلاب بهذا البحث.</div>`}`;
   const qi=$("accQ");qi.oninput=()=>{ADM.q=qi.value;clearTimeout(ADM.qt);ADM.qt=setTimeout(()=>{adminAccess();const n=$("accQ");n.focus();n.setSelectionRange(n.value.length,n.value.length)},250)};
-  list.forEach(m=>{const w=$("gw-"+m.id),d=$("gd-"+m.id);w.onchange=()=>{d.hidden=w.value!=="all"&&w.value!=="ai"}});
+  list.forEach(m=>{const w=$("gw-"+m.id),d=$("gd-"+m.id);w.onchange=()=>{d.hidden=!["all","ai","vip"].includes(w.value)}});
 }
 function adminLive(){
   const opts=S.courses.map(c=>`<option value="${esc(c.id)}">${esc(c.title)}</option>`).join("");
@@ -1085,7 +1129,7 @@ document.addEventListener("click",async e=>{
   const j=e.target.closest("[data-join]");if(j){j.disabled=true;try{const u=await API.link(+j.dataset.join);if(u)window.open(u,"_blank","noopener");else toast("الرابط مو متوفر إلك")}catch(err){toast(err.message)}j.disabled=false;return}
   const t=e.target.closest("[data-at]");if(t){ADM.tab=t.dataset.at;adminTab();return}
   const gr=e.target.closest("[data-grant]");if(gr){const id=gr.dataset.grant,w=$("gw-"+id).value,days=+$("gd-"+id).value;gr.disabled=true;
-    try{if(w==="all"||w==="ai")await API.aGrant(id,w,null,days);else await API.aGrant(id,"course",w.slice(2));toast("✅ انفتحت الصلاحية للطالب");await adminAccess(true)}catch(err){toast(err.message);gr.disabled=false}return}
+    try{if(w==="all"||w==="ai"||w==="vip")await API.aGrant(id,w,null,days);else await API.aGrant(id,"course",w.slice(2));toast("✅ انفتحت الصلاحية للطالب");await adminAccess(true)}catch(err){toast(err.message);gr.disabled=false}return}
   const rv=e.target.closest("[data-revoke]");if(rv){if(!confirm("تسحب هذي الصلاحية من الطالب؟"))return;try{await API.aRevoke(+rv.dataset.revoke);toast("تم سحب الصلاحية");await adminAccess(true)}catch(err){toast(err.message)}return}
   const pay=e.target.closest("button[data-pay]");if(pay){const id=+pay.dataset.pay,r=ADM.rows.find(x=>x.id===id),f={status:"paid"};
     if(r.kind==="zoom"){const at=$("at-"+id).value,zu=$("zu-"+id).value.trim();if(!at){$("at-"+id).focus();toast("حدد موعد الجلسة");return}f.session_at=new Date(at).toISOString();f.zoom_url=zu}
@@ -1102,6 +1146,8 @@ function render(){
   if(h.startsWith("cert/"))return certPage(decodeURIComponent(h.slice(5)));
   if(h==="orders")return ordersPage();
   if(h==="buy-ai"){plansPage();setTimeout(()=>openBuy("ai"),60);return}
+  if(h==="buy-vip"){plansPage();setTimeout(()=>openBuy("vip"),60);return}
+  if(h==="deposit"){plansPage();setTimeout(()=>openBuy("deposit"),60);return}
   if(h==="courses")return coursesPage();
   if(h==="certs")return certsPage();
   if(h==="live")return livePage();

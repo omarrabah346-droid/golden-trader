@@ -1468,6 +1468,8 @@ function supaBackend(){
     async uploadCoach(blob){const path="coach/photo.jpg";chk(await sb.storage.from("avatars").upload(path,blob,{upsert:true,contentType:"image/jpeg",cacheControl:"60"}));return sb.storage.from("avatars").getPublicUrl(path).data.publicUrl+"?v="+Date.now()},
     async access(uid){const r=chk(await sb.rpc("admin_members"))||[];const m=r.find(x=>x.id===uid);return m?m.access||[]:[]},
     async grant(uid,what,cid,days){return chk(await sb.rpc("admin_grant",{uid,what,cid:cid||null,days:days||null}))},
+    async myVip(){return chk(await sb.rpc("my_vip"))},
+    async vipChannel(){return chk(await sb.rpc("vip_channel"))},
     async revoke(pid){chk(await sb.rpc("admin_revoke",{pid}))},
     async leaderboard(){return chk(await sb.rpc("ref_leaderboard"))},
     async info(){const r=chk(await sb.from("site_info").select("key,value").in("key",["dist_share","dist_text","price_ai","currency"]));const o={};r.forEach(x=>o[x.key]=x.value);return o},
@@ -1754,6 +1756,7 @@ function showView(){
   const term=v===""||v==="trades"||v==="deep";
   $("terminalView").hidden=!term;$("profileView").hidden=v!=="profile";$("adminView").hidden=v!=="admin";$("rewardsView").hidden=v!=="rewards";if(v==="rewards")loadRewards();$("chartView").hidden=v!=="chart";if(v==="chart")chartPage();$("settingsView").hidden=v!=="settings";if(v==="settings")settingsPage();$("recordView").hidden=v!=="record";if(v==="record")loadRecord();$("calView").hidden=v!=="calendar";if(v==="calendar")calPage();$("inboxView").hidden=v!=="inbox";
   if(ME.locked)$("lockCard").hidden=!(term||v==="chart");
+  if(ME.novip&&$("vipCard"))$("vipCard").hidden=!term;
   document.querySelectorAll(".secnav [data-pg]").forEach(a=>a.toggleAttribute("aria-current",false));
   if(term)setPage(v||"analysis");
   $("dHero").hidden=v!==""||!!ME.locked;$("dStats").hidden=v!==""||!!ME.locked;if(v===""&&!ME.locked){dashTop().catch(()=>{});V8B()}else{const g=$("v8Grad");if(g)g.hidden=true}
@@ -1789,6 +1792,15 @@ function fillLock(){const p=ME.profile,el=$("lockCard"),B=esc(CONFIG.BROKER_NAME
 $("obBack").addEventListener("click",()=>{obSave({open:0});route()});
 $("obTg").addEventListener("input",()=>{const t=normTg($("obTg").value),er=t?tgProblem(t):"",h=$("obTgHint");
   h.textContent=!t?"ما عندك يوزر؟ افتح تيليجرام ← الإعدادات ← اسم المستخدم، وسوّي واحد بالإنجليزي.":er?er:"✓ "+t;h.style.color=!t?"":er?"#f0606f":"#34c98e"});
+function fillVip(){const el=$("vipCard");if(!el)return;
+  document.body.classList.toggle("novip",!!ME.novip);if(!ME.novip){el.hidden=true;el.innerHTML="";return}
+  const v=ME.vip||{},n=+v.open||0,min=v.min_deposit||100,pr=v.price||100,A="./#";
+  el.innerHTML=`<div class="lk-ic">⭐</div><h2>التوصيات المفتوحة لأعضاء VIP</h2>
+    <p>${n?`<b class="gold num">${n}</b> ${n===1?"توصية مفتوحة":"توصيات مفتوحة"} هسه بالدخول والوقف والأهداف. `:""}فعّل VIP حتى تشوفها وقت الدخول، وتنفتح لك قناة التوصيات ومؤشرات TradingView مجاناً.</p>
+    ${v.pending?'<p class="gold">⏳ طلبك بانتظار المراجعة. أول ما يتفعّل يوصلك إشعار.</p>':`<ol><li><span><b>🏦 أودع ${min}$ أو أكثر</b> بحسابك عند INFINOX وارفع صورة الإيداع: VIP شهر كامل، والفلوس تبقى بحسابك</span></li><li><span>أو <b>💳 اشترك ${pr}$ بالشهر</b></span></li></ol>
+    <div class="lk-cta"><a class="btn primary" href="${A}deposit">🏦 أودعت، فعّل VIP</a><a class="btn" href="${A}buy-vip">💳 اشترك ${pr}$ / شهر</a></div>`}
+    <p class="label" style="font-size:13px">التوصيات المسكّرة ونتائجها مفتوحة للكل: <a class="gold" href="#record">سجل الأداء</a>${v.tg_linked?"":' · اربط تيليجرامك من <a class="gold" href="#profile">ملفك</a> حتى تدخل القناة تلقائياً'}</p>`;
+}
 async function enterApp(){
   $("gate").hidden=true;$("app").hidden=false;fillUser();fillLock();
   try{const c=await DB.getConfig();
@@ -1798,6 +1810,11 @@ async function enterApp(){
     if(!isAdminUser())SC.auto=false;
     ME.invite=c.tg_invite||"";if($("tgInvite"))$("tgInvite").value=ME.invite;ME.invite2=c.tg_invite2||"";if($("tgInvite2"))$("tgInvite2").value=ME.invite2;
   }catch(e){}
+  ME.vip=null;ME.novip=false;
+  if(!isAdminUser()&&!ME.locked&&DB.myVip){try{ME.vip=await DB.myVip()}catch(e){}
+    if(ME.vip){try{const ch=await DB.vipChannel();ME.invite=(ch&&ch.invite)||"";ME.invite2=(ch&&ch.invite2)||""}catch(e){}}
+    ME.novip=!!ME.vip&&!ME.vip.vip}
+  fillVip();
   $("chanCard").hidden=!(ME.invite||ME.invite2)||isAdminUser()||!!ME.locked;$("chanLink").hidden=$("pChan").hidden=!ME.invite;$("chanLink2").hidden=$("pChan2").hidden=!ME.invite2;if(ME.invite){$("chanLink").href=ME.invite;$("pChan").href=ME.invite}if(ME.invite2){$("chanLink2").href=ME.invite2;$("pChan2").href=ME.invite2}
   $("chanUser").textContent=ME.profile.telegram||"";
   if(!ME.started){ME.started=true;startTerminal()}
@@ -1973,17 +1990,17 @@ function memberEdit(p){
       mdlClose();await loadAdmin()}catch(err){say("meMsg",err.message)}};
 }
 async function memberGift(p){
-  mdlOpen(`<h3>🎁 إهداء كورس</h3><p class="label" style="margin:0">${esc(p.full_name||p.email||"")}</p><div id="mgBody"><p class="label">جاري التحميل…</p></div>`);
+  mdlOpen(`<h3>🎁 إهداء صلاحية</h3><p class="label" style="margin:0">${esc(p.full_name||p.email||"")}</p><div id="mgBody"><p class="label">جاري التحميل…</p></div>`);
   try{if(!COURSES)COURSES=await DB.courses()||[]}catch(e){COURSES=[]}
   const cname=id=>{const c=COURSES.find(x=>x.id===id);return c?`${c.icon||"📘"} ${c.title}`:id};
   const render=async()=>{let acc=[];try{acc=await DB.access(p.id)||[]}catch(e){}
-    $("mgBody").innerHTML=`<div class="acc-l">${acc.length?acc.map(a=>`<div><span>${a.kind==="ai"?`🤖 اشتراك المساعد · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:a.kind==="monthly"?`⭐ كل الدورات · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:esc(cname(a.course_id))}</span><button class="btn" type="button" data-mrev="${a.id}" title="سحب الصلاحية">✕</button></div>`).join(""):'<span class="label">ما عنده دورات مفتوحة بعد.</span>'}</div>
-      <form class="fm" id="mgForm"><label>شنو تهديه؟<select id="mgW"><option value="all">⭐ كل الدورات + الزوم</option><option value="ai">🤖 اشتراك المساعد</option>${COURSES.map(c=>`<option value="c:${esc(c.id)}">${esc(c.icon||"")} ${esc(c.title)}</option>`).join("")}</select></label>
-        <label id="mgDL">المدة<select id="mgD"><option value="30">شهر</option><option value="90">3 أشهر</option><option value="180">6 أشهر</option><option value="365">سنة</option><option value="0">دائم</option></select></label>
-        <button class="btn primary" type="submit">🎁 إهداء</button><p class="msg" id="mgMsg"></p><p class="label" style="margin:0;font-size:12.5px">الدورة تنفتح له فوراً، ويوصله إشعار وإيميل.</p></form>`;
-    $("mgW").onchange=()=>{$("mgDL").hidden=!["all","ai"].includes($("mgW").value)};
+    $("mgBody").innerHTML=`<div class="acc-l">${acc.length?acc.map(a=>`<div><span>${a.kind==="vip"||a.kind==="deposit"?`${a.kind==="deposit"?"🏦 VIP بالإيداع":"⭐ VIP"} · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:a.kind==="ai"?`🤖 اشتراك المساعد · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:a.kind==="monthly"?`⭐ كل الدورات · لحد <span class="num">${new Date(a.expires_at).toLocaleDateString(window.LANG||"ar")}</span>`:esc(cname(a.course_id))}</span><button class="btn" type="button" data-mrev="${a.id}" title="سحب الصلاحية">✕</button></div>`).join(""):'<span class="label">ما عنده دورات مفتوحة بعد.</span>'}</div>
+      <form class="fm" id="mgForm"><label>شنو تهديه؟<select id="mgW"><option value="vip">⭐ VIP: القناة والتوصيات والمؤشرات</option><option value="all">🎓 كل الدورات + الزوم</option><option value="ai">🤖 اشتراك المساعد</option>${COURSES.map(c=>`<option value="c:${esc(c.id)}">${esc(c.icon||"")} ${esc(c.title)}</option>`).join("")}</select></label>
+        <label id="mgDL">المدة<select id="mgD"><option value="30">شهر</option><option value="7">أسبوع</option><option value="14">أسبوعين</option><option value="90">3 أشهر</option><option value="180">6 أشهر</option><option value="365">سنة</option><option value="0">دائم</option></select></label>
+        <button class="btn primary" type="submit">🎁 إهداء</button><p class="msg" id="mgMsg"></p><p class="label" style="margin:0;font-size:12.5px">الصلاحية تنفتح له فوراً. VIP يدخله قناة التوصيات، ولما تخلص المدة يطلع وحده.</p></form>`;
+    $("mgW").onchange=()=>{$("mgDL").hidden=!["all","ai","vip"].includes($("mgW").value)};
     $("mgForm").onsubmit=async e=>{e.preventDefault();const w=$("mgW").value;try{say("mgMsg","لحظة…",true);
-      if(w==="all"||w==="ai")await DB.grant(p.id,w,null,+$("mgD").value);else await DB.grant(p.id,"course",w.slice(2));
+      if(w==="all"||w==="ai"||w==="vip")await DB.grant(p.id,w,null,+$("mgD").value);else await DB.grant(p.id,"course",w.slice(2));
       await render();say("mgMsg","✅ انفتحت الصلاحية للطالب",true)}catch(err){say("mgMsg",err.message)}};
     $("mgBody").querySelectorAll("[data-mrev]").forEach(b=>b.onclick=async()=>{if(!confirm("تسحب هذي الصلاحية من الطالب؟"))return;try{await DB.revoke(+b.dataset.mrev);await render()}catch(err){alert(err.message)}});
   };

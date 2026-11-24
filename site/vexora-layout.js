@@ -81,7 +81,7 @@ function trust(g){
     <h2>ثلاث خطوات للانضمام</h2>
     <ol class="vxs-steps">${S.map(([h,p],n)=>`<li><i>${n+1}</i><b>${h}</b><span>${p}</span></li>`).join("")}</ol>`;
   const f=document.createElement("footer");f.className="vxs-foot";
-  f.innerHTML=`<div class="vxs-fl"><a href="index.html">الأكاديمية</a><a href="learn-trading.html">تعلّم التداول</a><a href="free-tools.html">حاسبة نقطة التعادل</a><a href="partners.html">برنامج الشركاء</a><a href="privacy.html">سياسة الخصوصية</a><a href="terms.html">شروط الاستخدام</a><a href="https://t.me/omo_rabah" target="_blank" rel="noopener">الدعم عبر تيليجرام</a></div>
+  f.innerHTML=`<div class="vxs-fl"><a href="index.html">الأكاديمية</a><a href="learn/">المقالات</a><a href="learn-trading.html">تعلّم التداول</a><a href="free-tools.html">حاسبة نقطة التعادل</a><a href="partners.html">برنامج الشركاء</a><a href="privacy.html">سياسة الخصوصية</a><a href="terms.html">شروط الاستخدام</a><a href="https://t.me/omo_rabah" target="_blank" rel="noopener">الدعم عبر تيليجرام</a></div>
     <p>التداول بالعملات والذهب والعملات الرقمية ينطوي على مخاطر عالية وقد يؤدي إلى خسارة رأس المال. المحتوى تعليمي ولا يُعدّ نصيحة استثمارية، والنتائج السابقة لا تضمن النتائج المستقبلية.</p>
     <p>© ${new Date().getFullYear()} <span>فيكسورا للتجارة العامة ذ.م.م · أبوظبي، الإمارات العربية المتحدة</span></p>`;
   g.append(t,f);

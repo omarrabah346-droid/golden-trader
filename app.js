@@ -1815,6 +1815,7 @@ async function enterApp(){
     if(ME.vip){try{const ch=await DB.vipChannel();ME.invite=(ch&&ch.invite)||"";ME.invite2=(ch&&ch.invite2)||""}catch(e){}}
     ME.novip=!!ME.vip&&!ME.vip.vip}
   fillVip();
+  {const pb=$("ppBtn");if(pb)pb.href=isAdminUser()?"#admin/partners":"#partners";}
   $("chanCard").hidden=!(ME.invite||ME.invite2)||isAdminUser()||!!ME.locked;$("chanLink").hidden=$("pChan").hidden=!ME.invite;$("chanLink2").hidden=$("pChan2").hidden=!ME.invite2;if(ME.invite){$("chanLink").href=ME.invite;$("pChan").href=ME.invite}if(ME.invite2){$("chanLink2").href=ME.invite2;$("pChan2").href=ME.invite2}
   $("chanUser").textContent=ME.profile.telegram||"";
   if(!ME.started){ME.started=true;startTerminal()}
@@ -4523,7 +4524,7 @@ const PP={
   nav(){const me=V5P.po&&V5P.po.me,ok=me&&me.status==="APPROVED",adm=isAdminUser();
     const L=[["dashboard","📊",L5("لوحتي","Dashboard"),"#partner/dashboard",1],["team","👥",L5("فريقي","My team"),"#partners/team",1],["ranks","🏅",L5("الرتب والحوافز","Ranks & rewards"),"#partners/ranks",1],["links","🔗",L5("روابطي والتسويق","Links & marketing"),"#partners/links",1],["money","💸",L5("العمولات والسحب","Commissions & payouts"),"#partners/money",1],
       ["ib","🏦",L5("طلب IB","IB request"),"#partners/ib",0],["support","🎧",L5("دعم وسيط الشركاء","Partner broker desk"),"#broker-support",0],["help","💬",L5("دعم الشركاء","Partner support"),"#partners/help",1],["agreement","📄",L5("العقد","Agreement"),"#partners/agreement",0]];
-    const top=ok?[]:[["","🏠",L5("البرنامج","Program"),"#partners",0],["apply","📝",me?L5("حالة طلبي","My application"):L5("طلب الانضمام","Apply"),"#partners/apply",0]];
+    const top=ok?[]:adm?[["","🏠",L5("البرنامج","Program"),"#partners",0]]:[["","🏠",L5("البرنامج","Program"),"#partners",0],["apply","📝",me?L5("حالة طلبي","My application"):L5("طلب الانضمام","Apply"),"#partners/apply",0]];
     const end=(ok?[["","ℹ️",L5("عن البرنامج","About the program"),"#partners",0]]:[]).concat(adm?[["admin","⚙️",L5("إعدادات الشركاء","Partner settings"),"#admin/partners",0]]:[]);
     return{items:top.concat(L,end),ok}},
   title(){const T={"":[L5("شركاء","VEXORA"),L5("فيكسورا","PARTNERS"),L5("روّج لخدمات فيكسورا واكسب عمولة على المبيعات المؤكدة","Promote VEXORA and earn on confirmed sales")],dashboard:[L5("لوحة","Partner"),L5("الشريك","dashboard"),L5("كل أرقامك ومبيعاتك وفريقك بمكان واحد","Your numbers, sales and team in one place")],team:[L5("فريقي","My"),"TEAM",L5("كل شريك يسجل من رابط فريقك ينضاف تحتك باليمين أو اليسار","Partners joining via your team link are placed left or right under you")],

@@ -1613,8 +1613,8 @@ function demoBackend(){
 const DB=DEMO?demoBackend():supaBackend();
 const ME={user:null,profile:null,started:false};
 function isAdminUser(){return ME.profile?.role==="admin"}
-const PERM_KEYS=["members","payments","courses","zoom","content"];
-const PERM_L={members:"👥 الأعضاء: قبول، رفض، تعديل البيانات، المتواجدين",payments:"💳 طلبات الأكاديمية والمدفوعات وإهداء الكورسات",courses:"🎓 فتح كل الدورات والدروس",zoom:"🎥 دروس الزوم",content:"🌐 محتوى الموقع: الكوتشات، الشهادات، المؤشرات، التواصل",news:"📰 أخبار فيكسورا: الأحداث والمقالات"};
+const PERM_KEYS=["members","payments","courses","zoom","content","partners","partner_money","team"];
+const PERM_L={members:"👥 الأعضاء: قبول، رفض، تعديل البيانات، المتواجدين",payments:"💳 طلبات الأكاديمية والمدفوعات وإهداء الكورسات",courses:"🎓 فتح كل الدورات والدروس",zoom:"🎥 دروس الزوم",content:"🌐 محتوى الموقع: الكوتشات، الشهادات، المؤشرات، التواصل",news:"📰 أخبار فيكسورا: الأحداث والمقالات",partners:"🤝 شريك فيكسورا: طلبات الشركاء، العقود، الرتب، طلبات IB والدعم (بدون فلوس)",partner_money:"💰 فلوس الشركاء: العمولات، السحوبات، التسويات والنِّسَب",team:"🧑‍🤝‍🧑 قائد فريق: يشوف ويفعّل بس الأعضاء اللي سجّلوا من رابط شراكته (لازم يكون شريك مقبول)"};
 const PERM_S={members:"الأعضاء",payments:"المدفوعات",courses:"الدورات",zoom:"الزوم",content:"المحتوى"};
 function can(k){return isAdminUser()||(ME.perms||[]).includes(k)}
 
@@ -1736,7 +1736,7 @@ $("pdEdit").addEventListener("click",()=>{fillOnboard();gate("vOnboard")});
 $("pdRefresh").addEventListener("click",async()=>{ME.profile=await DB.getProfile(ME.user.id);route()});
 
 /* app shell */
-function fillUser(){const p=ME.profile;$("uAv").innerHTML=avHTML(p,"sm");$("uName").textContent=(p.full_name||p.email).split(" ")[0];document.body.classList.toggle("is-admin",isAdminUser());document.body.classList.toggle("can-members",can("members"));document.body.classList.toggle("can-payments",can("payments"));{const g=document.getElementById("gAdm");if(g)g.hidden=!(isAdminUser()||(ME.perms||[]).length)}}
+function fillUser(){const p=ME.profile;$("uAv").innerHTML=avHTML(p,"sm");$("uName").textContent=(p.full_name||p.email).split(" ")[0];document.body.classList.toggle("is-admin",isAdminUser());document.body.classList.toggle("can-members",can("members")||can("team"));document.body.classList.toggle("can-payments",can("payments"));{const g=document.getElementById("gAdm");if(g)g.hidden=!(isAdminUser()||(ME.perms||[]).some(k=>["members","payments","courses","zoom","content","news"].includes(k)))}}
 $("userBtn").addEventListener("click",e=>{e.stopPropagation();const m=$("userMenu");m.hidden=!m.hidden;$("userBtn").setAttribute("aria-expanded",String(!m.hidden))});
 document.addEventListener("click",e=>{if(!e.target.closest(".umenu-w"))$("userMenu").hidden=true});
 document.addEventListener("click",e=>{const g=e.target.closest("[data-go]");if(!g)return;$("userMenu").hidden=true;location.hash=g.dataset.go;showView()});
@@ -1750,7 +1750,7 @@ function setPage(pg){
 }
 function showView(){
   if($("app").hidden)return;
-  let v=location.hash.slice(1),v4a="",v5a="";{let m5;if(m5=v.match(/^admin\/(news|partners|broker-support)$/)){v5a=m5[1]==="broker-support"?"brokers":"";v=m5[1]==="news"?"newsadm":"partadm"}else if(m5=v.match(/^(news|economic-calendar|calendar)(?:\/(.*))?$/)){v5a=m5[1]==="news"?(m5[2]||""):"calendar";v="news"}else if(v==="broker-help"){v="brokerhelp"}else if(m5=v.match(/^(partners|partner|broker-support)(?:\/(.*))?$/)){v5a=m5[1]==="partner"?"dashboard":m5[1]==="broker-support"?"support":(m5[2]||"");v="partners"}}if(v==="newsadm"&&!can("news"))v="news";if(v==="partadm"&&!isAdminUser())v="partners";{const m=v.match(/^(comp|gw|growth|rewards)\/(.+)$/);if(m){v=m[1];v4a=m[2]}}if(v==="admin"&&!can("members"))v="";if(v==="growth"&&v4a!=="marketing-ai"&&!isAdminUser())v="";
+  let v=location.hash.slice(1),v4a="",v5a="";{let m5;if(m5=v.match(/^admin\/(news|partners|broker-support)$/)){v5a=m5[1]==="broker-support"?"brokers":"";v=m5[1]==="news"?"newsadm":"partadm"}else if(m5=v.match(/^(news|economic-calendar|calendar)(?:\/(.*))?$/)){v5a=m5[1]==="news"?(m5[2]||""):"calendar";v="news"}else if(v==="broker-help"){v="brokerhelp"}else if(m5=v.match(/^(partners|partner|broker-support)(?:\/(.*))?$/)){v5a=m5[1]==="partner"?"dashboard":m5[1]==="broker-support"?"support":(m5[2]||"");v="partners"}}if(v==="newsadm"&&!can("news"))v="news";if(v==="partadm"&&!can("partners"))v="partners";{const m=v.match(/^(comp|gw|growth|rewards)\/(.+)$/);if(m){v=m[1];v4a=m[2]}}if(v==="admin"&&!can("members")&&!can("team"))v="";if(v==="growth"&&v4a!=="marketing-ai"&&!isAdminUser())v="";
   if(!["","trades","deep","profile","admin","rewards","chart","settings","record","calendar","inbox","ai","strategy","scanner","risk","comp","gw","growth","news","partners","newsadm","partadm","brokerhelp","journal","radar","winrate","zones","analysis","forecast","brief","path","help","crm","ops","bi","compliance","copier"].includes(v))v="";if(["ops","bi","compliance"].includes(v)&&!isAdminUser())v="";
   if(v==="settings"&&!isAdminUser())v="";
   const term=v===""||v==="trades"||v==="deep";
@@ -1815,11 +1815,11 @@ async function enterApp(){
     if(ME.vip){try{const ch=await DB.vipChannel();ME.invite=(ch&&ch.invite)||"";ME.invite2=(ch&&ch.invite2)||""}catch(e){}}
     ME.novip=!!ME.vip&&!ME.vip.vip}
   fillVip();
-  {const pb=$("ppBtn");if(pb)pb.href=isAdminUser()?"#admin/partners":"#partners";}
+  {const pb=$("ppBtn");if(pb)pb.href=can("partners")?"#admin/partners":"#partners";}
   $("chanCard").hidden=!(ME.invite||ME.invite2)||isAdminUser()||!!ME.locked;$("chanLink").hidden=$("pChan").hidden=!ME.invite;$("chanLink2").hidden=$("pChan2").hidden=!ME.invite2;if(ME.invite){$("chanLink").href=ME.invite;$("pChan").href=ME.invite}if(ME.invite2){$("chanLink2").href=ME.invite2;$("pChan2").href=ME.invite2}
   $("chanUser").textContent=ME.profile.telegram||"";
   if(!ME.started){ME.started=true;startTerminal()}
-  showView();if(can("members"))refreshPendCount();loadBell();startBeat();setTimeout(()=>PUSH.nudge(VAPID,pushSave),4000);
+  showView();if(can("members")||can("team"))refreshPendCount();loadBell();startBeat();setTimeout(()=>PUSH.nudge(VAPID,pushSave),4000);
   try{const rr=localStorage.getItem("albasha_ref");if(rr&&!ME.profile.referred_by&&ME.profile.status==="new"&&rr!==ME.profile.ref_code){ME.profile=await DB.saveProfile(ME.user.id,{referred_by:rr})||ME.profile}}catch(e){}
 }
 
@@ -4252,7 +4252,7 @@ const V5P={tab:"",
   spark(vals,col){const v=(vals&&vals.length?vals:[0,0]).slice(-20),mx=Math.max(1,...v),n=v.length,pts=v.map((y,i)=>`${Math.round(i*300/Math.max(1,n-1))},${Math.round(44-y/mx*38)}`).join(" "),id="sg"+Math.random().toString(36).slice(2,7),c=col||"#5cf28a";
     return`<svg viewBox="0 0 300 48" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity=".45"/><stop offset="1" stop-color="${c}" stop-opacity="0"/></linearGradient></defs><polygon points="0,48 ${pts} 300,48" fill="url(#${id})"/><polyline points="${pts}" fill="none" stroke="${c}" stroke-width="2"/></svg>`},
   nav(){const me=V5P.me,T=[["","🏠 "+L5("البرنامج","Program")],["apply","📝 "+L5("طلب الانضمام","Apply")],...(me&&me.status==="APPROVED"?[["dashboard","📊 "+L5("لوحتي","My dashboard")]]:[]),["ib","🏦 "+L5("طلب IB","IB request")],["agreement","📄 "+L5("العقد","Agreement")],["support","🎧 "+L5("دعم الوسيط","Broker support")]];
-    return`<nav class="px-nav">${T.map(([k,l])=>`<a href="#${k==="dashboard"?"partner/dashboard":k==="support"?"broker-support":"partners"+(k?"/"+k:"")}" class="${k===V5P.tab?"on":""}">${l}</a>`).join("")}${isAdminUser()?`<a href="#admin/partners">🛠 ${L5("الإدارة","Admin")}</a>`:""}</nav>`},
+    return`<nav class="px-nav">${T.map(([k,l])=>`<a href="#${k==="dashboard"?"partner/dashboard":k==="support"?"broker-support":"partners"+(k?"/"+k:"")}" class="${k===V5P.tab?"on":""}">${l}</a>`).join("")}${can("partners")?`<a href="#admin/partners">🛠 ${L5("الإدارة","Admin")}</a>`:""}</nav>`},
   hero(t1,t2,pill,ic){return`<div class="px-hero"><div><h1>${t1} <em>${t2}</em></h1><div class="k-row" style="margin-top:14px">${pill?`<span class="px-pill">${pill}</span>`:""}${V5.api().demo?`<span class="px-demo">🧪 ${L5("معاينة محلية · بيانات تجريبية","Local preview · demo data")}</span>`:""}</div></div><div class="px-logo">${ic}</div></div>`},
   async open(a){V5P.tab=["","apply","dashboard","ib","agreement","support"].includes(a)?a:"";const b=$("v5PartBody");if(!b)return;
     b.innerHTML=`<div class="px"><div class="px-c">${L5("جاري التحميل…","Loading…")}</div></div>`;
@@ -4385,7 +4385,7 @@ const V5P={tab:"",
 /* ---------- إدارة الشركاء (/admin/partners, /admin/broker-support) ---------- */
 const V5PA={tab:"requests",f:"open",
   async open(a){if(a==="brokers")V5PA.tab="brokers";const b=$("v5PartAdmBody");if(!b)return;
-    if(!isAdminUser()){b.innerHTML=`<div class="panel rc-empty">⛔ ${L5("إدارة الشركاء للمالك/الأدمن بس.","Owner/admin only.")}</div>`;return}
+    if(!can("partners")){b.innerHTML=`<div class="panel rc-empty">⛔ ${L5("إدارة الشركاء للمالك/الأدمن بس.","Owner/admin only.")}</div>`;return}
     b.innerHTML=`<div class="panel label">${L5("جاري التحميل…","Loading…")}</div>`;
     try{V5PA.d=await V5.api().adm.data();try{V5PA.v6=await V5.api().adm.v6()}catch(e){V5PA.v6={incentives:[],claims:[],tree:{},cfg:{}}}V5PA.render()}catch(e){b.innerHTML=`<div class="panel rc-empty">⚠️ ${esc(V5.err(e))}</div>`}},
   act(fn,ok){return async()=>{try{await fn();V5.toast("✅ "+(ok||L5("تم","Done")));await V5PA.open()}catch(e){V5.toast(V5.err(e),1)}}},
@@ -4521,7 +4521,7 @@ const V5PA={tab:"requests",f:"open",
 
 /* ================= V6: بوابة الشركاء المعزولة ================= */
 const PP={
-  nav(){const me=V5P.po&&V5P.po.me,ok=me&&me.status==="APPROVED",adm=isAdminUser();
+  nav(){const me=V5P.po&&V5P.po.me,ok=me&&me.status==="APPROVED",adm=can("partners");
     const L=[["dashboard","📊",L5("لوحتي","Dashboard"),"#partner/dashboard",1],["team","👥",L5("فريقي","My team"),"#partners/team",1],["ranks","🏅",L5("الرتب والحوافز","Ranks & rewards"),"#partners/ranks",1],["links","🔗",L5("روابطي والتسويق","Links & marketing"),"#partners/links",1],["money","💸",L5("العمولات والسحب","Commissions & payouts"),"#partners/money",1],
       ["ib","🏦",L5("طلب IB","IB request"),"#partners/ib",0],["support","🎧",L5("دعم وسيط الشركاء","Partner broker desk"),"#broker-support",0],["help","💬",L5("دعم الشركاء","Partner support"),"#partners/help",1],["agreement","📄",L5("العقد","Agreement"),"#partners/agreement",0]];
     const top=ok?[]:adm?[["","🏠",L5("البرنامج","Program"),"#partners",0]]:[["","🏠",L5("البرنامج","Program"),"#partners",0],["apply","📝",me?L5("حالة طلبي","My application"):L5("طلب الانضمام","Apply"),"#partners/apply",0]];

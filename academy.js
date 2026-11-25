@@ -136,7 +136,7 @@ const VX_CONTACTS=[{type:"channel",name:"قناة البروفيسور",user:"co
 const coaches=()=>JL("vx_coaches",VX_COACHES),vxCerts=()=>JL("vx_certs",VX_CERTS),vxInds=()=>JL("vx_indicators",[]),vxContacts=()=>JL("vx_contacts",VX_CONTACTS);
 const tgU=u=>String(u||"").trim().replace(/^https?:\/\/(t\.me|telegram\.me)\//i,"").replace(/^@/,"").replace(/[^A-Za-z0-9_+].*$/,"");
 const canP=k=>isAdmin()||(S.perms||[]).includes(k);
-const isStaff=()=>isAdmin()||(S.perms||[]).length>0;
+const isStaff=()=>isAdmin()||(S.perms||[]).some(k=>["members","payments","courses","zoom","content","news"].includes(k));
 
 async function loadAll(){
   const [info,courses,lessons]=await Promise.all([API.info(),API.courses().catch(e=>{console.error("[VEXORA] courses:",e);return[]}),API.lessons().catch(e=>{console.error("[VEXORA] lessons:",e);return[]})]);
